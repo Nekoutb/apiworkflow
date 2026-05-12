@@ -824,129 +824,397 @@ table.dossiers .amount { font-variant-numeric: tabular-nums; font-weight: 500; }
   body { background: white; }
 }
 
-/* === LOGIN SCREEN === */
+/* === LOGIN SCREEN (split layout, v2) === */
 .login-screen {
   position: fixed; inset: 0;
-  background: linear-gradient(135deg, #1e3a8a 0%, #006633 60%, #0a4d2a 100%);
-  display: flex; align-items: center; justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  background: var(--bg);
+  overflow: auto;
 }
-.login-screen .login-card {
-  background: white;
-  border-radius: 14px;
-  width: 100%;
-  max-width: 460px;
-  padding: 36px 36px 30px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-.login-screen .login-logo {
-  width: 72px; height: 72px;
-  border-radius: 14px;
-  margin: 0 auto 16px;
+
+.login-brand {
+  position: relative;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(252,209,22,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse 90% 70% at 100% 100%, rgba(206,17,38,0.15) 0%, transparent 55%),
+    linear-gradient(135deg, #062a16 0%, #0a4d2a 35%, #0e5d35 65%, #062a16 100%);
+  color: white;
+  padding: 56px 64px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(30,58,138,0.25);
 }
-.login-screen .login-logo img, .login-screen .login-logo svg { width: 100%; height: 100%; display: block; }
-.login-screen h1 {
-  text-align: center;
-  font-size: 19px;
-  margin-bottom: 4px;
-  color: var(--green-dark);
+.login-brand::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 28px 28px, 56px 56px;
+  background-position: 0 0, 14px 14px;
+  opacity: 0.5;
+  pointer-events: none;
 }
-.login-screen .sub {
-  text-align: center;
-  font-size: 12.5px;
-  color: var(--muted);
+.login-brand::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: 6px;
+  background: linear-gradient(180deg, #009639 0%, #009639 33%, #ce1126 33%, #ce1126 66%, #fcd116 66%, #fcd116 100%);
+}
+
+.brand-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand-top .brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-top .brand-mark .mark-img {
+  width: 56px; height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+.brand-top .brand-mark .mark-img img,
+.brand-top .brand-mark .mark-img svg { width: 100%; height: 100%; display: block; }
+.brand-top .brand-mark .mark-text {
+  line-height: 1.2;
+}
+.brand-top .brand-mark .mark-text .top-line {
+  font-size: 11px;
+  opacity: 0.7;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.brand-top .brand-mark .mark-text .org {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.brand-top .lang-pick { display: flex; gap: 4px; }
+.brand-top .lang-pick button {
+  background: rgba(255,255,255,0.10);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.22);
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  transition: background 0.15s;
+}
+.brand-top .lang-pick button:hover { background: rgba(255,255,255,0.18); }
+.brand-top .lang-pick button.active {
+  background: rgba(252,209,22,0.95);
+  color: #062a16;
+  border-color: rgba(252,209,22,1);
+}
+
+.brand-hero {
+  position: relative;
+  z-index: 2;
+  max-width: 540px;
+  margin: 24px 0;
+}
+.brand-hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  opacity: 0.85;
+  padding: 6px 12px;
+  border: 1px solid rgba(252,209,22,0.4);
+  background: rgba(252,209,22,0.08);
+  border-radius: 100px;
   margin-bottom: 22px;
+  color: #fcd116;
 }
-.login-tabs { display: flex; gap: 0; margin-bottom: 22px; border-bottom: 1px solid var(--border); }
+.brand-hero h1 {
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
+}
+.brand-hero h1 .accent { color: #fcd116; }
+.brand-hero .lead {
+  font-size: 15.5px;
+  line-height: 1.65;
+  opacity: 0.88;
+  max-width: 460px;
+  margin-bottom: 26px;
+}
+.brand-hero .legal-cite {
+  display: inline-block;
+  font-size: 11.5px;
+  color: rgba(255,255,255,0.7);
+  font-style: italic;
+  padding-left: 12px;
+  border-left: 2px solid rgba(252,209,22,0.6);
+}
+
+.brand-features {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 620px;
+}
+.brand-features .bf {
+  padding: 18px 18px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+}
+.brand-features .bf .num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fcd116;
+  line-height: 1;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.brand-features .bf .lbl {
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.88;
+}
+
+.brand-footer {
+  position: relative;
+  z-index: 2;
+  font-size: 11px;
+  opacity: 0.55;
+  letter-spacing: 0.2px;
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.brand-footer .dot { width: 3px; height: 3px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+
+.login-form-pane {
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  min-height: 100vh;
+}
+.login-form-pane .login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 0;
+}
+.login-form-pane .welcome-line {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.login-form-pane h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: -0.4px;
+}
+.login-form-pane .sub {
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-bottom: 26px;
+  line-height: 1.5;
+}
+
+.login-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 22px;
+  background: var(--bg);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
 .login-tabs .lt {
   flex: 1;
-  padding: 10px;
+  padding: 10px 14px;
   text-align: center;
   cursor: pointer;
   font-size: 13px;
   color: var(--muted);
-  border-bottom: 2px solid transparent;
   font-weight: 500;
+  border-radius: 7px;
+  transition: all 0.15s;
 }
-.login-tabs .lt.active { color: var(--green); border-bottom-color: var(--green); }
-.login-screen label {
+.login-tabs .lt:hover { color: var(--text); }
+.login-tabs .lt.active {
+  background: white;
+  color: var(--green-dark);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.login-form-pane label {
   display: block;
   font-size: 12px;
-  font-weight: 500;
-  margin: 10px 0 4px;
+  font-weight: 600;
+  margin: 14px 0 6px;
+  color: var(--text);
+  letter-spacing: 0.2px;
 }
-.login-screen input, .login-screen select {
+.login-form-pane input, .login-form-pane select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 13px;
   border: 1px solid var(--border-strong);
-  border-radius: 7px;
+  border-radius: 8px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.login-screen input:focus, .login-screen select:focus {
-  outline: 2px solid var(--green);
-  outline-offset: -1px;
+.login-form-pane input::placeholder { color: var(--muted-2); }
+.login-form-pane input:focus, .login-form-pane select:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(0,102,51,0.10);
 }
-.login-screen .submit-btn {
+.login-form-pane .submit-btn {
   width: 100%;
   background: var(--green);
   color: white;
   border: none;
-  padding: 11px;
-  border-radius: 7px;
-  font-size: 14px;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 16px;
+  margin-top: 22px;
+  letter-spacing: 0.2px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
-.login-screen .submit-btn:hover { background: var(--green-dark); }
-.login-screen .demo-hint {
-  margin-top: 18px;
+.login-form-pane .submit-btn:hover {
+  background: var(--green-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,102,51,0.18);
+}
+.login-form-pane .submit-btn .arrow { transition: transform 0.15s; }
+.login-form-pane .submit-btn:hover .arrow { transform: translateX(3px); }
+
+.login-form-pane .demo-hint {
+  margin-top: 26px;
+  padding: 12px 14px;
   font-size: 11.5px;
   color: var(--muted);
-  text-align: center;
-  padding-top: 14px;
-  border-top: 1px dashed var(--border);
+  background: var(--bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--warning);
 }
-.login-screen .quick-pick {
-  margin-top: 14px;
+
+.login-form-pane .quick-pick-title {
+  margin-top: 18px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+.login-form-pane .quick-pick {
+  margin-top: 10px;
   display: grid;
   gap: 6px;
 }
-.login-screen .quick-pick .qp {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px;
+.login-form-pane .quick-pick .qp {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 12.5px;
+  background: white;
+  transition: all 0.15s;
 }
-.login-screen .quick-pick .qp:hover { background: var(--bg); }
-.login-screen .quick-pick .qp .ico {
-  width: 26px; height: 26px;
-  border-radius: 6px;
-  background: var(--info-bg);
-  color: var(--info);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700;
+.login-form-pane .quick-pick .qp:hover {
+  background: var(--bg);
+  border-color: var(--green);
+  transform: translateX(2px);
 }
-.login-screen .quick-pick .qp .lbl { display: flex; flex-direction: column; line-height: 1.25; }
-.login-screen .quick-pick .qp .lbl .s { font-size: 10.5px; color: var(--muted); }
-.login-screen .lang-pick { position: absolute; top: 22px; right: 28px; display: flex; gap: 4px; }
-.login-screen .lang-pick button {
-  background: rgba(255,255,255,0.18);
+.login-form-pane .quick-pick .qp .ico {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #006633 0%, #004d26 100%);
   color: white;
-  border: 1px solid rgba(255,255,255,0.3);
-  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11.5px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
 }
-.login-screen .lang-pick button.active { background: rgba(255,255,255,0.35); border-color: white; }
+.login-form-pane .quick-pick .qp .lbl {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+  flex: 1;
+}
+.login-form-pane .quick-pick .qp .lbl strong { font-size: 13px; color: var(--text); font-weight: 600; }
+.login-form-pane .quick-pick .qp .lbl .s {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.login-form-pane .quick-pick .qp .arrow-icon {
+  opacity: 0;
+  color: var(--green);
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+.login-form-pane .quick-pick .qp:hover .arrow-icon { opacity: 1; }
+
+@media (max-width: 900px) {
+  .login-screen { grid-template-columns: 1fr; }
+  .login-brand { padding: 32px 28px; min-height: auto; }
+  .login-brand::after { display: none; }
+  .brand-hero { margin: 20px 0; }
+  .brand-features { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .brand-features .bf { padding: 12px; }
+  .brand-footer { margin-top: 18px; }
+  .login-form-pane { padding: 30px 24px; min-height: auto; }
+}
+@media (max-width: 520px) {
+  .brand-features { grid-template-columns: 1fr; }
+}
 
 /* === LANGUAGE TOGGLE & NOTIF BELL in header === */
 .lang-toggle {
@@ -1316,13 +1584,14 @@ table.dossiers .amount { font-variant-numeric: tabular-nums; font-weight: 500; }
 
 <!-- Login screen (shown when not authenticated) -->
 <div class="login-screen" id="loginScreen" style="display:none">
-  <div class="lang-pick">
-    <button id="langFr" class="active">FR</button>
-    <button id="langEn">EN</button>
-  </div>
-  <div class="login-card" id="loginCard">
+  <aside class="login-brand" id="loginBrand">
     <!-- populated by JS -->
-  </div>
+  </aside>
+  <section class="login-form-pane">
+    <div class="login-card" id="loginCard">
+      <!-- populated by JS -->
+    </div>
+  </section>
 </div>
 
 <div class="layout">
@@ -2168,20 +2437,74 @@ function renderContent() {
 // ============================================================
 
 function renderLogin() {
-  document.getElementById('langFr').classList.toggle('active', state.language === 'fr');
-  document.getElementById('langEn').classList.toggle('active', state.language === 'en');
+  const brand = document.getElementById('loginBrand');
   const card = document.getElementById('loginCard');
   const tab = state.loginTab || 'staff';
-  card.innerHTML = `
-    <div class="login-logo">
-      <img src="logo.png" alt="API" onerror="this.outerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'><defs><linearGradient id=\\'lbg\\' x1=\\'0%\\' y1=\\'0%\\' x2=\\'0%\\' y2=\\'100%\\'><stop offset=\\'0%\\' stop-color=\\'#3a59b5\\'/><stop offset=\\'100%\\' stop-color=\\'#1e3a8a\\'/></linearGradient></defs><rect width=\\'100\\' height=\\'100\\' rx=\\'20\\' fill=\\'url(#lbg)\\'/><text x=\\'50\\' y=\\'60\\' font-family=\\'Arial Black, Arial, sans-serif\\' font-weight=\\'900\\' font-size=\\'30\\' fill=\\'#ffffff\\' text-anchor=\\'middle\\'>API</text><path d=\\'M 18 78 Q 50 92 82 78\\' stroke=\\'#fcd116\\' stroke-width=\\'3.5\\' fill=\\'none\\' stroke-linecap=\\'round\\'/></svg>'">
+  const fr = state.language === 'fr';
+
+  // === Brand panel ===
+  brand.innerHTML = `
+    <div class="brand-top">
+      <div class="brand-mark">
+        <div class="mark-img">
+          <img src="logo.png" alt="API" onerror="this.outerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'><defs><linearGradient id=\\'lbg\\' x1=\\'0%\\' y1=\\'0%\\' x2=\\'0%\\' y2=\\'100%\\'><stop offset=\\'0%\\' stop-color=\\'#3a59b5\\'/><stop offset=\\'100%\\' stop-color=\\'#1e3a8a\\'/></linearGradient></defs><rect width=\\'100\\' height=\\'100\\' rx=\\'20\\' fill=\\'url(#lbg)\\'/><text x=\\'50\\' y=\\'60\\' font-family=\\'Arial Black, Arial, sans-serif\\' font-weight=\\'900\\' font-size=\\'30\\' fill=\\'#ffffff\\' text-anchor=\\'middle\\'>API</text><path d=\\'M 18 78 Q 50 92 82 78\\' stroke=\\'#fcd116\\' stroke-width=\\'3.5\\' fill=\\'none\\' stroke-linecap=\\'round\\'/></svg>'">
+        </div>
+        <div class="mark-text">
+          <div class="top-line">${fr ? 'RÉPUBLIQUE DU CAMEROUN' : 'REPUBLIC OF CAMEROON'}</div>
+          <div class="org">${fr ? 'Agence de Promotion des Investissements' : 'Investment Promotion Agency'}</div>
+        </div>
+      </div>
+      <div class="lang-pick">
+        <button id="langFr" class="${state.language === 'fr' ? 'active' : ''}">FR</button>
+        <button id="langEn" class="${state.language === 'en' ? 'active' : ''}">EN</button>
+      </div>
     </div>
+
+    <div class="brand-hero">
+      <div class="eyebrow">★ ${fr ? 'Portail Interne · Workflow d\\'agrément' : 'Internal Portal · Accreditation Workflow'}</div>
+      <h1>${fr ? 'Promouvoir l\\'investissement,<br><span class="accent">en toute transparence.</span>' : 'Promoting investment,<br><span class="accent">transparently.</span>'}</h1>
+      <p class="lead">${fr
+        ? "Plateforme officielle de gestion des conventions d'investissement entre l'État du Cameroun et les investisseurs nationaux et étrangers. Soumission, instruction, signature et suivi — du dépôt à l'agrément."
+        : "Official platform for managing investment conventions between the State of Cameroon and national and foreign investors. Submission, review, signing and tracking — from filing to accreditation."}</p>
+      <div class="legal-cite">${fr ? 'En application de l\\'Ordonnance n° 2025/002 du 18 juillet 2025' : 'Pursuant to Ordinance n° 2025/002 of 18 July 2025'}</div>
+    </div>
+
+    <div>
+      <div class="brand-features">
+        <div class="bf">
+          <div class="num">10<span style="font-size:14px;font-weight:500;margin-left:2px">${fr ? 'j' : 'd'}</span></div>
+          <div class="lbl">${fr ? 'jours ouvrés d\\'instruction (Art. 30.3)' : 'business days statutory review (Art. 30.3)'}</div>
+        </div>
+        <div class="bf">
+          <div class="num">6</div>
+          <div class="lbl">${fr ? 'départements intégrés au Guichet Unique' : 'departments in the One-Stop Shop'}</div>
+        </div>
+        <div class="bf">
+          <div class="num">FR · EN</div>
+          <div class="lbl">${fr ? 'portail bilingue (Art. 52)' : 'bilingual portal (Art. 52)'}</div>
+        </div>
+      </div>
+      <div class="brand-footer">
+        <span>🔒 ${fr ? 'Connexion chiffrée TLS 1.3' : 'TLS 1.3 encrypted connection'}</span>
+        <span class="dot"></span>
+        <span>${fr ? '© 2025 Présidence de la République' : '© 2025 Office of the President'}</span>
+        <span class="dot"></span>
+        <span>${fr ? 'Tous droits réservés' : 'All rights reserved'}</span>
+      </div>
+    </div>
+  `;
+
+  // === Form panel ===
+  card.innerHTML = `
+    <div class="welcome-line">${fr ? 'Bienvenue' : 'Welcome'}</div>
     <h1>${t('login.title')}</h1>
-    <div class="sub">${t('login.sub')}</div>
+    <div class="sub">${fr
+      ? "Sélectionnez votre profil et identifiez-vous pour accéder au portail."
+      : "Select your profile and sign in to access the portal."}</div>
 
     <div class="login-tabs">
-      <div class="lt ${tab === 'staff' ? 'active' : ''}" data-login-tab="staff">${t('login.tab.staff')}</div>
-      <div class="lt ${tab === 'investor' ? 'active' : ''}" data-login-tab="investor">${t('login.tab.investor')}</div>
+      <div class="lt ${tab === 'staff' ? 'active' : ''}" data-login-tab="staff">👤 ${t('login.tab.staff')}</div>
+      <div class="lt ${tab === 'investor' ? 'active' : ''}" data-login-tab="investor">🏢 ${t('login.tab.investor')}</div>
     </div>
 
     ${tab === 'staff' ? `
@@ -2193,13 +2516,15 @@ function renderLogin() {
       <input type="email" id="loginEmailField" placeholder="prenom.nom@api.cm">
       <label>${t('login.password')}</label>
       <input type="password" id="loginPasswordField" placeholder="••••••••">
-      <button class="submit-btn" data-action="login-staff">${t('login.submit')}</button>
-      <div class="demo-hint">${t('login.demo')}</div>
+      <button class="submit-btn" data-action="login-staff">${t('login.submit')} <span class="arrow">→</span></button>
+      <div class="demo-hint">⚙ ${t('login.demo')}</div>
+      <div class="quick-pick-title">${t('login.quick')}</div>
       <div class="quick-pick">
         ${ROLES.map(r => `
           <div class="qp" data-quick-staff="${r.id}">
             <div class="ico">${r.initials}</div>
             <div class="lbl"><strong>${r.name}</strong><span class="s">${state.language === 'en' ? (r.titleEn || r.title) : r.title}</span></div>
+            <span class="arrow-icon">→</span>
           </div>
         `).join('')}
       </div>
@@ -2208,13 +2533,15 @@ function renderLogin() {
       <input type="email" id="loginEmailField" placeholder="vous@entreprise.cm">
       <label>${t('login.password')}</label>
       <input type="password" id="loginPasswordField" placeholder="••••••••">
-      <button class="submit-btn" data-action="login-investor">${t('login.submit')}</button>
-      <div class="demo-hint">${t('login.demo')}</div>
+      <button class="submit-btn" data-action="login-investor">${t('login.submit')} <span class="arrow">→</span></button>
+      <div class="demo-hint">⚙ ${t('login.demo')}</div>
+      <div class="quick-pick-title">${t('login.quick')}</div>
       <div class="quick-pick">
         ${INVESTORS.map(inv => `
           <div class="qp" data-quick-investor="${inv.id}">
             <div class="ico">${inv.initials}</div>
             <div class="lbl"><strong>${inv.name}</strong><span class="s">${inv.company} · ${inv.email}</span></div>
+            <span class="arrow-icon">→</span>
           </div>
         `).join('')}
       </div>
