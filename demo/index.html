@@ -1,0 +1,4350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Cameroun — Portail Interne de Workflow (Démo)</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231e3a8a'/><text x='50' y='62' font-family='Arial Black, Arial, sans-serif' font-weight='900' font-size='32' fill='%23fff' text-anchor='middle'>API</text><path d='M 18 80 Q 50 92 82 80' stroke='%23fcd116' stroke-width='3.5' fill='none' stroke-linecap='round'/></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --green: #006633;
+  --green-dark: #004d26;
+  --red: #ce1126;
+  --yellow: #fcd116;
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --border: #e2e5ea;
+  --border-strong: #c9cdd4;
+  --text: #1f2329;
+  --muted: #6b7280;
+  --muted-2: #9ca3af;
+  --success: #15803d;
+  --success-bg: #dcfce7;
+  --warning: #b45309;
+  --warning-bg: #fef3c7;
+  --danger: #991b1b;
+  --danger-bg: #fee2e2;
+  --info: #1e40af;
+  --info-bg: #dbeafe;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 6px 10px rgba(0,0,0,0.04);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  min-height: 100vh;
+}
+
+/* === HEADER === */
+header.topbar {
+  background: var(--green);
+  color: white;
+  border-bottom: 4px solid var(--yellow);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  height: 60px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow);
+}
+header.topbar .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+header.topbar .brand .crest {
+  width: 42px; height: 42px;
+  border-radius: 9px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 2px solid white;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+header.topbar .brand .crest img,
+header.topbar .brand .crest svg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.acte-logo {
+  width: 84px; height: 84px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin: 0 auto 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.acte-logo img, .acte-logo svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+header.topbar .brand .titles { display: flex; flex-direction: column; line-height: 1.2; }
+header.topbar .brand .titles .sub { font-size: 11px; font-weight: 400; opacity: 0.85; }
+
+header.topbar nav { display: flex; gap: 4px; margin-left: 36px; }
+header.topbar nav a {
+  color: white;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0.85;
+  cursor: pointer;
+}
+header.topbar nav a:hover { background: rgba(255,255,255,0.12); opacity: 1; }
+header.topbar nav a.active { background: rgba(255,255,255,0.18); opacity: 1; font-weight: 500; }
+
+header.topbar .spacer { flex: 1; }
+
+.user-switcher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0,0,0,0.18);
+  padding: 4px 12px 4px 4px;
+  border-radius: 22px;
+  cursor: pointer;
+  position: relative;
+}
+.user-switcher .avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--yellow);
+  color: var(--green-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+.user-switcher .who { font-size: 12px; line-height: 1.2; }
+.user-switcher .who .role { opacity: 0.8; font-size: 10.5px; }
+.user-switcher .caret { opacity: 0.7; font-size: 10px; }
+
+.user-switcher .menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: white;
+  color: var(--text);
+  border-radius: 10px;
+  min-width: 280px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  padding: 6px;
+  display: none;
+  z-index: 200;
+}
+.user-switcher.open .menu { display: block; }
+.user-switcher .menu .head {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.user-switcher .menu .role-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.user-switcher .menu .role-item:hover { background: var(--bg); }
+.user-switcher .menu .role-item .icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--green);
+}
+.user-switcher .menu .role-item .label { display: flex; flex-direction: column; font-size: 13px; }
+.user-switcher .menu .role-item .label .sub { font-size: 11px; color: var(--muted); }
+.user-switcher .menu .role-item.current { background: var(--success-bg); }
+.user-switcher .menu .divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+/* === LAYOUT === */
+.layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: calc(100vh - 60px);
+}
+
+aside.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  overflow-y: auto;
+  position: sticky;
+  top: 60px;
+  height: calc(100vh - 60px);
+}
+aside.sidebar .group { margin-bottom: 22px; }
+aside.sidebar .group-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0 12px 8px 12px;
+}
+aside.sidebar .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--text);
+  text-decoration: none;
+  margin-bottom: 2px;
+}
+aside.sidebar .nav-item:hover { background: var(--bg); }
+aside.sidebar .nav-item.active {
+  background: var(--success-bg);
+  color: var(--green-dark);
+  font-weight: 500;
+}
+aside.sidebar .nav-item .badge {
+  margin-left: auto;
+  background: var(--red);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 9px;
+  min-width: 20px;
+  text-align: center;
+}
+aside.sidebar .nav-item.active .badge { background: var(--green-dark); }
+
+main.content {
+  padding: 24px 32px;
+  overflow-x: hidden;
+}
+
+/* === DEMO BANNER === */
+.demo-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fcd34d;
+  border-left: 4px solid var(--warning);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.demo-banner .close {
+  margin-left: auto;
+  cursor: pointer;
+  font-size: 18px;
+  opacity: 0.6;
+}
+.demo-banner .close:hover { opacity: 1; }
+.demo-banner strong { color: var(--warning); }
+
+/* === PAGE TITLES === */
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.page-title h1 { font-size: 22px; font-weight: 600; }
+.page-title .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.page-title .actions { display: flex; gap: 8px; }
+
+/* === BUTTONS === */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+.btn:hover { background: var(--bg); }
+.btn.primary {
+  background: var(--green);
+  color: white;
+  border-color: var(--green);
+}
+.btn.primary:hover { background: var(--green-dark); }
+.btn.danger {
+  background: white;
+  color: var(--danger);
+  border-color: #fca5a5;
+}
+.btn.danger:hover { background: var(--danger-bg); }
+.btn.warning {
+  background: white;
+  color: var(--warning);
+  border-color: #fcd34d;
+}
+.btn.warning:hover { background: var(--warning-bg); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.btn.ghost:hover { background: var(--bg); color: var(--text); }
+.btn.small { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* === CARDS === */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.card + .card { margin-top: 16px; }
+.card .card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* === KPI ROW === */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+.kpi .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.kpi .value { font-size: 28px; font-weight: 600; line-height: 1.1; }
+.kpi .delta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.kpi.green { border-left: 4px solid var(--success); }
+.kpi.red { border-left: 4px solid var(--danger); }
+.kpi.amber { border-left: 4px solid var(--warning); }
+.kpi.blue { border-left: 4px solid var(--info); }
+
+/* === TABLE === */
+table.dossiers {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+table.dossiers th {
+  text-align: left;
+  padding: 11px 14px;
+  background: #fafbfc;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+table.dossiers td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+table.dossiers tbody tr { cursor: pointer; transition: background 0.1s; }
+table.dossiers tbody tr:hover { background: #fafbfc; }
+table.dossiers tbody tr:last-child td { border-bottom: none; }
+table.dossiers .dno { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 500; color: var(--green); }
+table.dossiers .amount { font-variant-numeric: tabular-nums; font-weight: 500; }
+
+/* === PILLS / BADGES === */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 11px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.pill.green { background: var(--success-bg); color: var(--success); }
+.pill.red { background: var(--danger-bg); color: var(--danger); }
+.pill.amber { background: var(--warning-bg); color: var(--warning); }
+.pill.blue { background: var(--info-bg); color: var(--info); }
+.pill.gray { background: #f1f3f5; color: var(--muted); }
+.pill.cat-A { background: #e0e7ff; color: #3730a3; }
+.pill.cat-B { background: #ede9fe; color: #6b21a8; }
+.pill.cat-C { background: #fce7f3; color: #9d174d; }
+.pill.zdp { background: var(--yellow); color: #78350f; }
+
+.sla-pill { font-variant-numeric: tabular-nums; }
+.sla-pill::before {
+  content: "";
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.sla-pill.green::before { background: var(--success); }
+.sla-pill.amber::before { background: var(--warning); }
+.sla-pill.red::before { background: var(--danger); }
+.sla-pill.gray::before { background: var(--muted-2); }
+
+/* === DOSSIER DETAIL === */
+.dossier-detail {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 18px;
+}
+.dossier-header {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 22px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  grid-column: 1 / -1;
+}
+.dossier-header .row1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.dossier-header .row1 h2 { font-size: 18px; font-weight: 600; }
+.dossier-header .row1 .dno {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 500;
+}
+.dossier-header .investor { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.dossier-header .meta-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+.dossier-header .meta-row .meta-item .lbl { color: var(--muted); font-size: 11px; margin-bottom: 1px; }
+.dossier-header .meta-row .meta-item .val { font-weight: 500; }
+
+/* === STAGE TRACKER === */
+.stage-tracker {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  grid-column: 1 / -1;
+}
+.stage-tracker h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stages { display: flex; align-items: flex-start; justify-content: space-between; position: relative; }
+.stages::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+.stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 14%;
+  font-size: 11.5px;
+}
+.stage .dot {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.stage.done .dot { background: var(--success); border-color: var(--success); color: white; }
+.stage.current .dot {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: var(--green-dark);
+  box-shadow: 0 0 0 5px rgba(252,209,22,0.25);
+}
+.stage.rejected .dot { background: var(--danger); border-color: var(--danger); color: white; }
+.stage .label-line1 { font-weight: 500; color: var(--text); line-height: 1.3; }
+.stage .label-line2 { color: var(--muted); font-size: 10.5px; line-height: 1.3; margin-top: 1px; }
+.stage.done .label-line1 { color: var(--success); }
+.stage.current .label-line1 { color: var(--green-dark); font-weight: 600; }
+
+/* === TABS === */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
+.tabs .tab {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-weight: 500;
+}
+.tabs .tab:hover { color: var(--text); }
+.tabs .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
+/* === TIMELINE === */
+.timeline { list-style: none; padding-left: 0; }
+.timeline li {
+  position: relative;
+  padding: 0 0 18px 28px;
+  border-left: 2px solid var(--border);
+  margin-left: 8px;
+}
+.timeline li:last-child { padding-bottom: 0; border-left-color: transparent; }
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--green);
+  border: 2px solid white;
+}
+.timeline li.return::before { background: var(--warning); }
+.timeline li.reject::before { background: var(--danger); }
+.timeline li.system::before { background: var(--muted-2); }
+.timeline li .when {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.timeline li .who { font-weight: 500; font-size: 13px; margin-bottom: 4px; }
+.timeline li .what {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--border);
+}
+.timeline li.return .what { border-left-color: var(--warning); }
+.timeline li.reject .what { border-left-color: var(--danger); }
+
+/* === ACTION PANEL === */
+.action-panel {
+  position: sticky;
+  top: 84px;
+  align-self: start;
+}
+.action-panel .card-title { color: var(--green-dark); }
+.action-panel label { display: block; font-size: 12px; font-weight: 500; margin: 12px 0 5px; }
+.action-panel textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 80px;
+}
+.action-panel textarea:focus { outline: 2px solid var(--green); outline-offset: -1px; border-color: var(--green); }
+.action-panel select {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  background: white;
+}
+.action-panel .action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.action-panel .action-buttons .btn { justify-content: center; }
+.action-panel .role-tag {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+.action-panel .role-tag.allowed { color: var(--success); }
+.action-panel .role-tag.not-allowed { color: var(--muted); }
+
+/* === DOCUMENTS LIST === */
+.doc-list { list-style: none; }
+.doc-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.doc-list li:last-child { border-bottom: none; }
+.doc-list .icon {
+  width: 30px; height: 36px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+.doc-list .name { flex: 1; }
+.doc-list .name .sub { font-size: 11px; color: var(--muted); }
+.doc-list .actions { display: flex; gap: 4px; }
+
+/* === FORM === */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+}
+.form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.form-grid label { font-size: 12px; font-weight: 500; display: block; margin-bottom: 5px; }
+.form-grid input[type="text"],
+.form-grid input[type="number"],
+.form-grid input[type="email"],
+.form-grid select,
+.form-grid textarea {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+}
+.form-grid textarea { resize: vertical; min-height: 60px; }
+.form-grid input:focus, .form-grid select:focus, .form-grid textarea:focus {
+  outline: 2px solid var(--green);
+  outline-offset: -1px;
+  border-color: var(--green);
+}
+.form-grid .full { grid-column: 1 / -1; }
+.form-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-dark);
+  margin: 18px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.form-section-title:first-child { margin-top: 0; }
+
+.checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; }
+.checkbox-row input { width: 16px; height: 16px; cursor: pointer; }
+
+/* === EMPTY STATE === */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--muted);
+}
+.empty .icon { font-size: 42px; margin-bottom: 12px; opacity: 0.4; }
+.empty .label { font-size: 14px; }
+
+/* === ACCREDITATION === */
+.acte {
+  background: white;
+  border: 2px solid var(--green);
+  border-radius: 12px;
+  padding: 40px 48px;
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+}
+.acte::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.acte .header {
+  text-align: center;
+  border-bottom: 2px solid var(--green);
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+.acte .header .top-line { font-size: 11.5px; color: var(--muted); letter-spacing: 0.4px; }
+.acte .header .motto { font-size: 12px; font-weight: 500; color: var(--green); margin: 4px 0; letter-spacing: 1px; }
+.acte .header h1 { font-size: 22px; font-weight: 700; color: var(--green-dark); margin: 10px 0 4px; }
+.acte .header .ref { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 13px; color: var(--muted); }
+.acte .body p { margin-bottom: 12px; font-size: 13.5px; line-height: 1.65; }
+.acte .clauses { margin: 18px 0; }
+.acte .clauses .clause {
+  margin-bottom: 10px;
+  padding: 9px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  font-size: 13px;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 12px;
+}
+.acte .clauses .clause .lbl { color: var(--muted); font-weight: 500; }
+.acte .signature {
+  margin-top: 30px;
+  text-align: right;
+}
+.acte .signature .place-date { font-size: 13px; margin-bottom: 50px; }
+.acte .signature .role { font-size: 12px; color: var(--muted); }
+.acte .signature .name {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding-top: 30px;
+  border-top: 1px solid var(--text);
+  display: inline-block;
+  min-width: 220px;
+  text-align: center;
+  font-style: italic;
+}
+.acte .stamp {
+  position: absolute;
+  bottom: 70px;
+  left: 80px;
+  width: 110px;
+  height: 110px;
+  border: 3px solid var(--red);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--red);
+  transform: rotate(-12deg);
+  opacity: 0.85;
+  letter-spacing: 0.4px;
+  padding: 8px;
+  line-height: 1.2;
+}
+
+/* === MODAL === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 26px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+.modal h2 { font-size: 17px; margin-bottom: 8px; }
+.modal p { color: var(--muted); margin-bottom: 16px; font-size: 13.5px; }
+.modal .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+/* === SCROLL / RESPONSIVE === */
+@media (max-width: 1080px) {
+  .dossier-detail { grid-template-columns: 1fr; }
+  .action-panel { position: static; }
+}
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }
+  aside.sidebar { position: static; height: auto; }
+  main.content { padding: 16px; }
+  header.topbar nav { display: none; }
+}
+
+@media print {
+  header.topbar, aside.sidebar, .demo-banner, .action-panel, .tabs, .page-title .actions, .notif-bell, .lang-toggle { display: none !important; }
+  main.content { padding: 0; }
+  body { background: white; }
+}
+
+/* === LOGIN SCREEN === */
+.login-screen {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #1e3a8a 0%, #006633 60%, #0a4d2a 100%);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.login-screen .login-card {
+  background: white;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 460px;
+  padding: 36px 36px 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.login-screen .login-logo {
+  width: 72px; height: 72px;
+  border-radius: 14px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(30,58,138,0.25);
+}
+.login-screen .login-logo img, .login-screen .login-logo svg { width: 100%; height: 100%; display: block; }
+.login-screen h1 {
+  text-align: center;
+  font-size: 19px;
+  margin-bottom: 4px;
+  color: var(--green-dark);
+}
+.login-screen .sub {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 22px;
+}
+.login-tabs { display: flex; gap: 0; margin-bottom: 22px; border-bottom: 1px solid var(--border); }
+.login-tabs .lt {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+}
+.login-tabs .lt.active { color: var(--green); border-bottom-color: var(--green); }
+.login-screen label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 10px 0 4px;
+}
+.login-screen input, .login-screen select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 13.5px;
+}
+.login-screen input:focus, .login-screen select:focus {
+  outline: 2px solid var(--green);
+  outline-offset: -1px;
+}
+.login-screen .submit-btn {
+  width: 100%;
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 11px;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+}
+.login-screen .submit-btn:hover { background: var(--green-dark); }
+.login-screen .demo-hint {
+  margin-top: 18px;
+  font-size: 11.5px;
+  color: var(--muted);
+  text-align: center;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+.login-screen .quick-pick {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+}
+.login-screen .quick-pick .qp {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12.5px;
+}
+.login-screen .quick-pick .qp:hover { background: var(--bg); }
+.login-screen .quick-pick .qp .ico {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: var(--info-bg);
+  color: var(--info);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.login-screen .quick-pick .qp .lbl { display: flex; flex-direction: column; line-height: 1.25; }
+.login-screen .quick-pick .qp .lbl .s { font-size: 10.5px; color: var(--muted); }
+.login-screen .lang-pick { position: absolute; top: 22px; right: 28px; display: flex; gap: 4px; }
+.login-screen .lang-pick button {
+  background: rgba(255,255,255,0.18);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 4px 10px;
+  font-size: 11.5px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.login-screen .lang-pick button.active { background: rgba(255,255,255,0.35); border-color: white; }
+
+/* === LANGUAGE TOGGLE & NOTIF BELL in header === */
+.lang-toggle {
+  background: rgba(0,0,0,0.18);
+  color: white;
+  border: none;
+  padding: 4px 9px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 12px;
+  letter-spacing: 0.5px;
+}
+.lang-toggle:hover { background: rgba(0,0,0,0.28); }
+
+.notif-bell {
+  position: relative;
+  width: 36px; height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.18);
+  border-radius: 50%;
+  cursor: pointer;
+  margin-right: 12px;
+  color: white;
+  font-size: 16px;
+}
+.notif-bell:hover { background: rgba(0,0,0,0.28); }
+.notif-bell .count {
+  position: absolute;
+  top: -2px; right: -2px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--green);
+  padding: 0 4px;
+}
+
+/* === NOTIFICATION PANEL === */
+.notif-panel {
+  position: fixed;
+  top: 70px; right: 20px;
+  width: 380px;
+  max-height: calc(100vh - 100px);
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  z-index: 300;
+  display: none;
+  flex-direction: column;
+}
+.notif-panel.open { display: flex; }
+.notif-panel .head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.notif-panel .head h3 { font-size: 14px; font-weight: 600; }
+.notif-panel .head .mark-all {
+  font-size: 11.5px;
+  color: var(--info);
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+.notif-panel .list {
+  overflow-y: auto;
+  flex: 1;
+  max-height: 480px;
+}
+.notif-panel .notif {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 11px;
+  cursor: pointer;
+}
+.notif-panel .notif:hover { background: var(--bg); }
+.notif-panel .notif:last-child { border-bottom: none; }
+.notif-panel .notif.unread { background: #f0f7ff; }
+.notif-panel .notif.unread:hover { background: #e1efff; }
+.notif-panel .notif .ico {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.notif-panel .notif .ico.green { background: var(--success-bg); color: var(--success); }
+.notif-panel .notif .ico.amber { background: var(--warning-bg); color: var(--warning); }
+.notif-panel .notif .ico.red { background: var(--danger-bg); color: var(--danger); }
+.notif-panel .notif .ico.blue { background: var(--info-bg); color: var(--info); }
+.notif-panel .notif .body { flex: 1; min-width: 0; }
+.notif-panel .notif .title { font-size: 13px; font-weight: 500; line-height: 1.35; }
+.notif-panel .notif .meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.notif-panel .empty { padding: 40px 20px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* === DOC PREVIEW MODAL === */
+.doc-preview-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  padding: 30px;
+}
+.doc-preview-overlay.open { display: flex; }
+.doc-preview {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.doc-preview .head {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+}
+.doc-preview .head .name { font-size: 14px; font-weight: 600; flex: 1; }
+.doc-preview .head .meta { font-size: 11.5px; color: var(--muted); }
+.doc-preview .close {
+  background: none; border: none;
+  font-size: 22px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 4px;
+}
+.doc-preview .doc-body {
+  flex: 1;
+  background: #525659;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+.doc-preview .page {
+  background: white;
+  width: 100%;
+  max-width: 600px;
+  padding: 40px 50px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  font-family: Georgia, serif;
+  font-size: 12.5px;
+  line-height: 1.7;
+  min-height: 500px;
+}
+.doc-preview .page .doc-h1 {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 18px;
+  font-weight: bold;
+  color: #1e3a8a;
+}
+.doc-preview .page .doc-h2 {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 14px 0 8px;
+  color: #1e3a8a;
+}
+.doc-preview .page .stamp-band {
+  margin-top: 24px;
+  padding: 10px;
+  border: 2px dashed #999;
+  text-align: center;
+  font-style: italic;
+  color: #666;
+  font-size: 11px;
+}
+.doc-preview .verify-bar {
+  padding: 12px 18px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.doc-preview .verify-bar .pill { margin-right: 6px; }
+
+/* === DOC VERIFICATION list === */
+.doc-verify-list { display: grid; gap: 10px; }
+.doc-verify-item {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  padding: 12px 14px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  align-items: center;
+}
+.doc-verify-item.accepted { border-color: var(--success); background: var(--success-bg); }
+.doc-verify-item.rejected { border-color: var(--danger); background: var(--danger-bg); }
+.doc-verify-item.pending  { border-color: var(--warning); background: var(--warning-bg); }
+.doc-verify-item .ico {
+  width: 30px; height: 36px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+.doc-verify-item .name { font-weight: 500; font-size: 13px; }
+.doc-verify-item .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.doc-verify-item .actions { display: flex; gap: 6px; }
+
+/* === INVESTOR UPLOAD CHECKLIST === */
+.upload-checklist { display: grid; gap: 10px; }
+.upload-item {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  padding: 14px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  align-items: center;
+}
+.upload-item .ico {
+  width: 32px; height: 38px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+}
+.upload-item .ico.empty { background: #d1d5db; color: var(--muted); }
+.upload-item .ico.uploaded { background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); }
+.upload-item .ico.accepted { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
+.upload-item .ico.rejected { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+.upload-item .name { font-size: 13px; font-weight: 500; }
+.upload-item .req { color: var(--red); margin-left: 3px; }
+.upload-item .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.upload-item .sub.rejected { color: var(--danger); font-weight: 500; }
+.upload-item .sub.accepted { color: var(--success); }
+.upload-item .actions { display: flex; gap: 6px; align-items: center; }
+
+.investor-status-banner {
+  padding: 16px 20px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  border-left: 4px solid;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.investor-status-banner.draft { border-left-color: var(--muted); }
+.investor-status-banner.submitted { border-left-color: var(--info); background: var(--info-bg); }
+.investor-status-banner.verifying { border-left-color: var(--warning); background: var(--warning-bg); }
+.investor-status-banner.accepted { border-left-color: var(--success); background: var(--success-bg); }
+.investor-status-banner.rejected { border-left-color: var(--danger); background: var(--danger-bg); }
+.investor-status-banner h3 { font-size: 15px; margin-bottom: 4px; }
+.investor-status-banner p { font-size: 13px; color: var(--text); margin-bottom: 0; }
+
+/* === MESSAGES (investor) === */
+.message-list { display: grid; gap: 10px; }
+.message-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.message-item.unread { background: #f0f7ff; border-color: #c7dcfb; }
+.message-item .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.message-item .from { font-size: 13px; font-weight: 600; }
+.message-item .at { font-size: 11px; color: var(--muted); }
+.message-item .body { font-size: 13px; line-height: 1.55; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="crest" id="crestBox">
+      <img src="logo.png" alt="API Cameroun" onerror="this.outerHTML='<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><defs><linearGradient id=\'apiBg\' x1=\'0%\' y1=\'0%\' x2=\'0%\' y2=\'100%\'><stop offset=\'0%\' stop-color=\'#3a59b5\'/><stop offset=\'100%\' stop-color=\'#1e3a8a\'/></linearGradient></defs><rect width=\'100\' height=\'100\' rx=\'20\' fill=\'url(#apiBg)\'/><text x=\'50\' y=\'60\' font-family=\'Arial Black, Arial, sans-serif\' font-weight=\'900\' font-size=\'30\' fill=\'#ffffff\' text-anchor=\'middle\' letter-spacing=\'-0.5\'>API</text><path d=\'M 18 78 Q 50 92 82 78\' stroke=\'#fcd116\' stroke-width=\'3.5\' fill=\'none\' stroke-linecap=\'round\'/></svg>'">
+    </div>
+    <div class="titles">
+      <span>Agence de Promotion des Investissements</span>
+      <span class="sub">République du Cameroun · Portail Interne</span>
+    </div>
+  </div>
+
+  <nav id="topnav">
+    <!-- populated by JS based on user type -->
+  </nav>
+
+  <div class="spacer"></div>
+
+  <button class="lang-toggle" id="langToggle" title="Changer de langue / Switch language">FR / EN</button>
+
+  <div class="notif-bell" id="notifBell" title="Notifications">
+    <span>🔔</span>
+    <span class="count" id="notifCount" style="display:none">0</span>
+  </div>
+
+  <div class="user-switcher" id="userSwitcher">
+    <div class="avatar" id="userInitials">RG</div>
+    <div class="who">
+      <div id="userName">—</div>
+      <div class="role" id="userRole">—</div>
+    </div>
+    <div class="caret">▼</div>
+    <div class="menu" id="userMenu">
+      <div class="head" id="userMenuTitle">Changer de rôle (démo)</div>
+      <!-- role items populated by JS -->
+      <div class="divider"></div>
+      <div class="role-item" data-action="logout">
+        <div class="icon" style="background:#fee2e2;color:#991b1b">↪</div>
+        <div class="label" id="logoutLabel">
+          Se déconnecter
+          <span class="sub">Retour à l'écran de connexion</span>
+        </div>
+      </div>
+      <div class="role-item" data-action="reset">
+        <div class="icon" style="background:#fef3c7;color:#b45309">↻</div>
+        <div class="label" id="resetLabel">
+          Réinitialiser les données
+          <span class="sub">Recharger les dossiers d'exemple</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Notification panel (slides in) -->
+<div class="notif-panel" id="notifPanel">
+  <div class="head">
+    <h3 id="notifPanelTitle">Notifications</h3>
+    <button class="mark-all" id="markAllRead">Tout marquer comme lu</button>
+  </div>
+  <div class="list" id="notifList"></div>
+</div>
+
+<!-- Doc preview modal -->
+<div class="doc-preview-overlay" id="docPreviewOverlay">
+  <div class="doc-preview" id="docPreviewBox"></div>
+</div>
+
+<!-- Login screen (shown when not authenticated) -->
+<div class="login-screen" id="loginScreen" style="display:none">
+  <div class="lang-pick">
+    <button id="langFr" class="active">FR</button>
+    <button id="langEn">EN</button>
+  </div>
+  <div class="login-card" id="loginCard">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <!-- populated by JS -->
+  </aside>
+  <main class="content" id="content">
+    <!-- populated by JS -->
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ============================================================
+// === DATA MODEL & SEED
+// ============================================================
+
+const ROLES = [
+  { id: 'reception',   name: 'Marie Etoundi',     title: 'Réceptionniste · Guichet Unique',                titleEn: 'Receptionist · One-Stop Shop',          short: 'Réception',    initials: 'ME', stageIndex: 0 },
+  { id: 'instruction', name: 'Paul Nkomo',        title: 'Instructeur · Service Technique',                titleEn: 'Reviewer · Technical Service',          short: 'Instruction',  initials: 'PN', stageIndex: 1 },
+  { id: 'tax',         name: 'Jeanne Mballa',     title: 'Représentant · Administration Fiscale (DGI)',    titleEn: 'Representative · Tax Administration',   short: 'Avis fiscal',  initials: 'JM', stageIndex: 2 },
+  { id: 'customs',     name: 'Samuel Ngono',      title: 'Représentant · Administration Douanière (DGD)',  titleEn: 'Representative · Customs',              short: 'Avis douanier',initials: 'SN', stageIndex: 3 },
+  { id: 'chef_gu',     name: 'Christine Abena',   title: 'Chef du Guichet Unique',                         titleEn: 'Head of the One-Stop Shop',             short: 'Chef GU',      initials: 'CA', stageIndex: 4 },
+  { id: 'dg',          name: 'Dr. Pierre Eyenga', title: 'Directeur Général · API',                        titleEn: 'Director General · API',                short: 'DG API',       initials: 'PE', stageIndex: 5 }
+];
+
+const INVESTORS = [
+  { id: 'inv_tchoua',  name: 'Eric Tchoua',     email: 'e.tchoua@agrocam.cm',     company: 'SARL AGRO-CAM',           dossierId: '2025/000123', initials: 'ET' },
+  { id: 'inv_kameni',  name: 'Florence Kameni', email: 'f.kameni@camindustrie.com', company: 'SA CAMINDUSTRIE',       dossierId: '2025/000124', initials: 'FK' },
+  { id: 'inv_mbarga',  name: 'Patrick Mbarga',  email: 'p.mbarga@dcdouala.cm',    company: 'DATA-CENTER DOUALA SUARL', dossierId: '2025/000125', initials: 'PM' },
+  { id: 'inv_mengue',  name: 'Sophie Mengue',   email: 's.mengue@startup.cm',     company: 'STARTUP CAMTECH SARL',     dossierId: null,          initials: 'SM' }
+];
+
+// Fixed mandatory document list (Art. 6 of the Ordinance). CANNOT be changed by IPA.
+const REQUIRED_DOCS = [
+  { kind: 'activity_authorization', name: 'Autorisation d\'exercice',       nameEn: 'Activity authorization',         article: 'Art. 6.1' },
+  { kind: 'recruitment_plan',       name: 'Plan de recrutement Camerounais', nameEn: 'Cameroonian recruitment plan',  article: 'Art. 6.2.a' },
+  { kind: 'tech_transfer_plan',     name: 'Plan de transfert de technologies', nameEn: 'Technology transfer plan',    article: 'Art. 6.2.a' },
+  { kind: 'local_subcontracting',   name: 'Plan de sous-traitance locale',   nameEn: 'Local subcontracting plan',     article: 'Art. 6.2.a' },
+  { kind: 'financing_proof',        name: 'Justification du financement',    nameEn: 'Proof of financing',            article: 'Art. 6.2.b' },
+  { kind: 'feasibility',            name: 'Étude de faisabilité du projet',  nameEn: 'Project feasibility study',     article: 'Art. 6' }
+];
+
+// i18n dictionary
+const STRINGS = {
+  fr: {
+    'app.title': 'Portail Interne · Workflow d\'agrément',
+    'app.subtitle': 'République du Cameroun · Portail Interne',
+    'nav.dashboard': 'Tableau de bord',
+    'nav.inbox': 'Ma corbeille',
+    'nav.all': 'Tous les dossiers',
+    'nav.new': 'Nouveau dossier',
+    'nav.acts': 'Actes d\'agrément',
+    'nav.law': 'Ordonnance 2025/002',
+    'nav.workflow': 'Étapes du workflow',
+    'nav.navigation': 'Navigation',
+    'nav.reference': 'Référentiel',
+    'nav.investor.dossier': 'Mon dossier',
+    'nav.investor.docs': 'Pièces à fournir',
+    'nav.investor.messages': 'Messages',
+    'nav.investor.new': 'Nouvelle demande',
+    'login.title': 'Connexion au Portail',
+    'login.sub': 'Agence de Promotion des Investissements · Cameroun',
+    'login.tab.staff': 'Personnel API',
+    'login.tab.investor': 'Investisseur',
+    'login.email': 'Adresse email',
+    'login.password': 'Mot de passe',
+    'login.role': 'Rôle',
+    'login.submit': 'Se connecter',
+    'login.demo': 'Mode démo — n\'importe quel mot de passe est accepté. Cliquez sur un compte ci-dessous pour vous connecter rapidement.',
+    'login.quick': 'Comptes de démonstration',
+    'ui.logout': 'Se déconnecter',
+    'ui.logout.sub': 'Retour à l\'écran de connexion',
+    'ui.reset': 'Réinitialiser les données',
+    'ui.reset.sub': 'Recharger les dossiers d\'exemple',
+    'ui.change.role': 'Changer de rôle (démo)',
+    'ui.notifications': 'Notifications',
+    'ui.markall': 'Tout marquer comme lu',
+    'ui.no.notif': 'Aucune notification',
+    'ui.back': '← Retour',
+    'ui.cancel': 'Annuler',
+    'ui.print': '🖨 Imprimer / Exporter PDF',
+    'ui.preview': 'Aperçu',
+    'ui.download': 'Télécharger',
+    'ui.replace': 'Remplacer',
+    'ui.upload': 'Téléverser',
+    'ui.submit': 'Soumettre la demande',
+    'pill.zdp': 'ZDP',
+    'pill.new': 'Nouveau',
+    'pill.extension': 'Extension',
+    'pill.accepted': 'Acceptée',
+    'pill.rejected': 'Rejetée',
+    'pill.pending': 'En attente',
+    'pill.uploaded': 'Téléversée',
+    'pill.required': 'Obligatoire',
+    'doc.title': 'Pièce justificative scannée',
+    'doc.verify.accept': '✓ Accepter la pièce',
+    'doc.verify.reject': '✕ Rejeter la pièce',
+    'doc.verify.reason': 'Motif du rejet (obligatoire) :',
+    'doc.verify.title': 'Vérification des pièces du dossier',
+    'doc.verify.intro': 'Avant la délivrance du récépissé, vérifiez chaque pièce scannée. Le récépissé ne peut être délivré que lorsque toutes les pièces sont acceptées.',
+    'doc.scan.lbl': 'Scan reçu de l\'investisseur',
+    'doc.scanned.on': 'Scannée le',
+    'doc.accepted.by': 'Acceptée par',
+    'doc.rejected.by': 'Rejetée par',
+    'investor.status.draft.title': 'Demande en cours de préparation',
+    'investor.status.draft.body': 'Téléversez les 6 pièces obligatoires puis soumettez votre demande pour réception par le Guichet Unique.',
+    'investor.status.submitted.title': 'Demande soumise — pièces en cours de vérification',
+    'investor.status.submitted.body': 'Le Guichet Unique vérifie actuellement vos pièces scannées. Vous serez notifié(e) lorsque le récépissé sera délivré.',
+    'investor.status.verifying.title': 'Vérification des pièces en cours',
+    'investor.status.verifying.body': 'Certaines de vos pièces ont été examinées. Consultez la liste — les pièces rejetées doivent être re-téléversées.',
+    'investor.status.received.title': 'Dossier reçu et en instruction',
+    'investor.status.received.body': 'Votre récépissé de dépôt a été délivré. Délai légal d\'instruction : 10 jours ouvrés (Art. 30.3).',
+    'investor.status.accredited.title': '✓ Convention d\'investissement signée',
+    'investor.status.accredited.body': 'Félicitations. Votre acte d\'agrément est disponible au téléchargement.',
+    'investor.status.rejected.title': 'Demande rejetée',
+    'investor.status.rejected.body': 'Votre demande a été rejetée. Consultez les messages pour les motifs.',
+    'unfav.title': 'Avis défavorable reçu',
+    'unfav.note': 'Le dossier porte un avis défavorable. Vous pouvez soit rejeter le dossier, soit le renvoyer en révision auprès de l\'instructeur.',
+    'unfav.escalate': 'Renvoyer en révision (Instruction)',
+    'unfav.reject': 'Rejeter le dossier'
+  },
+  en: {
+    'app.title': 'Internal Portal · Accreditation Workflow',
+    'app.subtitle': 'Republic of Cameroon · Internal Portal',
+    'nav.dashboard': 'Dashboard',
+    'nav.inbox': 'My inbox',
+    'nav.all': 'All dossiers',
+    'nav.new': 'New dossier',
+    'nav.acts': 'Accreditation decrees',
+    'nav.law': 'Ordinance 2025/002',
+    'nav.workflow': 'Workflow stages',
+    'nav.navigation': 'Navigation',
+    'nav.reference': 'Reference',
+    'nav.investor.dossier': 'My dossier',
+    'nav.investor.docs': 'Required documents',
+    'nav.investor.messages': 'Messages',
+    'nav.investor.new': 'New application',
+    'login.title': 'Sign in to the Portal',
+    'login.sub': 'Investment Promotion Agency · Cameroon',
+    'login.tab.staff': 'API Staff',
+    'login.tab.investor': 'Investor',
+    'login.email': 'Email address',
+    'login.password': 'Password',
+    'login.role': 'Role',
+    'login.submit': 'Sign in',
+    'login.demo': 'Demo mode — any password is accepted. Click an account below for a quick login.',
+    'login.quick': 'Demo accounts',
+    'ui.logout': 'Sign out',
+    'ui.logout.sub': 'Back to the login screen',
+    'ui.reset': 'Reset demo data',
+    'ui.reset.sub': 'Reload the seeded dossiers',
+    'ui.change.role': 'Switch role (demo)',
+    'ui.notifications': 'Notifications',
+    'ui.markall': 'Mark all as read',
+    'ui.no.notif': 'No notifications',
+    'ui.back': '← Back',
+    'ui.cancel': 'Cancel',
+    'ui.print': '🖨 Print / Export PDF',
+    'ui.preview': 'Preview',
+    'ui.download': 'Download',
+    'ui.replace': 'Replace',
+    'ui.upload': 'Upload',
+    'ui.submit': 'Submit application',
+    'pill.zdp': 'PDZ',
+    'pill.new': 'New',
+    'pill.extension': 'Extension',
+    'pill.accepted': 'Accepted',
+    'pill.rejected': 'Rejected',
+    'pill.pending': 'Pending',
+    'pill.uploaded': 'Uploaded',
+    'pill.required': 'Required',
+    'doc.title': 'Scanned supporting document',
+    'doc.verify.accept': '✓ Accept document',
+    'doc.verify.reject': '✕ Reject document',
+    'doc.verify.reason': 'Rejection reason (required):',
+    'doc.verify.title': 'Document verification',
+    'doc.verify.intro': 'Before issuing the receipt, verify each scanned document. The receipt may only be issued once all documents are accepted.',
+    'doc.scan.lbl': 'Scan received from the investor',
+    'doc.scanned.on': 'Scanned on',
+    'doc.accepted.by': 'Accepted by',
+    'doc.rejected.by': 'Rejected by',
+    'investor.status.draft.title': 'Application in preparation',
+    'investor.status.draft.body': 'Upload all 6 mandatory documents and submit your application for receipt by the One-Stop Shop.',
+    'investor.status.submitted.title': 'Application submitted — documents being verified',
+    'investor.status.submitted.body': 'The One-Stop Shop is verifying your scanned documents. You will be notified when the receipt is issued.',
+    'investor.status.verifying.title': 'Document verification in progress',
+    'investor.status.verifying.body': 'Some of your documents have been reviewed. See the list — rejected items must be re-uploaded.',
+    'investor.status.received.title': 'Dossier received — under review',
+    'investor.status.received.body': 'Your deposit receipt has been issued. Statutory review window: 10 business days (Art. 30.3).',
+    'investor.status.accredited.title': '✓ Investment Convention signed',
+    'investor.status.accredited.body': 'Congratulations. Your accreditation decree is available for download.',
+    'investor.status.rejected.title': 'Application rejected',
+    'investor.status.rejected.body': 'Your application has been rejected. See messages for the reason.',
+    'unfav.title': 'Unfavourable opinion received',
+    'unfav.note': 'The dossier carries an unfavourable opinion. You may either reject the dossier or send it back for review.',
+    'unfav.escalate': 'Send back for review (Instruction)',
+    'unfav.reject': 'Reject the dossier'
+  }
+};
+
+function t(key) {
+  const lang = (state && state.language) || 'fr';
+  return (STRINGS[lang] && STRINGS[lang][key]) || STRINGS.fr[key] || key;
+}
+
+const STAGES = [
+  { id: 'reception',   short: 'Réception',    long: 'Guichet Unique',           role: 'reception',   actionLabel: 'Délivrer récépissé' },
+  { id: 'instruction', short: 'Instruction',  long: 'Service Technique',        role: 'instruction', actionLabel: 'Valider l\'instruction' },
+  { id: 'tax',         short: 'Avis fiscal',  long: 'DGI',                      role: 'tax',         actionLabel: 'Émettre avis fiscal' },
+  { id: 'customs',     short: 'Avis douanier',long: 'DGD',                      role: 'customs',     actionLabel: 'Émettre avis douanier' },
+  { id: 'chef_gu',     short: 'Synthèse',     long: 'Chef Guichet Unique',      role: 'chef_gu',     actionLabel: 'Valider et transmettre au DG' },
+  { id: 'dg',          short: 'Signature',    long: 'Directeur Général',        role: 'dg',          actionLabel: 'Signer la convention' }
+];
+
+const SECTORS = {
+  agriculture: 'Agriculture, élevage et pêche',
+  industrie:   'Industrie lourde, automobile, manufacturière',
+  energie:     'Eau et énergie',
+  education:   'Éducation et santé',
+  transport:   'Transport aérien, ferroviaire et maritime',
+  tourisme:    'Tourisme et loisirs',
+  distribution:'Infrastructures de grande distribution',
+  numerique:   'Infrastructures de stockage et traitement de données numériques'
+};
+
+const STATE_TITLES = {
+  DRAFT: 'Brouillon investisseur',
+  SUBMITTED: 'Soumis — à réceptionner',
+  RECEIPT_ISSUED: 'Reçu — en instruction',
+  INSTRUCTION_DONE: 'Instruction validée — avis fiscal requis',
+  TAX_OPINION_DONE: 'Avis fiscal favorable — avis douanier requis',
+  CUSTOMS_OPINION_DONE: 'Avis douanier favorable — synthèse Chef GU',
+  SYNTHESIS_DONE: 'Synthèse validée — signature DG',
+  ACCREDITED: 'Convention signée — agréé',
+  REJECTED: 'Rejeté',
+  RETURNED: 'Retourné pour complément'
+};
+
+const STATE_TO_STAGE = {
+  SUBMITTED: 0,
+  RECEIPT_ISSUED: 1,
+  INSTRUCTION_DONE: 2,
+  TAX_OPINION_DONE: 3,
+  CUSTOMS_OPINION_DONE: 4,
+  SYNTHESIS_DONE: 5,
+  ACCREDITED: 6
+};
+
+const STATE_TO_ROLE = {
+  SUBMITTED: 'reception',
+  RECEIPT_ISSUED: 'instruction',
+  INSTRUCTION_DONE: 'tax',
+  TAX_OPINION_DONE: 'customs',
+  CUSTOMS_OPINION_DONE: 'chef_gu',
+  SYNTHESIS_DONE: 'dg'
+};
+
+const NEXT_STATE = {
+  SUBMITTED: 'RECEIPT_ISSUED',
+  RECEIPT_ISSUED: 'INSTRUCTION_DONE',
+  INSTRUCTION_DONE: 'TAX_OPINION_DONE',
+  TAX_OPINION_DONE: 'CUSTOMS_OPINION_DONE',
+  CUSTOMS_OPINION_DONE: 'SYNTHESIS_DONE',
+  SYNTHESIS_DONE: 'ACCREDITED'
+};
+
+function todayISO() { return new Date().toISOString().slice(0,10); }
+function daysAgoISO(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0,10);
+}
+function addBusinessDays(isoDate, days) {
+  const d = new Date(isoDate);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const day = d.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return d.toISOString().slice(0,10);
+}
+function businessDaysBetween(fromISO, toISO) {
+  const d1 = new Date(fromISO);
+  const d2 = new Date(toISO);
+  let count = 0;
+  const cur = new Date(d1);
+  while (cur < d2) {
+    cur.setDate(cur.getDate() + 1);
+    const day = cur.getDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
+function fmtFCFA(v) {
+  if (v == null) return '—';
+  if (v >= 1e9) return (v / 1e9).toFixed(v % 1e9 === 0 ? 0 : 2) + ' Mrd FCFA';
+  if (v >= 1e6) return (v / 1e6).toFixed(0) + ' M FCFA';
+  return v.toLocaleString('fr-FR') + ' FCFA';
+}
+function fmtFCFAFull(v) {
+  return v.toLocaleString('fr-FR') + ' FCFA';
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function categoryFor(amount) {
+  if (amount < 1e9) return 'A';
+  if (amount <= 5e9) return 'B';
+  return 'C';
+}
+
+// === seed dossiers ===
+
+function makeVerifiedDocs(docs, verifierName, verifiedDaysAgo) {
+  return docs.map(d => ({ ...d, verification: 'accepted', verifiedBy: verifierName, verifiedAt: daysAgoISO(verifiedDaysAgo) }));
+}
+
+function seedDossiers() {
+  const today = new Date();
+  return [
+    {
+      id: '2025/000123',
+      investorId: 'inv_tchoua',
+      investor: {
+        raisonSociale: 'SARL AGRO-CAM',
+        niu: 'M042312891234B',
+        legalForm: 'SARL',
+        country: 'Cameroun',
+        contact: { name: 'Eric Tchoua', email: 'e.tchoua@agrocam.cm', phone: '+237 6 70 12 34 56' }
+      },
+      sector: 'agriculture',
+      type: 'new',
+      amount: 800_000_000,
+      isZdp: true,
+      zdpLocality: 'Région du Nord',
+      objet: "Création d'une unité agro-industrielle de transformation de manioc en farine et amidon, située à Garoua (Région du Nord). Capacité visée : 12 000 tonnes/an.",
+      installationMonths: 24,
+      eligibility: {
+        art7: ['art7_jobs', 'art7_local_inputs'],
+        criteriaDetails: '52 emplois directs prévus en phase d\'installation, 78 en exploitation. Utilisation de 65% d\'intrants nationaux (manioc local, emballages camerounais).'
+      },
+      state: 'CUSTOMS_OPINION_DONE',
+      submittedAt: daysAgoISO(11),
+      recepisseAt: daysAgoISO(10),
+      avisRequestedAt: daysAgoISO(8),
+      documents: [
+        { kind: 'activity_authorization', name: 'Autorisation d\'exercice MINADER',                          uploaded: daysAgoISO(11), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(10) },
+        { kind: 'recruitment_plan',       name: 'Plan de recrutement Camerounais (12 pages)',               uploaded: daysAgoISO(11), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(10) },
+        { kind: 'tech_transfer_plan',     name: 'Plan de transfert de technologies',                        uploaded: daysAgoISO(11), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(10) },
+        { kind: 'local_subcontracting',   name: 'Plan de sous-traitance locale',                            uploaded: daysAgoISO(11), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(10) },
+        { kind: 'financing_proof',        name: 'Attestation BICEC — capacité de financement 850 M FCFA',   uploaded: daysAgoISO(11), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(10) },
+        { kind: 'feasibility',            name: 'Étude de faisabilité du projet',                           uploaded: daysAgoISO(11), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(10) }
+      ],
+      avis: [
+        { admin: 'instruction', position: 'favorable', signedBy: 'Paul Nkomo',    signedAt: daysAgoISO(8), text: 'Dossier complet, critères Art. 7 (emplois + intrants nationaux) satisfaits. ZDP confirmé (Région du Nord).' },
+        { admin: 'tax',         position: 'favorable', signedBy: 'Jeanne Mballa', signedAt: daysAgoISO(5), text: 'Régime fiscal applicable : Catégorie A avec uplift ZDP (crédit d\'impôt 30%). Pas d\'obstacle fiscal identifié.' },
+        { admin: 'customs',     position: 'favorable', signedBy: 'Samuel Ngono',  signedAt: daysAgoISO(2), text: 'Liste prévisionnelle d\'équipements cohérente. Régime préférentiel ZDP applicable. Pas de similaires localement fabriqués sur les éléments critiques.' }
+      ],
+      history: [
+        { actor: 'investor',   role: 'Investisseur',          action: 'Dossier soumis en ligne',                      at: daysAgoISO(11) + 'T09:14:00', class: '' },
+        { actor: 'reception',  role: 'Marie Etoundi (Réception)', action: 'Récépissé de dépôt délivré (n° 2025/R0098)', at: daysAgoISO(10) + 'T11:02:00', class: '' },
+        { actor: 'instruction',role: 'Paul Nkomo (Instruction)',  action: 'Instruction technique terminée — avis favorable', at: daysAgoISO(8) + 'T15:32:00', comment: 'Dossier complet, critères Art. 7 satisfaits.', class: '' },
+        { actor: 'tax',        role: 'Jeanne Mballa (DGI)',       action: 'Avis fiscal favorable', at: daysAgoISO(5) + 'T10:48:00', comment: 'Catégorie A + ZDP confirmé.', class: '' },
+        { actor: 'customs',    role: 'Samuel Ngono (DGD)',        action: 'Avis douanier favorable', at: daysAgoISO(2) + 'T16:20:00', comment: 'Liste équipements OK.', class: '' }
+      ]
+    },
+    {
+      id: '2025/000124',
+      investorId: 'inv_kameni',
+      investor: {
+        raisonSociale: 'SA CAMINDUSTRIE',
+        niu: 'M021987654321A',
+        legalForm: 'SA',
+        country: 'Cameroun',
+        contact: { name: 'Florence Kameni', email: 'f.kameni@camindustrie.com', phone: '+237 6 99 87 65 43' }
+      },
+      sector: 'industrie',
+      type: 'extension',
+      amount: 3_200_000_000,
+      isZdp: false,
+      zdpLocality: null,
+      objet: "Extension de l'unité de production de matériaux de construction à Douala. Acquisition d'une nouvelle ligne de production de tuyaux PEHD permettant un accroissement de 35% de la capacité.",
+      installationMonths: 18,
+      eligibility: {
+        art8: ['production_20pct', 'jobs', 'local_inputs'],
+        criteriaDetails: 'Accroissement de la production de 35% (>20% requis). Création de 24 emplois (1 par 50 M FCFA programmés). Utilisation de 58% d\'intrants nationaux.'
+      },
+      state: 'TAX_OPINION_DONE',
+      submittedAt: daysAgoISO(7),
+      recepisseAt: daysAgoISO(6),
+      avisRequestedAt: daysAgoISO(4),
+      documents: [
+        { kind: 'activity_authorization', name: 'Agrément MINMIDT (Industrie)',                              uploaded: daysAgoISO(7), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(6) },
+        { kind: 'recruitment_plan',       name: 'Plan de recrutement (24 nouveaux postes)',                  uploaded: daysAgoISO(7), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(6) },
+        { kind: 'tech_transfer_plan',     name: 'Programme de transfert — partenariat technique Bauer GmbH', uploaded: daysAgoISO(7), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(6) },
+        { kind: 'local_subcontracting',   name: 'Liste sous-traitants locaux (18 fournisseurs)',             uploaded: daysAgoISO(7), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(6) },
+        { kind: 'financing_proof',        name: 'Contrat de prêt SCB 2,5 Mrd + apport propre 700 M',         uploaded: daysAgoISO(7), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(6) },
+        { kind: 'feasibility',            name: 'Étude de faisabilité — ligne PEHD',                         uploaded: daysAgoISO(7), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: daysAgoISO(6) }
+      ],
+      avis: [
+        { admin: 'instruction', position: 'favorable', signedBy: 'Paul Nkomo',    signedAt: daysAgoISO(4), text: 'Extension. Production +35%, 3 critères Art. 8 satisfaits sur 3. Catégorie B (3,2 Mrd FCFA).' },
+        { admin: 'tax',         position: 'favorable', signedBy: 'Jeanne Mballa', signedAt: daysAgoISO(1), text: 'Crédit d\'impôt 50%. Régularité fiscale vérifiée auprès du CDI de Douala. Aucun arriéré.' }
+      ],
+      history: [
+        { actor: 'investor',   role: 'Investisseur',          action: 'Dossier soumis en ligne', at: daysAgoISO(7) + 'T14:22:00', class: '' },
+        { actor: 'reception',  role: 'Marie Etoundi (Réception)', action: 'Récépissé n° 2025/R0099 délivré', at: daysAgoISO(6) + 'T09:50:00', class: '' },
+        { actor: 'instruction',role: 'Paul Nkomo (Instruction)',  action: 'Instruction favorable — Catégorie B confirmée', at: daysAgoISO(4) + 'T11:15:00', comment: 'Critères Art. 8 tous satisfaits.', class: '' },
+        { actor: 'tax',        role: 'Jeanne Mballa (DGI)',       action: 'Avis fiscal favorable', at: daysAgoISO(1) + 'T16:05:00', class: '' }
+      ]
+    },
+    {
+      id: '2025/000125',
+      investorId: 'inv_mbarga',
+      investor: {
+        raisonSociale: 'DATA-CENTER DOUALA SUARL',
+        niu: 'M050246813579C',
+        legalForm: 'SUARL',
+        country: 'Cameroun (cap. mixte FR/CM)',
+        contact: { name: 'Patrick Mbarga', email: 'p.mbarga@dcdouala.cm', phone: '+237 6 50 24 68 13' }
+      },
+      sector: 'numerique',
+      type: 'new',
+      amount: 8_500_000_000,
+      isZdp: true,
+      zdpLocality: 'Région du Sud-Ouest',
+      objet: "Construction et exploitation d'un centre de traitement et de stockage de données Tier-III à Limbe. Surface : 4 800 m². Capacité : 1 200 racks. Connectivité fibres SAT-3 et MainOne.",
+      installationMonths: 36,
+      eligibility: {
+        art7: ['art7_jobs', 'art7_value_added', 'art7_exports'],
+        criteriaDetails: '170 emplois directs (1 par 50 M FCFA). Valeur ajoutée projetée +42%. Exportation de services cloud à la sous-région CEMAC : 38% du CA HT.'
+      },
+      state: 'SUBMITTED',
+      submittedAt: daysAgoISO(1),
+      recepisseAt: null,
+      avisRequestedAt: null,
+      documents: [
+        { kind: 'activity_authorization', name: 'Récépissé ART (Régulation Télécoms)',           uploaded: daysAgoISO(1), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: todayISO() },
+        { kind: 'recruitment_plan',       name: 'Plan de recrutement 170 ETP — détaillé',        uploaded: daysAgoISO(1), verification: 'pending' },
+        { kind: 'tech_transfer_plan',     name: 'Accord technique Equinix / formation continue', uploaded: daysAgoISO(1), verification: 'rejected', verifiedBy: 'Marie Etoundi', verifiedAt: todayISO(), rejectionReason: 'Document illisible aux pages 4-7. Merci de re-scanner en meilleure résolution (300 DPI minimum).' },
+        { kind: 'local_subcontracting',   name: 'Plan de sous-traitance BTP et maintenance',     uploaded: daysAgoISO(1), verification: 'pending' },
+        { kind: 'financing_proof',        name: 'IFC + Proparco — accord de financement 9 Mrd FCFA', uploaded: daysAgoISO(1), verification: 'accepted', verifiedBy: 'Marie Etoundi', verifiedAt: todayISO() },
+        { kind: 'feasibility',            name: 'Étude de faisabilité — 84 pages',               uploaded: daysAgoISO(1), verification: 'pending' }
+      ],
+      avis: [],
+      history: [
+        { actor: 'investor', role: 'Investisseur', action: 'Dossier soumis en ligne (vérification des pièces en cours)', at: daysAgoISO(1) + 'T17:45:00', class: '' }
+      ]
+    },
+    {
+      id: '2025/000126',
+      investorId: 'inv_mengue',
+      investor: {
+        raisonSociale: 'STARTUP CAMTECH SARL',
+        niu: '',
+        legalForm: 'SARL',
+        country: 'Cameroun',
+        contact: { name: 'Sophie Mengue', email: 's.mengue@startup.cm', phone: '+237 6 80 11 22 33' }
+      },
+      sector: 'numerique',
+      type: 'new',
+      amount: 1_500_000_000,
+      isZdp: false,
+      zdpLocality: null,
+      objet: 'Brouillon en cours de préparation.',
+      installationMonths: 18,
+      eligibility: { art7: [], criteriaDetails: '' },
+      state: 'DRAFT',
+      submittedAt: null,
+      recepisseAt: null,
+      avisRequestedAt: null,
+      documents: [],
+      avis: [],
+      history: []
+    }
+  ];
+}
+
+// ============================================================
+// === STATE
+// ============================================================
+
+const APP_KEY = 'apicm_workflow_demo_v2';
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(APP_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.dossiers) return parsed;
+    }
+  } catch (e) { /* fall through */ }
+  return freshState();
+}
+
+function seedNotifications() {
+  return [
+    { id: 'n1', forUser: 'reception',   forType: 'staff',    icon: '📥', iconCls: 'amber', title: '3 pièces du dossier 2025/000125 à vérifier', dossierId: '2025/000125', at: daysAgoISO(1) + 'T18:00:00', read: false },
+    { id: 'n2', forUser: 'chef_gu',     forType: 'staff',    icon: '⏳', iconCls: 'amber', title: 'Dossier 2025/000123 — synthèse en attente (3 avis prêts)', dossierId: '2025/000123', at: daysAgoISO(2) + 'T08:30:00', read: false },
+    { id: 'n3', forUser: 'customs',     forType: 'staff',    icon: '⏳', iconCls: 'amber', title: 'Avis douanier requis sur dossier 2025/000124', dossierId: '2025/000124', at: daysAgoISO(1) + 'T09:15:00', read: false },
+    { id: 'n4', forUser: 'inv_mbarga',  forType: 'investor', icon: '✕', iconCls: 'red',   title: 'Pièce rejetée : Plan de transfert de technologies. Merci de re-téléverser.', dossierId: '2025/000125', at: todayISO() + 'T10:00:00', read: false },
+    { id: 'n5', forUser: 'inv_mbarga',  forType: 'investor', icon: '✓', iconCls: 'green', title: 'Pièce acceptée : Récépissé ART', dossierId: '2025/000125', at: todayISO() + 'T09:55:00', read: true },
+    { id: 'n6', forUser: 'inv_tchoua',  forType: 'investor', icon: '📋', iconCls: 'blue',  title: 'Votre dossier 2025/000123 est au stade Synthèse Chef GU', dossierId: '2025/000123', at: daysAgoISO(2) + 'T16:25:00', read: false },
+    { id: 'n7', forUser: 'inv_kameni',  forType: 'investor', icon: '📋', iconCls: 'blue',  title: 'Avis fiscal favorable émis sur votre dossier 2025/000124', dossierId: '2025/000124', at: daysAgoISO(1) + 'T16:05:00', read: false }
+  ];
+}
+
+function freshState() {
+  return {
+    authenticated: false,
+    currentUser: null,          // { type: 'staff'|'investor', id, name, title, initials, dossierId? }
+    currentRole: 'reception',   // legacy compat for STAFF; equals currentUser.id when type=='staff'
+    language: 'fr',
+    screen: 'dashboard',
+    selectedDossierId: null,
+    selectedTab: 'timeline',
+    dossiers: seedDossiers(),
+    notifications: seedNotifications(),
+    notificationsOpen: false,
+    docPreview: null,
+    bannerDismissed: false,
+    loginTab: 'staff',
+    loginRoleSel: 'reception',
+    loginEmail: '',
+    counter: 127
+  };
+}
+
+function saveState() {
+  localStorage.setItem(APP_KEY, JSON.stringify(state));
+}
+
+function resetState() {
+  localStorage.removeItem(APP_KEY);
+  state = freshState();
+  render();
+}
+
+// ============================================================
+// === LOOKUPS
+// ============================================================
+
+function currentUser() {
+  if (state.currentUser) return state.currentUser;
+  return null;
+}
+function isStaff() { return state.currentUser && state.currentUser.type === 'staff'; }
+function isInvestor() { return state.currentUser && state.currentUser.type === 'investor'; }
+function currentDossier() { return state.dossiers.find(d => d.id === state.selectedDossierId); }
+function investorDossier() {
+  if (!isInvestor()) return null;
+  return state.dossiers.find(d => d.investorId === state.currentUser.id);
+}
+function userInitials() { return (state.currentUser && state.currentUser.initials) || '?'; }
+function userTitle() {
+  const u = state.currentUser;
+  if (!u) return '';
+  if (u.type === 'staff') {
+    return state.language === 'en' ? (u.titleEn || u.title) : u.title;
+  }
+  return u.title;
+}
+function notificationsForUser() {
+  if (!state.currentUser) return [];
+  return state.notifications.filter(n => n.forUser === state.currentUser.id);
+}
+function unreadCount() {
+  return notificationsForUser().filter(n => !n.read).length;
+}
+function stageIndexForState(s) { return STATE_TO_STAGE[s] != null ? STATE_TO_STAGE[s] : -1; }
+function inboxFor(roleId) {
+  return state.dossiers.filter(d => STATE_TO_ROLE[d.state] === roleId);
+}
+
+function slaInfo(dossier) {
+  if (!dossier.recepisseAt) return { state: 'gray', label: 'Pas encore reçu', dueBusiness: null };
+  if (dossier.state === 'ACCREDITED') return { state: 'green', label: 'Traité', dueBusiness: null };
+  if (dossier.state === 'REJECTED') return { state: 'gray', label: 'Clôturé', dueBusiness: null };
+  const dueIso = addBusinessDays(dossier.recepisseAt, 10);
+  const today = todayISO();
+  const elapsed = businessDaysBetween(dossier.recepisseAt, today);
+  const remaining = 10 - elapsed;
+  let st = 'green';
+  if (remaining < 0) st = 'red';
+  else if (remaining <= 2) st = 'amber';
+  else if (remaining <= 5) st = 'amber';
+  const label = remaining < 0
+    ? 'Dépassé · J+' + Math.abs(remaining) + ' jour(s) ouvré(s)'
+    : 'Reste ' + remaining + ' jour(s) ouvré(s) · échéance ' + fmtDate(dueIso);
+  return { state: st, label, remaining, dueIso };
+}
+
+// ============================================================
+// === RENDER ROOT
+// ============================================================
+
+function render() {
+  document.documentElement.lang = state.language;
+  if (!state.authenticated) {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.querySelector('header.topbar').style.display = 'none';
+    document.querySelector('.layout').style.display = 'none';
+    renderLogin();
+    return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.querySelector('header.topbar').style.display = 'flex';
+  document.querySelector('.layout').style.display = 'grid';
+  renderHeader();
+  renderSidebar();
+  renderContent();
+  renderNotifPanel();
+  renderDocPreview();
+  saveState();
+}
+
+function renderHeader() {
+  const u = currentUser();
+  if (!u) return;
+  document.getElementById('userInitials').textContent = u.initials;
+  document.getElementById('userName').textContent = u.name;
+  document.getElementById('userRole').textContent = userTitle();
+
+  // Language toggle label
+  document.getElementById('langToggle').textContent = state.language === 'fr' ? 'EN' : 'FR';
+
+  // Notification count
+  const count = unreadCount();
+  const countEl = document.getElementById('notifCount');
+  if (count > 0) {
+    countEl.textContent = count;
+    countEl.style.display = 'flex';
+  } else {
+    countEl.style.display = 'none';
+  }
+
+  // Top nav (varies by user type)
+  const nav = document.getElementById('topnav');
+  if (isStaff()) {
+    nav.innerHTML = `
+      <a data-screen="dashboard">${t('nav.dashboard')}</a>
+      <a data-screen="inbox">${t('nav.inbox')}</a>
+      <a data-screen="all">${t('nav.all')}</a>
+      <a data-screen="new">${t('nav.new')}</a>
+    `;
+  } else {
+    nav.innerHTML = `
+      <a data-screen="my_dossier">${t('nav.investor.dossier')}</a>
+      <a data-screen="my_docs">${t('nav.investor.docs')}</a>
+      <a data-screen="my_messages">${t('nav.investor.messages')}</a>
+    `;
+  }
+  document.querySelectorAll('#topnav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.screen === state.screen);
+  });
+
+  // User menu (role switcher only for staff)
+  const menu = document.getElementById('userMenu');
+  const titleEl = document.getElementById('userMenuTitle');
+  titleEl.textContent = isStaff() ? t('ui.change.role') : t('login.tab.investor');
+  document.getElementById('logoutLabel').firstChild.textContent = '';
+  document.getElementById('logoutLabel').innerHTML = `${t('ui.logout')}<span class="sub">${t('ui.logout.sub')}</span>`;
+  document.getElementById('resetLabel').innerHTML = `${t('ui.reset')}<span class="sub">${t('ui.reset.sub')}</span>`;
+  const existing = menu.querySelectorAll('.role-item:not([data-action])');
+  existing.forEach(e => e.remove());
+  const divider = menu.querySelector('.divider');
+  if (isStaff()) {
+    ROLES.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'role-item' + (r.id === u.id ? ' current' : '');
+      div.dataset.role = r.id;
+      const tt = state.language === 'en' ? (r.titleEn || r.title) : r.title;
+      div.innerHTML = `
+        <div class="icon">${r.initials}</div>
+        <div class="label">${r.name}<span class="sub">${tt}</span></div>
+      `;
+      menu.insertBefore(div, divider);
+    });
+  } else {
+    INVESTORS.forEach(inv => {
+      const div = document.createElement('div');
+      div.className = 'role-item' + (inv.id === u.id ? ' current' : '');
+      div.dataset.investor = inv.id;
+      div.innerHTML = `
+        <div class="icon">${inv.initials}</div>
+        <div class="label">${inv.name}<span class="sub">${inv.company}</span></div>
+      `;
+      menu.insertBefore(div, divider);
+    });
+  }
+}
+
+function renderSidebar() {
+  if (isInvestor()) return renderInvestorSidebar();
+  return renderStaffSidebar();
+}
+
+function renderStaffSidebar() {
+  const u = currentUser();
+  const inbox = inboxFor(u.id);
+  const counts = {
+    SUBMITTED:            state.dossiers.filter(d => d.state === 'SUBMITTED').length,
+    RECEIPT_ISSUED:       state.dossiers.filter(d => d.state === 'RECEIPT_ISSUED').length,
+    INSTRUCTION_DONE:     state.dossiers.filter(d => d.state === 'INSTRUCTION_DONE').length,
+    TAX_OPINION_DONE:     state.dossiers.filter(d => d.state === 'TAX_OPINION_DONE').length,
+    CUSTOMS_OPINION_DONE: state.dossiers.filter(d => d.state === 'CUSTOMS_OPINION_DONE').length,
+    SYNTHESIS_DONE:       state.dossiers.filter(d => d.state === 'SYNTHESIS_DONE').length,
+    ACCREDITED:           state.dossiers.filter(d => d.state === 'ACCREDITED').length
+  };
+
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = `
+    <div class="group">
+      <div class="group-title">${t('nav.navigation')}</div>
+      <div class="nav-item ${state.screen === 'dashboard' ? 'active' : ''}" data-screen="dashboard">
+        <span>▤</span> ${t('nav.dashboard')}
+      </div>
+      <div class="nav-item ${state.screen === 'inbox' ? 'active' : ''}" data-screen="inbox">
+        <span>📥</span> ${t('nav.inbox')}
+        ${inbox.length ? `<span class="badge">${inbox.length}</span>` : ''}
+      </div>
+      <div class="nav-item ${state.screen === 'all' ? 'active' : ''}" data-screen="all">
+        <span>🗂</span> ${t('nav.all')}
+      </div>
+      <div class="nav-item ${state.screen === 'new' ? 'active' : ''}" data-screen="new">
+        <span>＋</span> ${t('nav.new')}
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-title">${t('nav.workflow')}</div>
+      ${STAGES.map((s, i) => `
+        <div class="nav-item" data-screen="stage" data-stage="${s.id}">
+          <span style="width:22px;height:22px;border-radius:50%;background:${i <= u.stageIndex ? 'var(--success-bg)' : '#f1f3f5'};color:${i <= u.stageIndex ? 'var(--success)' : 'var(--muted)'};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600">${i+1}</span>
+          ${s.short}
+          ${(() => {
+            const stateKey = Object.keys(STATE_TO_ROLE).find(k => STATE_TO_ROLE[k] === s.role);
+            const n = stateKey ? counts[stateKey] : 0;
+            return n ? `<span class="badge">${n}</span>` : '';
+          })()}
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="group">
+      <div class="group-title">${t('nav.reference')}</div>
+      <div class="nav-item" data-screen="acts" >
+        <span>📜</span> ${t('nav.acts')}
+        ${counts.ACCREDITED ? `<span class="badge" style="background:var(--success)">${counts.ACCREDITED}</span>` : ''}
+      </div>
+      <div class="nav-item" data-screen="law">
+        <span>§</span> ${t('nav.law')}
+      </div>
+    </div>
+  `;
+}
+
+function renderInvestorSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const inv = state.currentUser;
+  const myDoss = investorDossier();
+  const unread = notificationsForUser().filter(n => !n.read).length;
+  sidebar.innerHTML = `
+    <div class="group">
+      <div class="group-title">${t('nav.navigation')}</div>
+      <div class="nav-item ${state.screen === 'my_dossier' ? 'active' : ''}" data-screen="my_dossier">
+        <span>📋</span> ${t('nav.investor.dossier')}
+      </div>
+      <div class="nav-item ${state.screen === 'my_docs' ? 'active' : ''}" data-screen="my_docs">
+        <span>📎</span> ${t('nav.investor.docs')}
+        ${myDoss ? `<span class="badge" style="background:var(--info)">${myDoss.documents.length}/6</span>` : ''}
+      </div>
+      <div class="nav-item ${state.screen === 'my_messages' ? 'active' : ''}" data-screen="my_messages">
+        <span>💬</span> ${t('nav.investor.messages')}
+        ${unread ? `<span class="badge">${unread}</span>` : ''}
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-title">${state.language === 'fr' ? 'Mon compte' : 'My account'}</div>
+      <div style="padding:10px 12px;background:var(--bg);border-radius:8px;font-size:12.5px">
+        <div style="font-weight:600">${inv.name}</div>
+        <div style="color:var(--muted);font-size:11.5px;margin-top:2px">${inv.company}</div>
+        <div style="color:var(--muted);font-size:11.5px;margin-top:2px;word-break:break-all">${inv.email}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// === CONTENT ROUTER
+// ============================================================
+
+function renderContent() {
+  const c = document.getElementById('content');
+  const banner = state.bannerDismissed ? '' : renderDemoBanner();
+  let body = '';
+
+  if (isInvestor()) {
+    // Default investor screen
+    if (!['my_dossier','my_docs','my_messages','dossier','acte'].includes(state.screen)) {
+      state.screen = 'my_dossier';
+    }
+    if (state.screen === 'my_dossier')        body = renderMyDossier();
+    else if (state.screen === 'my_docs')      body = renderMyDocs();
+    else if (state.screen === 'my_messages')  body = renderMyMessages();
+    else if (state.screen === 'dossier')      body = renderDossierDetail();
+    else if (state.screen === 'acte')         body = renderActeDetail();
+    else                                       body = renderMyDossier();
+  } else {
+    if (state.screen === 'dashboard')      body = renderDashboard();
+    else if (state.screen === 'inbox')     body = renderInbox();
+    else if (state.screen === 'all')       body = renderAllDossiers();
+    else if (state.screen === 'new')       body = renderNewDossier();
+    else if (state.screen === 'dossier')   body = renderDossierDetail();
+    else if (state.screen === 'acte')      body = renderActeDetail();
+    else if (state.screen === 'acts')      body = renderActsList();
+    else if (state.screen === 'law')       body = renderLawPage();
+    else                                   body = renderDashboard();
+  }
+
+  c.innerHTML = banner + body;
+}
+
+// ============================================================
+// === LOGIN SCREEN
+// ============================================================
+
+function renderLogin() {
+  document.getElementById('langFr').classList.toggle('active', state.language === 'fr');
+  document.getElementById('langEn').classList.toggle('active', state.language === 'en');
+  const card = document.getElementById('loginCard');
+  const tab = state.loginTab || 'staff';
+  card.innerHTML = `
+    <div class="login-logo">
+      <img src="logo.png" alt="API" onerror="this.outerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'><defs><linearGradient id=\\'lbg\\' x1=\\'0%\\' y1=\\'0%\\' x2=\\'0%\\' y2=\\'100%\\'><stop offset=\\'0%\\' stop-color=\\'#3a59b5\\'/><stop offset=\\'100%\\' stop-color=\\'#1e3a8a\\'/></linearGradient></defs><rect width=\\'100\\' height=\\'100\\' rx=\\'20\\' fill=\\'url(#lbg)\\'/><text x=\\'50\\' y=\\'60\\' font-family=\\'Arial Black, Arial, sans-serif\\' font-weight=\\'900\\' font-size=\\'30\\' fill=\\'#ffffff\\' text-anchor=\\'middle\\'>API</text><path d=\\'M 18 78 Q 50 92 82 78\\' stroke=\\'#fcd116\\' stroke-width=\\'3.5\\' fill=\\'none\\' stroke-linecap=\\'round\\'/></svg>'">
+    </div>
+    <h1>${t('login.title')}</h1>
+    <div class="sub">${t('login.sub')}</div>
+
+    <div class="login-tabs">
+      <div class="lt ${tab === 'staff' ? 'active' : ''}" data-login-tab="staff">${t('login.tab.staff')}</div>
+      <div class="lt ${tab === 'investor' ? 'active' : ''}" data-login-tab="investor">${t('login.tab.investor')}</div>
+    </div>
+
+    ${tab === 'staff' ? `
+      <label>${t('login.role')}</label>
+      <select id="loginRoleField">
+        ${ROLES.map(r => `<option value="${r.id}" ${state.loginRoleSel === r.id ? 'selected' : ''}>${r.name} — ${state.language === 'en' ? (r.titleEn || r.title) : r.title}</option>`).join('')}
+      </select>
+      <label>${t('login.email')}</label>
+      <input type="email" id="loginEmailField" placeholder="prenom.nom@api.cm">
+      <label>${t('login.password')}</label>
+      <input type="password" id="loginPasswordField" placeholder="••••••••">
+      <button class="submit-btn" data-action="login-staff">${t('login.submit')}</button>
+      <div class="demo-hint">${t('login.demo')}</div>
+      <div class="quick-pick">
+        ${ROLES.map(r => `
+          <div class="qp" data-quick-staff="${r.id}">
+            <div class="ico">${r.initials}</div>
+            <div class="lbl"><strong>${r.name}</strong><span class="s">${state.language === 'en' ? (r.titleEn || r.title) : r.title}</span></div>
+          </div>
+        `).join('')}
+      </div>
+    ` : `
+      <label>${t('login.email')}</label>
+      <input type="email" id="loginEmailField" placeholder="vous@entreprise.cm">
+      <label>${t('login.password')}</label>
+      <input type="password" id="loginPasswordField" placeholder="••••••••">
+      <button class="submit-btn" data-action="login-investor">${t('login.submit')}</button>
+      <div class="demo-hint">${t('login.demo')}</div>
+      <div class="quick-pick">
+        ${INVESTORS.map(inv => `
+          <div class="qp" data-quick-investor="${inv.id}">
+            <div class="ico">${inv.initials}</div>
+            <div class="lbl"><strong>${inv.name}</strong><span class="s">${inv.company} · ${inv.email}</span></div>
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+}
+
+// ============================================================
+// === INVESTOR SCREENS
+// ============================================================
+
+function renderMyDossier() {
+  const doss = investorDossier();
+  if (!doss) {
+    return `
+      <div class="page-title">
+        <div>
+          <h1>${state.language === 'fr' ? 'Mon dossier' : 'My dossier'}</h1>
+          <div class="sub">${state.language === 'fr' ? 'Vous n\'avez pas encore créé de demande.' : 'You have not yet created an application.'}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="empty">
+          <div class="icon">📋</div>
+          <div class="label">${state.language === 'fr' ? 'Aucun dossier' : 'No dossier yet'}</div>
+          <div style="margin-top:8px;font-size:12px">${state.language === 'fr' ? 'Démarrez une nouvelle demande en téléversant les 6 pièces obligatoires.' : 'Start a new application by uploading the 6 mandatory documents.'}</div>
+          <button class="btn primary" style="margin-top:14px" data-screen="my_docs">${state.language === 'fr' ? '📎 Préparer mes pièces' : '📎 Prepare my documents'}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Determine banner state
+  let bannerCls, bannerKey;
+  if (doss.state === 'DRAFT') { bannerCls = 'draft'; bannerKey = 'draft'; }
+  else if (doss.state === 'SUBMITTED') {
+    const allAccepted = doss.documents.length >= 6 && doss.documents.every(d => d.verification === 'accepted');
+    const someVerified = doss.documents.some(d => d.verification === 'accepted' || d.verification === 'rejected');
+    if (allAccepted) { bannerCls = 'submitted'; bannerKey = 'submitted'; }
+    else if (someVerified) { bannerCls = 'verifying'; bannerKey = 'verifying'; }
+    else { bannerCls = 'submitted'; bannerKey = 'submitted'; }
+  }
+  else if (doss.state === 'ACCREDITED') { bannerCls = 'accepted'; bannerKey = 'accredited'; }
+  else if (doss.state === 'REJECTED') { bannerCls = 'rejected'; bannerKey = 'rejected'; }
+  else { bannerCls = 'submitted'; bannerKey = 'received'; }
+
+  const cat = categoryFor(doss.amount);
+  const sla = slaInfo(doss);
+  const stageIdx = stageIndexForState(doss.state);
+
+  return `
+    <div class="page-title">
+      <div>
+        <h1>${state.language === 'fr' ? 'Mon dossier' : 'My dossier'} · ${doss.id}</h1>
+        <div class="sub">${doss.investor.raisonSociale}</div>
+      </div>
+      <div class="actions">
+        ${doss.state === 'ACCREDITED' ? `<button class="btn primary" data-action="view-acte" data-id="${doss.id}">${state.language === 'fr' ? 'Voir mon acte d\'agrément' : 'View my accreditation decree'}</button>` : ''}
+      </div>
+    </div>
+
+    <div class="investor-status-banner ${bannerCls}">
+      <h3>${t('investor.status.' + bannerKey + '.title')}</h3>
+      <p>${t('investor.status.' + bannerKey + '.body')}</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">${state.language === 'fr' ? 'Synthèse' : 'Overview'}</div>
+      <div class="meta-row" style="display:flex;flex-wrap:wrap;gap:18px;font-size:13px">
+        <div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">${state.language === 'fr' ? 'Secteur' : 'Sector'}</div><div>${SECTORS[doss.sector] || '—'}</div></div>
+        <div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">${state.language === 'fr' ? 'Type' : 'Type'}</div><div>${doss.type === 'new' ? t('pill.new') : t('pill.extension')}</div></div>
+        <div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">${state.language === 'fr' ? 'Montant' : 'Amount'}</div><div>${fmtFCFAFull(doss.amount)}</div></div>
+        <div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">${state.language === 'fr' ? 'Catégorie' : 'Category'}</div><div><span class="pill cat-${cat}">${cat}</span></div></div>
+        <div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">${state.language === 'fr' ? 'Soumis le' : 'Submitted on'}</div><div>${doss.submittedAt ? fmtDate(doss.submittedAt) : '—'}</div></div>
+        <div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">${state.language === 'fr' ? 'Récépissé' : 'Receipt'}</div><div>${doss.recepisseAt ? fmtDate(doss.recepisseAt) : '—'}</div></div>
+        ${doss.recepisseAt ? `<div class="meta-item"><div class="lbl" style="color:var(--muted);font-size:11px">SLA</div><div><span class="pill sla-pill ${sla.state}">${sla.label}</span></div></div>` : ''}
+      </div>
+    </div>
+
+    ${doss.state !== 'DRAFT' ? `
+    <div class="stage-tracker">
+      <h3>${state.language === 'fr' ? 'Parcours de mon dossier' : 'My dossier journey'}</h3>
+      <div class="stages">
+        ${STAGES.map((s, i) => {
+          let cls = '';
+          if (doss.state === 'ACCREDITED') cls = 'done';
+          else if (doss.state === 'REJECTED') cls = i < stageIdx ? 'done' : (i === stageIdx ? 'rejected' : '');
+          else if (i < stageIdx) cls = 'done';
+          else if (i === stageIdx) cls = 'current';
+          return `
+            <div class="stage ${cls}">
+              <div class="dot">${cls === 'done' ? '✓' : (cls === 'rejected' ? '✕' : (i+1))}</div>
+              <div class="label-line1">${s.short}</div>
+              <div class="label-line2">${s.long}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>` : ''}
+
+    ${doss.history.length > 0 ? `
+    <div class="card">
+      <div class="card-title">${state.language === 'fr' ? 'Historique' : 'History'}</div>
+      <ul class="timeline">
+        ${doss.history.map(h => `
+          <li class="${h.class || ''}">
+            <div class="when">${fmtDateTime(h.at)}</div>
+            <div class="who">${h.role}</div>
+            <div class="what">${h.action}${h.comment ? `<div style="margin-top:6px;color:var(--muted);font-size:12.5px;font-style:italic">« ${h.comment} »</div>` : ''}</div>
+          </li>
+        `).join('')}
+      </ul>
+    </div>` : ''}
+  `;
+}
+
+function renderMyDocs() {
+  let doss = investorDossier();
+  if (!doss) {
+    // Auto-create draft dossier for Sophie Mengue or any investor without one
+    doss = {
+      id: '2025/' + String(state.counter).padStart(6, '0'),
+      investorId: state.currentUser.id,
+      investor: {
+        raisonSociale: state.currentUser.company,
+        niu: '',
+        legalForm: 'SARL',
+        country: 'Cameroun',
+        contact: { name: state.currentUser.name, email: state.currentUser.email, phone: '' }
+      },
+      sector: 'numerique', type: 'new', amount: 0,
+      isZdp: false, zdpLocality: null,
+      objet: 'Brouillon — en cours de préparation',
+      installationMonths: 24,
+      eligibility: { art7: [], criteriaDetails: '' },
+      state: 'DRAFT', submittedAt: null, recepisseAt: null, avisRequestedAt: null,
+      documents: [], avis: [], history: []
+    };
+    state.dossiers.push(doss);
+    state.counter++;
+  }
+
+  const allUploaded = REQUIRED_DOCS.every(rd => doss.documents.find(d => d.kind === rd.kind));
+  const isDraft = doss.state === 'DRAFT';
+  const isSubmitted = doss.state === 'SUBMITTED';
+
+  return `
+    <div class="page-title">
+      <div>
+        <h1>${state.language === 'fr' ? 'Pièces à fournir' : 'Required documents'}</h1>
+        <div class="sub">${state.language === 'fr' ? '6 pièces obligatoires (Art. 6 de l\'Ordonnance 2025/002). Liste fixe, non modifiable.' : '6 mandatory documents (Art. 6 of Ordinance 2025/002). Fixed list, not modifiable.'}</div>
+      </div>
+      ${isDraft && allUploaded ? `<div class="actions"><button class="btn primary" data-action="submit-investor-dossier" data-id="${doss.id}">${t('ui.submit')} →</button></div>` : ''}
+    </div>
+
+    ${isDraft ? `
+      <div class="investor-status-banner draft">
+        <h3>${t('investor.status.draft.title')}</h3>
+        <p>${t('investor.status.draft.body')}</p>
+      </div>
+    ` : isSubmitted ? `
+      <div class="investor-status-banner ${doss.documents.some(d => d.verification === 'rejected') ? 'verifying' : 'submitted'}">
+        <h3>${doss.documents.some(d => d.verification === 'rejected') ? t('investor.status.verifying.title') : t('investor.status.submitted.title')}</h3>
+        <p>${doss.documents.some(d => d.verification === 'rejected') ? t('investor.status.verifying.body') : t('investor.status.submitted.body')}</p>
+      </div>
+    ` : ''}
+
+    <div class="card">
+      <div class="upload-checklist">
+        ${REQUIRED_DOCS.map(rd => {
+          const existing = doss.documents.find(d => d.kind === rd.kind);
+          const docName = state.language === 'en' ? rd.nameEn : rd.name;
+          if (!existing) {
+            return `
+              <div class="upload-item">
+                <div class="ico empty">PDF</div>
+                <div>
+                  <div class="name">${docName}<span class="req">*</span></div>
+                  <div class="sub">${rd.article} · ${state.language === 'fr' ? 'Non téléversée' : 'Not uploaded'}</div>
+                </div>
+                <div class="actions">
+                  ${isDraft ? `<button class="btn primary small" data-action="upload-doc" data-id="${doss.id}" data-kind="${rd.kind}">${t('ui.upload')} 📎</button>` : `<span class="pill amber">${state.language === 'fr' ? 'Manquante' : 'Missing'}</span>`}
+                </div>
+              </div>
+            `;
+          }
+          let cls = 'uploaded', pillCls = 'blue', pillLabel = t('pill.uploaded'), subLine = state.language === 'fr' ? `Téléversée le ${fmtDate(existing.uploaded)}` : `Uploaded on ${fmtDate(existing.uploaded)}`, subCls = '';
+          if (existing.verification === 'accepted') { cls = 'accepted'; pillCls = 'green'; pillLabel = t('pill.accepted'); subLine = `${t('doc.accepted.by')} ${existing.verifiedBy} · ${fmtDate(existing.verifiedAt)}`; subCls = 'accepted'; }
+          if (existing.verification === 'rejected') { cls = 'rejected'; pillCls = 'red'; pillLabel = t('pill.rejected'); subLine = `${t('doc.rejected.by')} ${existing.verifiedBy} — « ${existing.rejectionReason} »`; subCls = 'rejected'; }
+          if (existing.verification === 'pending') { cls = 'uploaded'; pillCls = 'amber'; pillLabel = t('pill.pending'); }
+          return `
+            <div class="upload-item">
+              <div class="ico ${cls}">PDF</div>
+              <div>
+                <div class="name">${docName} <span class="pill ${pillCls}" style="margin-left:6px">${pillLabel}</span></div>
+                <div class="sub ${subCls}">${existing.name} · ${subLine}</div>
+              </div>
+              <div class="actions">
+                <button class="btn small ghost" data-action="preview-doc" data-id="${doss.id}" data-kind="${existing.kind}">${t('ui.preview')}</button>
+                ${(isDraft || existing.verification === 'rejected') ? `<button class="btn small warning" data-action="upload-doc" data-id="${doss.id}" data-kind="${rd.kind}">${t('ui.replace')}</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    ${isDraft && !allUploaded ? `
+      <div style="margin-top:14px;padding:10px 14px;background:var(--warning-bg);color:var(--warning);border-radius:8px;font-size:12.5px">
+        ${state.language === 'fr' ? 'Téléversez les 6 pièces obligatoires pour pouvoir soumettre votre demande.' : 'Upload all 6 mandatory documents to submit your application.'}
+      </div>
+    ` : ''}
+    ${isDraft && allUploaded ? `
+      <div style="margin-top:14px;padding:14px 16px;background:var(--success-bg);color:var(--success);border-radius:8px;font-size:13px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>✓ ${state.language === 'fr' ? 'Les 6 pièces sont prêtes. Vous pouvez soumettre votre demande.' : 'All 6 documents are ready. You may now submit your application.'}</div>
+        <button class="btn primary" data-action="submit-investor-dossier" data-id="${doss.id}">${t('ui.submit')} →</button>
+      </div>
+    ` : ''}
+  `;
+}
+
+function renderMyMessages() {
+  const notifs = notificationsForUser();
+  const sorted = notifs.slice().sort((a,b) => b.at.localeCompare(a.at));
+  return `
+    <div class="page-title">
+      <div>
+        <h1>${t('nav.investor.messages')}</h1>
+        <div class="sub">${state.language === 'fr' ? 'Notifications du Guichet Unique concernant votre dossier' : 'One-Stop Shop notifications about your dossier'}</div>
+      </div>
+    </div>
+    ${sorted.length === 0 ? `
+      <div class="card"><div class="empty">
+        <div class="icon">💬</div>
+        <div class="label">${t('ui.no.notif')}</div>
+      </div></div>
+    ` : `
+      <div class="message-list">
+        ${sorted.map(m => `
+          <div class="message-item ${m.read ? '' : 'unread'}" data-action="open-message" data-id="${m.id}">
+            <div class="head">
+              <div class="from">${m.icon} ${state.language === 'fr' ? 'Guichet Unique · API' : 'One-Stop Shop · API'}</div>
+              <div class="at">${fmtDateTime(m.at)}</div>
+            </div>
+            <div class="body">${m.title}</div>
+            ${m.dossierId ? `<div style="margin-top:8px"><button class="btn small ghost" data-action="open-dossier" data-id="${m.dossierId}">${state.language === 'fr' ? 'Voir le dossier →' : 'View dossier →'}</button></div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `}
+  `;
+}
+
+// ============================================================
+// === NOTIFICATION PANEL & DOC PREVIEW
+// ============================================================
+
+function renderNotifPanel() {
+  const panel = document.getElementById('notifPanel');
+  panel.classList.toggle('open', !!state.notificationsOpen);
+  document.getElementById('notifPanelTitle').textContent = t('ui.notifications');
+  document.getElementById('markAllRead').textContent = t('ui.markall');
+  const list = document.getElementById('notifList');
+  const notifs = notificationsForUser().slice().sort((a,b) => b.at.localeCompare(a.at));
+  if (notifs.length === 0) {
+    list.innerHTML = `<div class="empty">${t('ui.no.notif')}</div>`;
+    return;
+  }
+  list.innerHTML = notifs.map(n => `
+    <div class="notif ${n.read ? '' : 'unread'}" data-notif-id="${n.id}" data-dossier-id="${n.dossierId || ''}">
+      <div class="ico ${n.iconCls}">${n.icon}</div>
+      <div class="body">
+        <div class="title">${n.title}</div>
+        <div class="meta">${fmtDateTime(n.at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderDocPreview() {
+  const ov = document.getElementById('docPreviewOverlay');
+  const box = document.getElementById('docPreviewBox');
+  if (!state.docPreview) { ov.classList.remove('open'); box.innerHTML = ''; return; }
+  const { dossierId, kind } = state.docPreview;
+  const doss = state.dossiers.find(d => d.id === dossierId);
+  if (!doss) { ov.classList.remove('open'); return; }
+  const doc = doss.documents.find(x => x.kind === kind);
+  if (!doc) { ov.classList.remove('open'); return; }
+  const reqDef = REQUIRED_DOCS.find(r => r.kind === kind);
+  const titleName = reqDef ? (state.language === 'en' ? reqDef.nameEn : reqDef.name) : doc.name;
+
+  const u = currentUser();
+  const isReception = isStaff() && u.id === 'reception' && doss.state === 'SUBMITTED';
+
+  // Choose appropriate fake body content per doc kind
+  const bodyContent = fakeDocBody(kind, doss);
+
+  let verifyBar = '';
+  if (doc.verification === 'accepted') {
+    verifyBar = `<div class="verify-bar"><span class="pill green">✓ ${t('pill.accepted')}</span><span style="color:var(--muted);font-size:12px">${t('doc.accepted.by')} ${doc.verifiedBy} · ${fmtDate(doc.verifiedAt)}</span></div>`;
+  } else if (doc.verification === 'rejected') {
+    verifyBar = `<div class="verify-bar"><span class="pill red">✕ ${t('pill.rejected')}</span><span style="color:var(--danger);font-size:12px">« ${doc.rejectionReason} »</span></div>`;
+  } else if (isReception) {
+    verifyBar = `
+      <div class="verify-bar">
+        <span class="pill amber">${t('pill.pending')}</span>
+        <span style="flex:1"></span>
+        <button class="btn small primary" data-action="accept-doc" data-id="${doss.id}" data-kind="${kind}">${t('doc.verify.accept')}</button>
+        <button class="btn small danger" data-action="reject-doc" data-id="${doss.id}" data-kind="${kind}">${t('doc.verify.reject')}</button>
+      </div>
+    `;
+  } else {
+    verifyBar = `<div class="verify-bar"><span class="pill amber">${t('pill.pending')}</span></div>`;
+  }
+
+  box.innerHTML = `
+    <div class="head">
+      <div>
+        <div class="name">${titleName}</div>
+        <div class="meta">${doc.name} · ${t('doc.scanned.on')} ${fmtDate(doc.uploaded)}</div>
+      </div>
+      <button class="close" data-action="close-doc-preview">✕</button>
+    </div>
+    <div class="doc-body">
+      <div class="page">
+        ${bodyContent}
+        <div class="stamp-band">— ${state.language === 'fr' ? 'Document scanné en présence du déposant' : 'Document scanned in presence of the depositor'} —</div>
+      </div>
+    </div>
+    ${verifyBar}
+  `;
+  ov.classList.add('open');
+}
+
+function fakeDocBody(kind, doss) {
+  const inv = doss.investor;
+  switch (kind) {
+    case 'activity_authorization':
+      return `
+        <div class="doc-h1">${state.language === 'fr' ? 'Autorisation d\'Exercice' : 'Activity Authorization'}</div>
+        <p><strong>${state.language === 'fr' ? 'Délivrée à' : 'Issued to'} :</strong> ${inv.raisonSociale}</p>
+        <p><strong>${state.language === 'fr' ? 'Forme juridique' : 'Legal form'} :</strong> ${inv.legalForm}</p>
+        <p><strong>NIU :</strong> ${inv.niu || 'En cours d\'attribution'}</p>
+        <p><strong>${state.language === 'fr' ? 'Activité autorisée' : 'Authorized activity'} :</strong> ${SECTORS[doss.sector]}</p>
+        <p>${state.language === 'fr' ? 'Le Ministère compétent autorise par la présente la société susmentionnée à exercer l\'activité décrite dans son objet social, conformément à la législation en vigueur en République du Cameroun.' : 'The competent Ministry hereby authorizes the above-mentioned company to operate the activity described in its corporate purpose, in accordance with the legislation in force in the Republic of Cameroon.'}</p>
+        <div class="doc-h2">${state.language === 'fr' ? 'Conditions particulières' : 'Specific conditions'}</div>
+        <p>${state.language === 'fr' ? 'L\'activité doit s\'exercer dans le respect des normes environnementales, fiscales et sociales applicables.' : 'The activity must be conducted in compliance with applicable environmental, tax and social standards.'}</p>
+      `;
+    case 'recruitment_plan':
+      return `
+        <div class="doc-h1">${state.language === 'fr' ? 'Plan de Recrutement Camerounais' : 'Cameroonian Recruitment Plan'}</div>
+        <p><strong>${inv.raisonSociale}</strong></p>
+        <div class="doc-h2">1. ${state.language === 'fr' ? 'Effectifs prévisionnels' : 'Projected workforce'}</div>
+        <p>${state.language === 'fr' ? 'Phase d\'installation' : 'Installation phase'} : 52 ${state.language === 'fr' ? 'emplois directs' : 'direct jobs'}</p>
+        <p>${state.language === 'fr' ? 'Phase d\'exploitation' : 'Operating phase'} : 78 ${state.language === 'fr' ? 'emplois directs' : 'direct jobs'}</p>
+        <div class="doc-h2">2. ${state.language === 'fr' ? 'Politique de recrutement' : 'Recruitment policy'}</div>
+        <p>${state.language === 'fr' ? 'Priorité absolue aux candidats Camerounais conformément à l\'Article 6.2 de l\'Ordonnance 2025/002. Recours à des cabinets de recrutement locaux (RH-Cameroun SARL).' : 'Absolute priority to Cameroonian candidates in accordance with Article 6.2 of Ordinance 2025/002. Use of local recruitment firms (RH-Cameroun SARL).'}</p>
+        <div class="doc-h2">3. ${state.language === 'fr' ? 'Formation' : 'Training'}</div>
+        <p>${state.language === 'fr' ? 'Programme de formation interne de 120 heures/an pour les techniciens de production, en partenariat avec le CIPAD-Cameroun.' : '120-hour annual internal training program for production technicians, in partnership with CIPAD-Cameroun.'}</p>
+      `;
+    case 'tech_transfer_plan':
+      return `
+        <div class="doc-h1">${state.language === 'fr' ? 'Plan de Transfert de Technologies' : 'Technology Transfer Plan'}</div>
+        <p><strong>${inv.raisonSociale}</strong></p>
+        <p>${state.language === 'fr' ? 'Ce document décrit les modalités de transfert de compétences et technologies vers le personnel et les sous-traitants Camerounais, sur la durée des phases d\'installation et d\'exploitation.' : 'This document describes the mechanisms for transferring skills and technology to Cameroonian staff and subcontractors over the installation and operating phases.'}</p>
+        <div class="doc-h2">${state.language === 'fr' ? '1. Partenariats techniques' : '1. Technical partnerships'}</div>
+        <p>${state.language === 'fr' ? 'Accord-cadre avec un partenaire technologique international pour le transfert progressif du savoir-faire industriel.' : 'Framework agreement with an international technology partner for the progressive transfer of industrial know-how.'}</p>
+        <div class="doc-h2">${state.language === 'fr' ? '2. Programme de formation' : '2. Training programme'}</div>
+        <p>${state.language === 'fr' ? 'Détachement de 4 cadres techniques Camerounais auprès du siège du partenaire pendant 6 mois.' : 'Secondment of 4 Cameroonian technical managers to the partner\'s headquarters for 6 months.'}</p>
+      `;
+    case 'local_subcontracting':
+      return `
+        <div class="doc-h1">${state.language === 'fr' ? 'Plan de Sous-Traitance Locale' : 'Local Subcontracting Plan'}</div>
+        <p><strong>${inv.raisonSociale}</strong></p>
+        <p>${state.language === 'fr' ? 'Liste des entreprises locales pressenties comme sous-traitants pour la phase d\'installation et d\'exploitation.' : 'List of local companies identified as subcontractors for the installation and operating phases.'}</p>
+        <ul>
+          <li>SARL BTP-CAMEROUN — ${state.language === 'fr' ? 'Génie civil' : 'Civil works'}</li>
+          <li>ENERGY-SOLUTIONS SA — ${state.language === 'fr' ? 'Installations électriques' : 'Electrical installations'}</li>
+          <li>TRANSPORT-DOUALA — ${state.language === 'fr' ? 'Logistique' : 'Logistics'}</li>
+          <li>SECURITE-CAM — ${state.language === 'fr' ? 'Gardiennage' : 'Security'}</li>
+          <li>NETTOYAGE-PLUS — ${state.language === 'fr' ? 'Entretien' : 'Maintenance'}</li>
+        </ul>
+      `;
+    case 'financing_proof':
+      return `
+        <div class="doc-h1">${state.language === 'fr' ? 'Attestation de Capacité de Financement' : 'Financing Capacity Certificate'}</div>
+        <p><strong>${state.language === 'fr' ? 'Établissement émetteur' : 'Issuing institution'} :</strong> Banque Internationale du Cameroun</p>
+        <p><strong>${state.language === 'fr' ? 'Bénéficiaire' : 'Beneficiary'} :</strong> ${inv.raisonSociale}</p>
+        <p>${state.language === 'fr' ? 'L\'établissement soussigné atteste de la capacité financière du bénéficiaire à couvrir l\'investissement projeté, à concurrence d\'un montant de' : 'The undersigned institution certifies the financial capacity of the beneficiary to cover the projected investment up to'} ${fmtFCFAFull(doss.amount)}.</p>
+        <p>${state.language === 'fr' ? 'La présente attestation est délivrée pour servir et valoir ce que de droit.' : 'This certificate is issued to serve as required.'}</p>
+      `;
+    case 'feasibility':
+      return `
+        <div class="doc-h1">${state.language === 'fr' ? 'Étude de Faisabilité' : 'Feasibility Study'}</div>
+        <p><strong>${inv.raisonSociale}</strong></p>
+        <div class="doc-h2">${state.language === 'fr' ? '1. Description du projet' : '1. Project description'}</div>
+        <p>${doss.objet}</p>
+        <div class="doc-h2">${state.language === 'fr' ? '2. Investissement total' : '2. Total investment'}</div>
+        <p>${fmtFCFAFull(doss.amount)}</p>
+        <div class="doc-h2">${state.language === 'fr' ? '3. Étude de marché' : '3. Market study'}</div>
+        <p>${state.language === 'fr' ? 'Analyse approfondie de la demande locale et sous-régionale CEMAC, avec projections sur 10 ans.' : 'In-depth analysis of local and CEMAC sub-regional demand, with 10-year projections.'}</p>
+        <div class="doc-h2">${state.language === 'fr' ? '4. Analyse financière' : '4. Financial analysis'}</div>
+        <p>${state.language === 'fr' ? 'Compte de résultat prévisionnel, plan de trésorerie, indicateurs (TRI, VAN, délai de retour).' : 'Forecast income statement, cash-flow plan, indicators (IRR, NPV, payback period).'}</p>
+      `;
+    default:
+      return `<div class="doc-h1">${state.language === 'fr' ? 'Pièce justificative' : 'Supporting document'}</div><p>${state.language === 'fr' ? 'Contenu scanné — aperçu généré pour la démonstration.' : 'Scanned content — preview generated for the demo.'}</p>`;
+  }
+}
+
+// ============================================================
+// === BANNER
+// ============================================================
+
+function renderDemoBanner() {
+  const u = currentUser();
+  if (!u) return '';
+  let nudge = '';
+  if (isStaff()) {
+    const inbox = inboxFor(u.id);
+    if (inbox.length > 0) {
+      nudge = state.language === 'fr'
+        ? ` Vous avez <strong>${inbox.length} dossier(s)</strong> en attente d'action.`
+        : ` You have <strong>${inbox.length} dossier(s)</strong> awaiting your action.`;
+    } else {
+      nudge = state.language === 'fr'
+        ? ' Aucun dossier en attente pour ce rôle — utilisez le menu en haut à droite pour changer de rôle.'
+        : ' No dossier awaiting this role — use the top-right menu to switch role.';
+    }
+  } else {
+    const doss = investorDossier();
+    nudge = state.language === 'fr'
+      ? (doss ? ` Votre dossier ${doss.id} est suivi par le Guichet Unique.` : ' Vous n\'avez pas encore créé de demande.')
+      : (doss ? ` Your dossier ${doss.id} is being tracked by the One-Stop Shop.` : ' You have not yet created an application.');
+  }
+  const intro = state.language === 'fr'
+    ? `<strong>Mode démonstration.</strong> Vous êtes connecté en tant que <strong>${u.name}</strong> · ${userTitle()}.`
+    : `<strong>Demo mode.</strong> You are signed in as <strong>${u.name}</strong> · ${userTitle()}.`;
+  const footer = state.language === 'fr'
+    ? ' Toutes les données sont fictives et stockées localement dans votre navigateur.'
+    : ' All data is fictional and stored locally in your browser.';
+  return `
+    <div class="demo-banner">
+      <span>⚙</span>
+      <div>${intro}${nudge}${footer}</div>
+      <span class="close" data-action="dismiss-banner">✕</span>
+    </div>
+  `;
+}
+
+// ============================================================
+// === DASHBOARD
+// ============================================================
+
+function renderDashboard() {
+  const total = state.dossiers.length;
+  const accredited = state.dossiers.filter(d => d.state === 'ACCREDITED').length;
+  const inProcess = state.dossiers.filter(d => d.state !== 'ACCREDITED' && d.state !== 'REJECTED').length;
+  const atRisk = state.dossiers.filter(d => {
+    const s = slaInfo(d);
+    return s.state === 'red' || s.state === 'amber';
+  }).length;
+
+  const recent = state.dossiers
+    .slice()
+    .sort((a,b) => (b.history[b.history.length-1].at).localeCompare(a.history[a.history.length-1].at))
+    .slice(0, 5);
+
+  // funnel counts
+  const funnel = STAGES.map((s, i) => {
+    const stateKey = Object.keys(STATE_TO_ROLE).find(k => STATE_TO_ROLE[k] === s.role);
+    const cnt = stateKey ? state.dossiers.filter(d => d.state === stateKey).length : 0;
+    return { stage: s, count: cnt };
+  });
+
+  return `
+    <div class="page-title">
+      <div>
+        <h1>${t('nav.dashboard')}</h1>
+        <div class="sub">${state.language === 'fr' ? 'Vue d\'ensemble des dossiers d\'agrément en instruction' : 'Overview of accreditation dossiers under review'}</div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-screen="new">＋ ${t('nav.new')}</button>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi blue">
+        <div class="label">${state.language === 'fr' ? 'Dossiers totaux' : 'Total dossiers'}</div>
+        <div class="value">${total}</div>
+        <div class="delta">${state.language === 'fr' ? 'Année' : 'Year'} 2025</div>
+      </div>
+      <div class="kpi amber">
+        <div class="label">En instruction</div>
+        <div class="value">${inProcess}</div>
+        <div class="delta">Tous départements confondus</div>
+      </div>
+      <div class="kpi green">
+        <div class="label">Conventions signées</div>
+        <div class="value">${accredited}</div>
+        <div class="delta">Agréés cette année</div>
+      </div>
+      <div class="kpi red">
+        <div class="label">À risque SLA</div>
+        <div class="value">${atRisk}</div>
+        <div class="delta">Délai légal 10 jours ouvrés (Art. 30.3)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        Répartition par étape du workflow
+        <span style="font-size:11.5px;font-weight:400;color:var(--muted)">Chaque dossier passe par 6 départements</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">
+        ${funnel.map((f, i) => `
+          <div style="text-align:center;padding:14px 8px;background:${f.count ? 'var(--info-bg)' : 'var(--bg)'};border-radius:8px;border:1px solid ${f.count ? 'var(--info)' : 'var(--border)'}">
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px">${i+1}. ${f.stage.short}</div>
+            <div style="font-size:24px;font-weight:600;color:${f.count ? 'var(--info)' : 'var(--muted-2)'}">${f.count}</div>
+            <div style="font-size:10.5px;color:var(--muted)">${f.stage.long}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Activité récente</div>
+      <table class="dossiers">
+        <thead>
+          <tr>
+            <th>N° Dossier</th>
+            <th>Investisseur</th>
+            <th>Secteur</th>
+            <th>Catégorie</th>
+            <th>Montant</th>
+            <th>État</th>
+            <th>SLA</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${recent.map(d => {
+            const sla = slaInfo(d);
+            const cat = categoryFor(d.amount);
+            return `
+              <tr data-action="open-dossier" data-id="${d.id}">
+                <td class="dno">${d.id}</td>
+                <td>${d.investor.raisonSociale}${d.isZdp ? ' <span class="pill zdp" style="margin-left:6px">ZDP</span>' : ''}</td>
+                <td>${SECTORS[d.sector]}</td>
+                <td><span class="pill cat-${cat}">Cat. ${cat}</span></td>
+                <td class="amount">${fmtFCFA(d.amount)}</td>
+                <td><span class="pill ${stateColor(d.state)}">${STATE_TITLES[d.state]}</span></td>
+                <td><span class="pill sla-pill ${sla.state}">${sla.label}</span></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function stateColor(s) {
+  if (s === 'ACCREDITED') return 'green';
+  if (s === 'REJECTED') return 'red';
+  if (s === 'RETURNED') return 'amber';
+  return 'blue';
+}
+
+// ============================================================
+// === INBOX
+// ============================================================
+
+function renderInbox() {
+  const u = currentUser();
+  const inbox = inboxFor(u.id);
+
+  const stageName = STAGES.find(s => s.role === u.id).short;
+  return `
+    <div class="page-title">
+      <div>
+        <h1>${t('nav.inbox')} — ${stageName}</h1>
+        <div class="sub">${state.language === 'fr' ? 'Dossiers en attente de votre action' : 'Dossiers awaiting your action'} · ${userTitle()}</div>
+      </div>
+    </div>
+
+    ${inbox.length === 0 ? `
+      <div class="card">
+        <div class="empty">
+          <div class="icon">📭</div>
+          <div class="label">${state.language === 'fr' ? 'Aucun dossier en attente d\'action de votre part.' : 'No dossier awaiting your action.'}</div>
+          <div style="margin-top:8px;font-size:12px">${state.language === 'fr' ? 'Pour voir le workflow en mouvement, basculez vers un autre rôle via le menu en haut à droite.' : 'To see the workflow in motion, switch to another role using the top-right menu.'}</div>
+        </div>
+      </div>
+    ` : `
+      <div class="card">
+        <table class="dossiers">
+          <thead>
+            <tr>
+              <th>N° Dossier</th>
+              <th>Investisseur</th>
+              <th>Secteur</th>
+              <th>Catégorie</th>
+              <th>Montant</th>
+              <th>Reçu le</th>
+              <th>SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${inbox.map(d => {
+              const sla = slaInfo(d);
+              const cat = categoryFor(d.amount);
+              return `
+                <tr data-action="open-dossier" data-id="${d.id}">
+                  <td class="dno">${d.id}</td>
+                  <td>${d.investor.raisonSociale}${d.isZdp ? ' <span class="pill zdp" style="margin-left:6px">ZDP</span>' : ''}</td>
+                  <td>${SECTORS[d.sector]}</td>
+                  <td><span class="pill cat-${cat}">Cat. ${cat}</span></td>
+                  <td class="amount">${fmtFCFA(d.amount)}</td>
+                  <td>${fmtDate(d.recepisseAt || d.submittedAt)}</td>
+                  <td><span class="pill sla-pill ${sla.state}">${sla.label}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `}
+  `;
+}
+
+// ============================================================
+// === ALL DOSSIERS
+// ============================================================
+
+function renderAllDossiers() {
+  return `
+    <div class="page-title">
+      <div>
+        <h1>Tous les dossiers</h1>
+        <div class="sub">Registre complet des demandes d'agrément</div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-screen="new">＋ Nouveau dossier</button>
+      </div>
+    </div>
+    <div class="card">
+      <table class="dossiers">
+        <thead>
+          <tr>
+            <th>N° Dossier</th>
+            <th>Investisseur</th>
+            <th>Secteur</th>
+            <th>Cat.</th>
+            <th>Montant</th>
+            <th>État</th>
+            <th>Étape</th>
+            <th>SLA</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${state.dossiers.map(d => {
+            const sla = slaInfo(d);
+            const cat = categoryFor(d.amount);
+            const stageIdx = stageIndexForState(d.state);
+            const stage = stageIdx >= 0 && stageIdx < 6 ? STAGES[stageIdx] : (d.state === 'ACCREDITED' ? { short: 'Agréé' } : { short: '—' });
+            return `
+              <tr data-action="open-dossier" data-id="${d.id}">
+                <td class="dno">${d.id}</td>
+                <td>${d.investor.raisonSociale}${d.isZdp ? ' <span class="pill zdp" style="margin-left:6px">ZDP</span>' : ''}</td>
+                <td>${SECTORS[d.sector]}</td>
+                <td><span class="pill cat-${cat}">${cat}</span></td>
+                <td class="amount">${fmtFCFA(d.amount)}</td>
+                <td><span class="pill ${stateColor(d.state)}">${STATE_TITLES[d.state]}</span></td>
+                <td>${stageIdx + 1 || '—'}/6 · ${stage.short}</td>
+                <td><span class="pill sla-pill ${sla.state}">${sla.label}</span></td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ============================================================
+// === DOSSIER DETAIL
+// ============================================================
+
+function renderDossierDetail() {
+  const d = currentDossier();
+  if (!d) return '<div class="card">Dossier introuvable.</div>';
+
+  const sla = slaInfo(d);
+  const cat = categoryFor(d.amount);
+  const u = currentUser();
+  const isMine = STATE_TO_ROLE[d.state] === u.id;
+  const stageIdx = stageIndexForState(d.state);
+  const isAccredited = d.state === 'ACCREDITED';
+  const isRejected = d.state === 'REJECTED';
+
+  return `
+    <div class="page-title">
+      <div>
+        <h1>Dossier ${d.id}</h1>
+        <div class="sub">${d.investor.raisonSociale} · ${SECTORS[d.sector]}</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" data-screen="all">← Retour</button>
+        ${isAccredited ? `<button class="btn primary" data-action="view-acte" data-id="${d.id}">Voir l'acte d'agrément</button>` : ''}
+      </div>
+    </div>
+
+    <div class="dossier-header">
+      <div class="row1">
+        <h2>${d.investor.raisonSociale}</h2>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="pill ${stateColor(d.state)}">${STATE_TITLES[d.state]}</span>
+          <span class="pill sla-pill ${sla.state}">${sla.label}</span>
+        </div>
+      </div>
+      <div class="investor">${d.investor.legalForm} · NIU ${d.investor.niu} · Contact : ${d.investor.contact.name} (${d.investor.contact.email})</div>
+      <div class="meta-row">
+        <div class="meta-item">
+          <div class="lbl">Objet</div>
+          <div class="val" style="max-width:560px;font-weight:400">${d.objet}</div>
+        </div>
+      </div>
+      <div class="meta-row" style="margin-top:12px">
+        <div class="meta-item"><div class="lbl">Type</div><div class="val">${d.type === 'new' ? 'Projet nouveau' : 'Projet d\'extension'}</div></div>
+        <div class="meta-item"><div class="lbl">Montant</div><div class="val">${fmtFCFAFull(d.amount)}</div></div>
+        <div class="meta-item"><div class="lbl">Catégorie</div><div class="val"><span class="pill cat-${cat}">Cat. ${cat}</span></div></div>
+        <div class="meta-item"><div class="lbl">Phase installation</div><div class="val">${d.installationMonths} mois</div></div>
+        <div class="meta-item"><div class="lbl">ZDP</div><div class="val">${d.isZdp ? `<span class="pill zdp">${d.zdpLocality}</span>` : 'Non'}</div></div>
+        <div class="meta-item"><div class="lbl">Soumis le</div><div class="val">${fmtDate(d.submittedAt)}</div></div>
+        <div class="meta-item"><div class="lbl">Récépissé</div><div class="val">${d.recepisseAt ? fmtDate(d.recepisseAt) : '<em>en attente</em>'}</div></div>
+      </div>
+    </div>
+
+    <div class="stage-tracker">
+      <h3>Parcours du dossier · ${stageIdx >= 0 ? `étape ${Math.min(stageIdx+1,6)}/6` : ''}</h3>
+      <div class="stages">
+        ${STAGES.map((s, i) => {
+          let cls = '';
+          if (isAccredited) cls = 'done';
+          else if (isRejected) cls = i < stageIdx ? 'done' : (i === stageIdx ? 'rejected' : '');
+          else if (i < stageIdx) cls = 'done';
+          else if (i === stageIdx) cls = 'current';
+          return `
+            <div class="stage ${cls}">
+              <div class="dot">${cls === 'done' ? '✓' : (cls === 'rejected' ? '✕' : (i+1))}</div>
+              <div class="label-line1">${s.short}</div>
+              <div class="label-line2">${s.long}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="dossier-detail">
+      <div>
+        <div class="card">
+          <div class="tabs">
+            <div class="tab ${state.selectedTab === 'timeline' ? 'active' : ''}" data-tab="timeline">Historique</div>
+            <div class="tab ${state.selectedTab === 'docs' ? 'active' : ''}" data-tab="docs">Documents (${d.documents.length})</div>
+            <div class="tab ${state.selectedTab === 'avis' ? 'active' : ''}" data-tab="avis">Avis (${d.avis.length}/3)</div>
+            <div class="tab ${state.selectedTab === 'elig' ? 'active' : ''}" data-tab="elig">Éligibilité</div>
+          </div>
+          <div>${renderDossierTab(d)}</div>
+        </div>
+      </div>
+
+      <div class="action-panel">
+        ${renderActionPanel(d, isMine)}
+      </div>
+    </div>
+  `;
+}
+
+function renderDossierTab(d) {
+  if (state.selectedTab === 'docs') return renderDocsTab(d);
+  if (state.selectedTab === 'avis') return renderAvisTab(d);
+  if (state.selectedTab === 'elig') return renderEligTab(d);
+  return renderTimelineTab(d);
+}
+
+function renderTimelineTab(d) {
+  return `
+    <ul class="timeline">
+      ${d.history.map(h => `
+        <li class="${h.class || ''}">
+          <div class="when">${fmtDateTime(h.at)}</div>
+          <div class="who">${h.role}</div>
+          <div class="what">
+            ${h.action}
+            ${h.comment ? `<div style="margin-top:6px;color:var(--muted);font-size:12.5px;font-style:italic">« ${h.comment} »</div>` : ''}
+          </div>
+        </li>
+      `).join('')}
+    </ul>
+  `;
+}
+
+function renderDocsTab(d) {
+  const u = currentUser();
+  const isReception = isStaff() && u.id === 'reception' && d.state === 'SUBMITTED';
+
+  if (isReception) {
+    // Reception verification view
+    const allAccepted = d.documents.length > 0 && d.documents.every(x => x.verification === 'accepted');
+    const someRejected = d.documents.some(x => x.verification === 'rejected');
+    return `
+      <div style="padding:10px 12px;background:${allAccepted ? 'var(--success-bg)' : 'var(--info-bg)'};color:${allAccepted ? 'var(--success)' : 'var(--info)'};border-radius:8px;font-size:12.5px;margin-bottom:12px">
+        <strong>${t('doc.verify.title')}</strong> — ${t('doc.verify.intro')}
+        ${allAccepted ? '<br>✓ ' + (state.language === 'fr' ? 'Toutes les pièces sont acceptées — le récépissé peut être délivré.' : 'All documents accepted — the receipt can be issued.') : ''}
+        ${someRejected ? '<br>⚠ ' + (state.language === 'fr' ? 'Des pièces ont été rejetées — l\'investisseur doit re-téléverser.' : 'Some documents were rejected — the investor must re-upload.') : ''}
+      </div>
+      <div class="doc-verify-list">
+        ${d.documents.map(doc => {
+          let cls = 'pending', pill = `<span class="pill amber">${t('pill.pending')}</span>`;
+          if (doc.verification === 'accepted') { cls = 'accepted'; pill = `<span class="pill green">✓ ${t('pill.accepted')}</span>`; }
+          if (doc.verification === 'rejected') { cls = 'rejected'; pill = `<span class="pill red">✕ ${t('pill.rejected')}</span>`; }
+          return `
+            <div class="doc-verify-item ${cls}">
+              <div class="ico">PDF</div>
+              <div>
+                <div class="name">${doc.name} ${pill}</div>
+                <div class="sub">${t('doc.scanned.on')} ${fmtDate(doc.uploaded)}${doc.verifiedBy ? ' · ' + (doc.verification === 'accepted' ? t('doc.accepted.by') : t('doc.rejected.by')) + ' ' + doc.verifiedBy : ''}</div>
+                ${doc.rejectionReason ? `<div style="margin-top:5px;font-size:12px;color:var(--danger);font-style:italic">« ${doc.rejectionReason} »</div>` : ''}
+              </div>
+              <div class="actions">
+                <button class="btn small ghost" data-action="preview-doc" data-id="${d.id}" data-kind="${doc.kind}">${t('ui.preview')}</button>
+                ${doc.verification === 'pending' ? `
+                  <button class="btn small primary" data-action="accept-doc" data-id="${d.id}" data-kind="${doc.kind}">${t('doc.verify.accept')}</button>
+                  <button class="btn small danger" data-action="reject-doc" data-id="${d.id}" data-kind="${doc.kind}">${t('doc.verify.reject')}</button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  return `
+    <ul class="doc-list">
+      ${d.documents.map(doc => {
+        let pill = '';
+        if (doc.verification === 'accepted') pill = `<span class="pill green" style="margin-left:6px">✓ ${t('pill.accepted')}</span>`;
+        else if (doc.verification === 'rejected') pill = `<span class="pill red" style="margin-left:6px">✕ ${t('pill.rejected')}</span>`;
+        else pill = `<span class="pill amber" style="margin-left:6px">${t('pill.pending')}</span>`;
+        return `
+          <li>
+            <div class="icon">PDF</div>
+            <div class="name">
+              ${doc.name}${pill}
+              <div class="sub">${t('doc.scanned.on')} ${fmtDate(doc.uploaded)}${doc.verifiedBy ? ' · ' + doc.verifiedBy : ''}</div>
+              ${doc.rejectionReason ? `<div style="margin-top:3px;font-size:11.5px;color:var(--danger);font-style:italic">« ${doc.rejectionReason} »</div>` : ''}
+            </div>
+            <div class="actions">
+              <button class="btn small ghost" data-action="preview-doc" data-id="${d.id}" data-kind="${doc.kind}">${t('ui.preview')}</button>
+              <button class="btn small ghost">${t('ui.download')}</button>
+            </div>
+          </li>
+        `;
+      }).join('')}
+    </ul>
+  `;
+}
+
+function renderAvisTab(d) {
+  const required = ['instruction','tax','customs'];
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+      ${required.map(adminId => {
+        const a = d.avis.find(x => x.admin === adminId);
+        const labels = { instruction: 'Service Technique', tax: 'Administration Fiscale (DGI)', customs: 'Administration Douanière (DGD)' };
+        if (!a) {
+          return `
+            <div style="padding:14px;border:1px dashed var(--border-strong);border-radius:8px;background:var(--bg)">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px">${labels[adminId]}</div>
+              <div style="margin-top:8px;color:var(--muted);font-size:13px">⏳ En attente d'avis</div>
+            </div>
+          `;
+        }
+        return `
+          <div style="padding:14px;border:1px solid var(--success);border-radius:8px;background:var(--success-bg)">
+            <div style="font-size:11px;color:var(--success);text-transform:uppercase;letter-spacing:0.4px;font-weight:600">${labels[adminId]} · ${a.position}</div>
+            <div style="margin-top:6px;font-size:13px;font-weight:500">${a.signedBy}</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Signé le ${fmtDate(a.signedAt)}</div>
+            <div style="font-size:12.5px;color:var(--text);font-style:italic">« ${a.text} »</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div style="margin-top:14px;padding:10px 14px;border-radius:8px;background:var(--info-bg);font-size:12px;color:var(--info)">
+      ℹ <strong>Article 30.5 de l'Ordonnance 2025/002 :</strong> la convention est soumise à l'avis obligatoire des représentants des administrations fiscale et douanière au sein du Guichet Unique.
+    </div>
+  `;
+}
+
+function renderEligTab(d) {
+  if (d.type === 'new') {
+    return `
+      <div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:14px">
+        <strong>Projet nouveau · Article 7 de l'Ordonnance</strong><br>
+        L'investisseur doit satisfaire <strong>au moins 2 des 5 critères suivants</strong> :
+      </div>
+      <ul style="list-style:none;padding:0">
+        <li class="checkbox-row">
+          <input type="checkbox" disabled ${d.eligibility.art7?.includes('art7_jobs') ? 'checked' : ''}>
+          Emplois directs Camerounais (1 par tranche de 50 M FCFA programmés)
+        </li>
+        <li class="checkbox-row">
+          <input type="checkbox" disabled ${d.eligibility.art7?.includes('art7_local_inputs') ? 'checked' : ''}>
+          Utilisation d'au moins 50% d'intrants nationaux (industriel)
+        </li>
+        <li class="checkbox-row">
+          <input type="checkbox" disabled ${d.eligibility.art7?.includes('art7_cm_products') ? 'checked' : ''}>
+          Commercialisation d'au moins 40% de produits camerounais (grande distribution)
+        </li>
+        <li class="checkbox-row">
+          <input type="checkbox" disabled ${d.eligibility.art7?.includes('art7_value_added') ? 'checked' : ''}>
+          Augmentation de la valeur ajoutée d'au moins 30%
+        </li>
+        <li class="checkbox-row">
+          <input type="checkbox" disabled ${d.eligibility.art7?.includes('art7_exports') ? 'checked' : ''}>
+          Exportations / expéditions ≥ 25% du chiffre d'affaires HT
+        </li>
+      </ul>
+      <div style="margin-top:14px;padding:12px;background:var(--success-bg);border-left:3px solid var(--success);border-radius:6px;font-size:13px">
+        <strong>Détail déclaré :</strong> ${d.eligibility.criteriaDetails}
+      </div>
+    `;
+  }
+  return `
+    <div style="padding:14px;background:var(--bg);border-radius:8px;margin-bottom:14px">
+      <strong>Projet d'extension · Article 8 de l'Ordonnance</strong><br>
+      Accroissement de la production d'au moins 20% <strong>+ au moins 1 des 3 conditions suivantes</strong> :
+    </div>
+    <ul style="list-style:none;padding:0">
+      <li class="checkbox-row">
+        <input type="checkbox" disabled ${d.eligibility.art8?.includes('production_20pct') ? 'checked' : ''}>
+        Production augmentée d'au moins 20% (obligatoire)
+      </li>
+      <li class="checkbox-row">
+        <input type="checkbox" disabled ${d.eligibility.art8?.includes('jobs') ? 'checked' : ''}>
+        Création d'emplois directs Camerounais (1 par tranche de 50 M FCFA)
+      </li>
+      <li class="checkbox-row">
+        <input type="checkbox" disabled ${d.eligibility.art8?.includes('local_inputs') ? 'checked' : ''}>
+        Utilisation d'au moins 50% d'intrants nationaux (industriel)
+      </li>
+      <li class="checkbox-row">
+        <input type="checkbox" disabled ${d.eligibility.art8?.includes('staff_20pct') ? 'checked' : ''}>
+        Accroissement des effectifs d'au moins 20%
+      </li>
+    </ul>
+    <div style="margin-top:14px;padding:12px;background:var(--success-bg);border-left:3px solid var(--success);border-radius:6px;font-size:13px">
+      <strong>Détail déclaré :</strong> ${d.eligibility.criteriaDetails}
+    </div>
+  `;
+}
+
+// ============================================================
+// === ACTION PANEL
+// ============================================================
+
+function renderActionPanel(d, isMine) {
+  const u = currentUser();
+  const stage = STAGES.find(s => s.role === u.id);
+
+  if (d.state === 'ACCREDITED') {
+    return `
+      <div class="card">
+        <div class="card-title">État final</div>
+        <div style="padding:14px;background:var(--success-bg);border-radius:8px;color:var(--success);font-weight:500">
+          ✓ Convention signée — agrément délivré
+        </div>
+        <button class="btn primary" style="width:100%;margin-top:12px;justify-content:center" data-action="view-acte" data-id="${d.id}">
+          📜 Voir l'acte d'agrément
+        </button>
+      </div>
+    `;
+  }
+
+  if (d.state === 'REJECTED') {
+    return `
+      <div class="card">
+        <div class="card-title">Dossier rejeté</div>
+        <div style="padding:14px;background:var(--danger-bg);border-radius:8px;color:var(--danger);font-weight:500">
+          ✕ Le dossier a été rejeté.
+        </div>
+      </div>
+    `;
+  }
+
+  if (!isMine) {
+    const owner = STATE_TO_ROLE[d.state];
+    const ownerRole = ROLES.find(r => r.id === owner);
+    return `
+      <div class="card">
+        <div class="card-title">Action requise</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px">
+          Ce dossier n'est pas dans votre corbeille. Il attend une action de :
+        </p>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;margin-bottom:10px">
+          <div style="font-weight:500;font-size:13.5px">${ownerRole.name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${ownerRole.title}</div>
+        </div>
+        <button class="btn primary" style="width:100%;justify-content:center" data-action="switch-role" data-role="${owner}">
+          Se connecter en tant que ${ownerRole.name}
+        </button>
+      </div>
+    `;
+  }
+
+  // It's mine. Render the appropriate action form.
+  const actionLabel = stage.actionLabel;
+  return `
+    <div class="card">
+      <div class="card-title">
+        ✏ Action à effectuer
+        <span class="pill green">À traiter</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+        Connecté en tant que <strong style="color:var(--text)">${u.name}</strong> (${stage.long}).
+      </div>
+
+      ${renderActionSpecificFields(d, u)}
+
+      <label>Commentaire / motivation</label>
+      <textarea id="actionComment" placeholder="${getCommentPlaceholder(u.id)}"></textarea>
+
+      <div class="action-buttons">
+        ${(() => {
+          // Block "issue receipt" if reception and not all docs accepted
+          if (u.id === 'reception' && d.state === 'SUBMITTED') {
+            const allAccepted = d.documents.length > 0 && d.documents.every(x => x.verification === 'accepted');
+            if (!allAccepted) {
+              return `<button class="btn primary" disabled title="${state.language === 'fr' ? 'Toutes les pièces doivent être acceptées' : 'All documents must be accepted'}">${getApproveLabel(u.id)} →</button>`;
+            }
+          }
+          return `<button class="btn primary" data-action="approve-forward" data-id="${d.id}">${getApproveLabel(u.id)} →</button>`;
+        })()}
+        <button class="btn warning" data-action="return-dossier" data-id="${d.id}">
+          ↶ ${state.language === 'fr' ? 'Retourner pour complément' : 'Return for completion'}
+        </button>
+        <button class="btn danger" data-action="reject-dossier" data-id="${d.id}">
+          ✕ ${state.language === 'fr' ? 'Rejeter' : 'Reject'}
+        </button>
+      </div>
+
+      <div class="role-tag allowed">
+        ✓ Étape ${stage.short} · Article ${getArticleRef(u.id)}
+      </div>
+    </div>
+  `;
+}
+
+function renderActionSpecificFields(d, u) {
+  if (u.id === 'reception') {
+    const total = d.documents.length;
+    const accepted = d.documents.filter(x => x.verification === 'accepted').length;
+    const rejected = d.documents.filter(x => x.verification === 'rejected').length;
+    const pending  = d.documents.filter(x => x.verification === 'pending').length;
+    const allAccepted = total > 0 && accepted === total;
+    return `
+      <div style="padding:11px 13px;background:${allAccepted ? 'var(--success-bg)' : 'var(--warning-bg)'};border-radius:7px;font-size:12.5px;color:${allAccepted ? 'var(--success)' : 'var(--warning)'};margin-bottom:8px">
+        <strong>${state.language === 'fr' ? 'Contrôle de complétude :' : 'Completeness check:'}</strong>
+        ${total}/6 ${state.language === 'fr' ? 'pièces' : 'documents'} ·
+        ✓ ${accepted} ${t('pill.accepted').toLowerCase()} ·
+        ⏳ ${pending} ${t('pill.pending').toLowerCase()} ·
+        ✕ ${rejected} ${t('pill.rejected').toLowerCase()}
+        ${!allAccepted ? '<br>' + (state.language === 'fr' ? 'Allez à l\'onglet « Documents » pour vérifier chaque pièce avant de délivrer le récépissé.' : 'Go to the "Documents" tab to verify each item before issuing the receipt.') : ''}
+      </div>
+      <label>${state.language === 'fr' ? 'N° de récépissé à délivrer' : 'Receipt number to issue'}</label>
+      <input type="text" style="width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:6px;font:inherit;font-size:13px" value="2025/R${String(100 + state.counter - 26).padStart(4,'0')}" id="recepNo" ${allAccepted ? '' : 'disabled'}>
+    `;
+  }
+  if (u.id === 'instruction') {
+    return `
+      <div style="padding:11px 13px;background:var(--info-bg);border-radius:7px;font-size:12.5px;color:var(--info);margin-bottom:8px">
+        <strong>Vérification technique :</strong> Critères d'éligibilité (Art. 6, ${d.type === 'new' ? '7' : '8'}), cohérence du programme d'investissement.
+      </div>
+      <label>Avis technique</label>
+      <select id="opinionPosition" style="width:100%">
+        <option value="favorable">Favorable</option>
+        <option value="favorable_reserve">Favorable avec réserves</option>
+        <option value="unfavorable">Défavorable</option>
+      </select>
+    `;
+  }
+  if (u.id === 'tax') {
+    return `
+      <div style="padding:11px 13px;background:var(--info-bg);border-radius:7px;font-size:12.5px;color:var(--info);margin-bottom:8px">
+        <strong>Avis fiscal obligatoire (Art. 30.5) :</strong> Régime fiscal applicable, régularité fiscale, conformité Art. 11.
+      </div>
+      <label>Position de l'administration fiscale</label>
+      <select id="opinionPosition" style="width:100%">
+        <option value="favorable">Favorable</option>
+        <option value="favorable_reserve">Favorable avec réserves</option>
+        <option value="unfavorable">Défavorable</option>
+      </select>
+      <label>Régime fiscal proposé</label>
+      <div style="padding:10px;background:var(--bg);border-radius:6px;font-size:13px">
+        Catégorie ${categoryFor(d.amount)}${d.isZdp ? ' + uplift ZDP' : ''} · crédit d'impôt ${getCredit(d)}%
+      </div>
+    `;
+  }
+  if (u.id === 'customs') {
+    return `
+      <div style="padding:11px 13px;background:var(--info-bg);border-radius:7px;font-size:12.5px;color:var(--info);margin-bottom:8px">
+        <strong>Avis douanier obligatoire (Art. 30.5) :</strong> Validation de la liste prévisionnelle d'équipements (Art. 33).
+      </div>
+      <label>Position de l'administration douanière</label>
+      <select id="opinionPosition" style="width:100%">
+        <option value="favorable">Favorable</option>
+        <option value="favorable_reserve">Favorable avec réserves</option>
+        <option value="unfavorable">Défavorable</option>
+      </select>
+    `;
+  }
+  if (u.id === 'chef_gu') {
+    const allAvis = d.avis.length >= 3;
+    return `
+      <div style="padding:11px 13px;background:${allAvis ? 'var(--success-bg)' : 'var(--warning-bg)'};border-radius:7px;font-size:12.5px;color:${allAvis ? 'var(--success)' : 'var(--warning)'};margin-bottom:8px">
+        <strong>Synthèse du dossier :</strong> ${allAvis ? '✓ Les 3 avis sont présents (instruction, fiscal, douanier).' : '⚠ Avis manquants — la transmission au DG est bloquée.'}
+      </div>
+      <label>Projet de convention (Art. 31)</label>
+      <div style="padding:10px;background:var(--bg);border-radius:6px;font-size:12.5px;line-height:1.6">
+        ✓ Raison sociale, NIU, objet, lieu d'implantation<br>
+        ✓ Durée d'installation (${d.installationMonths} mois) + exploitation 5 ans<br>
+        ✓ Avantages consentis (Cat. ${categoryFor(d.amount)}${d.isZdp ? ' + ZDP' : ''})<br>
+        ✓ Engagements vis-à-vis de l'État<br>
+        ✓ Liste prévisionnelle des équipements<br>
+        ✓ Modalités de contrôle et sanctions
+      </div>
+    `;
+  }
+  if (u.id === 'dg') {
+    return `
+      <div style="padding:11px 13px;background:var(--success-bg);border-radius:7px;font-size:12.5px;color:var(--success);margin-bottom:8px">
+        <strong>Signature de la convention d'investissement.</strong> En signant, vous délivrez l'acte d'agrément définitif.
+      </div>
+      <label>N° d'agrément à attribuer</label>
+      <input type="text" style="width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:6px;font:inherit;font-size:13px" value="API/2025/AG/${String(state.counter).padStart(4,'0')}" id="agreementNo">
+    `;
+  }
+  return '';
+}
+
+function getApproveLabel(roleId) {
+  return {
+    reception: 'Délivrer le récépissé',
+    instruction: 'Valider l\'instruction',
+    tax: 'Émettre avis fiscal favorable',
+    customs: 'Émettre avis douanier favorable',
+    chef_gu: 'Transmettre au DG pour signature',
+    dg: '✓ Signer la convention'
+  }[roleId] || 'Approuver';
+}
+
+function getCommentPlaceholder(roleId) {
+  return {
+    reception: 'Notes de réception (complétude du dossier)…',
+    instruction: 'Synthèse de l\'instruction technique…',
+    tax: 'Position de l\'administration fiscale (motivation)…',
+    customs: 'Position de l\'administration douanière (motivation)…',
+    chef_gu: 'Synthèse pour la signature du DG…',
+    dg: 'Note de signature (facultatif)…'
+  }[roleId] || '';
+}
+
+function getArticleRef(roleId) {
+  return {
+    reception: '30.3',
+    instruction: '6, 7, 8',
+    tax: '30.5',
+    customs: '30.5, 33',
+    chef_gu: '30.4',
+    dg: '30.4, 31'
+  }[roleId] || '—';
+}
+
+function getCredit(d) {
+  const cat = categoryFor(d.amount);
+  const base = { A: 25, B: 50, C: 75 }[cat];
+  const zdp  = { A: 30, B: 55, C: 80 }[cat];
+  return d.isZdp ? zdp : base;
+}
+
+// ============================================================
+// === ACTE D'AGRÉMENT (printable)
+// ============================================================
+
+function renderActeDetail() {
+  const d = currentDossier();
+  if (!d || d.state !== 'ACCREDITED') return '<div class="card">Acte indisponible.</div>';
+
+  const cat = categoryFor(d.amount);
+  const credit = getCredit(d);
+  const signedAt = d.history.find(h => h.action.includes('Convention signée'))?.at || todayISO();
+  const agrementNo = d.agreementNo || `API/2025/AG/${String(state.counter).padStart(4,'0')}`;
+
+  return `
+    <div class="page-title">
+      <div>
+        <h1>Acte d'agrément</h1>
+        <div class="sub">Dossier ${d.id} · ${d.investor.raisonSociale}</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" data-action="open-dossier" data-id="${d.id}">← Retour au dossier</button>
+        <button class="btn primary" onclick="window.print()">🖨 Imprimer / Exporter PDF</button>
+      </div>
+    </div>
+
+    <div class="acte">
+      <div class="header">
+        <div class="acte-logo">
+          <img src="logo.png" alt="API Cameroun" onerror="this.outerHTML='<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'><defs><linearGradient id=\\'apiBg2\\' x1=\\'0%\\' y1=\\'0%\\' x2=\\'0%\\' y2=\\'100%\\'><stop offset=\\'0%\\' stop-color=\\'#3a59b5\\'/><stop offset=\\'100%\\' stop-color=\\'#1e3a8a\\'/></linearGradient></defs><rect width=\\'100\\' height=\\'100\\' rx=\\'20\\' fill=\\'url(#apiBg2)\\'/><text x=\\'50\\' y=\\'60\\' font-family=\\'Arial Black, Arial, sans-serif\\' font-weight=\\'900\\' font-size=\\'30\\' fill=\\'#ffffff\\' text-anchor=\\'middle\\' letter-spacing=\\'-0.5\\'>API</text><path d=\\'M 18 78 Q 50 92 82 78\\' stroke=\\'#fcd116\\' stroke-width=\\'3.5\\' fill=\\'none\\' stroke-linecap=\\'round\\'/></svg>'">
+        </div>
+        <div class="top-line">RÉPUBLIQUE DU CAMEROUN · REPUBLIC OF CAMEROON</div>
+        <div class="motto">PAIX — TRAVAIL — PATRIE</div>
+        <div class="top-line">Présidence de la République<br>Agence de Promotion des Investissements</div>
+        <h1>ACTE D'AGRÉMENT</h1>
+        <div class="ref">N° ${agrementNo}</div>
+      </div>
+
+      <div class="body">
+        <p style="text-align:center;font-weight:500">
+          Convention d'investissement délivrée en application de l'Ordonnance n° 2025/002<br>
+          du 18 juillet 2025 fixant les incitations à l'investissement en République du Cameroun
+        </p>
+
+        <p>
+          Entre le <strong>Gouvernement de la République du Cameroun</strong>, représenté par l'Agence de Promotion des Investissements (API),
+          ci-après désignée « l'Organisme »,<br>
+          et la société <strong>${d.investor.raisonSociale}</strong>, ${d.investor.legalForm}, NIU ${d.investor.niu}, ci-après désignée « l'Investisseur ».
+        </p>
+
+        <p>
+          Il a été convenu ce qui suit dans le cadre de la présente convention d'investissement, prise en application des articles 6 à 13 et 30 à 31 de l'Ordonnance précitée :
+        </p>
+
+        <div class="clauses">
+          <div class="clause"><span class="lbl">Objet du projet</span><span>${d.objet}</span></div>
+          <div class="clause"><span class="lbl">Secteur d'activité</span><span>${SECTORS[d.sector]}</span></div>
+          <div class="clause"><span class="lbl">Lieu d'implantation</span><span>${d.isZdp ? d.zdpLocality + ' — Zone de Développement Prioritaire' : 'Territoire de la République du Cameroun'}</span></div>
+          <div class="clause"><span class="lbl">Catégorie d'investissement</span><span>Catégorie ${cat} — ${fmtFCFAFull(d.amount)}</span></div>
+          <div class="clause"><span class="lbl">Type de projet</span><span>${d.type === 'new' ? 'Projet nouveau (Art. 7)' : 'Projet d\'extension (Art. 8)'}</span></div>
+          <div class="clause"><span class="lbl">Phase d'installation</span><span>${d.installationMonths} mois (plafond 5 ans · Art. 10)</span></div>
+          <div class="clause"><span class="lbl">Phase d'exploitation</span><span>5 années à compter de la fin de l'installation (Art. 11)</span></div>
+          <div class="clause"><span class="lbl">Régime fiscal applicable</span><span>Crédit d'impôt ${credit}% · taux réduit 5% droit de douane · exonérations Arts. 10 et 11${d.isZdp ? ' · facilités supplémentaires Art. 12 (ZDP)' : ''}</span></div>
+          <div class="clause"><span class="lbl">Engagements de l'Investisseur</span><span>Respect du programme d'investissement, plan de recrutement Camerounais, transfert de technologies, recours à la sous-traitance locale, rapport annuel (Art. 32).</span></div>
+          <div class="clause"><span class="lbl">Modalités de contrôle</span><span>Contrôles d'évaluation (Art. 37). Comité d'audit et de recours (Art. 39). Audits a posteriori sur la conformité au programme annoncé.</span></div>
+          <div class="clause"><span class="lbl">Sanctions applicables</span><span>Amende (Art. 41.3), suspension max 6 mois, retrait d'agrément en cas de non-respect des engagements (Art. 41).</span></div>
+          <div class="clause"><span class="lbl">Redevance annuelle</span><span>${fmtFCFA(Math.min(5_000_000, Math.max(100_000, d.amount * 0.001)))} (0,1% du montant des investissements, plafonnée à 5 M FCFA · Art. 48)</span></div>
+        </div>
+
+        <p style="font-size:12.5px;color:var(--muted);font-style:italic">
+          Le présent acte d'agrément emporte stabilité des incitations octroyées pour toute la durée de la convention (Art. 45). L'Investisseur est tenu de produire la liste prévisionnelle des matériels et équipements à importer dans un délai de 10 jours ouvrés à compter de la date de signature (Art. 33.3).
+        </p>
+      </div>
+
+      <div class="signature">
+        <div class="place-date">Fait à Yaoundé, le ${fmtDate(signedAt)}</div>
+        <div class="role">Le Directeur Général de l'API</div>
+        <div class="name">Dr. Pierre Eyenga</div>
+      </div>
+
+      <div class="stamp">RÉPUBLIQUE<br>DU<br>CAMEROUN<br>—<br>API · GU</div>
+    </div>
+  `;
+}
+
+function renderActsList() {
+  const acts = state.dossiers.filter(d => d.state === 'ACCREDITED');
+  return `
+    <div class="page-title">
+      <div>
+        <h1>Actes d'agrément délivrés</h1>
+        <div class="sub">Registre des conventions d'investissement signées</div>
+      </div>
+    </div>
+    ${acts.length === 0 ? `
+      <div class="card"><div class="empty">
+        <div class="icon">📜</div>
+        <div class="label">Aucun acte d'agrément encore délivré.</div>
+        <div style="margin-top:8px;font-size:12px">Faites progresser un dossier jusqu'à la 6ème étape (signature DG) pour voir un acte généré.</div>
+      </div></div>
+    ` : `
+      <div class="card">
+        <table class="dossiers">
+          <thead>
+            <tr><th>N° Agrément</th><th>Dossier</th><th>Investisseur</th><th>Catégorie</th><th>Date signature</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${acts.map(d => `
+              <tr data-action="view-acte" data-id="${d.id}">
+                <td class="dno">${d.agreementNo || ('API/2025/AG/' + d.id.split('/')[1])}</td>
+                <td>${d.id}</td>
+                <td>${d.investor.raisonSociale}</td>
+                <td><span class="pill cat-${categoryFor(d.amount)}">Cat. ${categoryFor(d.amount)}</span></td>
+                <td>${fmtDate(d.history.find(h => h.action.includes('signée'))?.at || todayISO())}</td>
+                <td><button class="btn small primary" data-action="view-acte" data-id="${d.id}">Voir</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `}
+  `;
+}
+
+function renderLawPage() {
+  return `
+    <div class="page-title">
+      <div>
+        <h1>Ordonnance n° 2025/002 du 18 juillet 2025</h1>
+        <div class="sub">Fondement juridique du workflow · 52 articles · 7 titres</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px">Articles clés mobilisés par ce workflow</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px">
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--green)">
+          <strong>Art. 3</strong> — 8 secteurs éligibles
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--green)">
+          <strong>Arts. 6–8</strong> — Critères d'éligibilité (communs + nouveaux projets + extensions)
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--green)">
+          <strong>Arts. 10–11</strong> — Incitations fiscales et douanières par catégorie (A/B/C)
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--yellow)">
+          <strong>Art. 12</strong> — Uplift Zones de Développement Prioritaire (ZDP)
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--red)">
+          <strong>Art. 29</strong> — Création du Guichet Unique au sein de l'API
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--red)">
+          <strong>Art. 30</strong> — Procédure de convention d'investissement (10 jours ouvrés)
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--red)">
+          <strong>Art. 30.5</strong> — Avis obligatoire fiscal + douanier au sein du Guichet Unique
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--green)">
+          <strong>Art. 31</strong> — 12 clauses obligatoires de la convention
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--yellow)">
+          <strong>Art. 32</strong> — Rapport annuel (3 mois après début exercice, amende 1 M FCFA/mois)
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--yellow)">
+          <strong>Art. 33</strong> — Validation conjointe API + Douane des listes d'équipements
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--red)">
+          <strong>Art. 39</strong> — Comité d'audit et de recours
+        </div>
+        <div style="padding:12px;background:var(--bg);border-radius:8px;border-left:3px solid var(--green)">
+          <strong>Art. 41</strong> — Sanctions (amendes 10/15/25 M FCFA, suspension max 6 mois)
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// === NEW DOSSIER FORM
+// ============================================================
+
+function renderNewDossier() {
+  return `
+    <div class="page-title">
+      <div>
+        <h1>Nouveau dossier d'agrément</h1>
+        <div class="sub">Réception d'une demande de convention d'investissement (Art. 30)</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" data-screen="all">Annuler</button>
+      </div>
+    </div>
+
+    <form id="newDossierForm" class="card">
+      <div class="form-section-title">Investisseur</div>
+      <div class="form-grid">
+        <div>
+          <label>Raison sociale *</label>
+          <input type="text" name="raisonSociale" required placeholder="ex. SARL EXEMPLE-CAM">
+        </div>
+        <div>
+          <label>NIU (Numéro d'Identifiant Unique) *</label>
+          <input type="text" name="niu" required placeholder="M01XXXXXXXXXX">
+        </div>
+        <div>
+          <label>Forme juridique</label>
+          <select name="legalForm">
+            <option>SARL</option><option>SA</option><option>SUARL</option><option>SAS</option><option>SCS</option><option>GIE</option>
+          </select>
+        </div>
+        <div>
+          <label>Pays d'origine du capital</label>
+          <input type="text" name="country" value="Cameroun">
+        </div>
+        <div>
+          <label>Contact — Nom *</label>
+          <input type="text" name="contactName" required>
+        </div>
+        <div>
+          <label>Contact — Email *</label>
+          <input type="email" name="contactEmail" required>
+        </div>
+      </div>
+
+      <div class="form-section-title">Projet d'investissement</div>
+      <div class="form-grid">
+        <div class="full">
+          <label>Objet du projet *</label>
+          <textarea name="objet" required placeholder="Description précise de l'activité, localisation, capacité…"></textarea>
+        </div>
+        <div>
+          <label>Type de projet *</label>
+          <select name="type">
+            <option value="new">Projet nouveau (Art. 7)</option>
+            <option value="extension">Projet d'extension (Art. 8)</option>
+          </select>
+        </div>
+        <div>
+          <label>Secteur d'activité *</label>
+          <select name="sector">
+            ${Object.entries(SECTORS).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label>Montant total de l'investissement (FCFA) *</label>
+          <input type="number" name="amount" required placeholder="ex. 800000000">
+        </div>
+        <div>
+          <label>Durée prévue de la phase d'installation (mois)</label>
+          <input type="number" name="installationMonths" value="24" max="60">
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" name="isZdp" style="margin-right:6px">
+            Implantation en Zone de Développement Prioritaire (ZDP)
+          </label>
+        </div>
+        <div>
+          <label>Localité ZDP (si applicable)</label>
+          <input type="text" name="zdpLocality" placeholder="ex. Région du Nord">
+        </div>
+      </div>
+
+      <div class="form-section-title">Pièces du dossier (Art. 6)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="checkbox-row"><input type="checkbox" name="doc_activity" checked> Autorisation d'exercice (Art. 6.1)</div>
+        <div class="checkbox-row"><input type="checkbox" name="doc_recruitment" checked> Plan de recrutement Camerounais</div>
+        <div class="checkbox-row"><input type="checkbox" name="doc_tech" checked> Plan de transfert de technologies</div>
+        <div class="checkbox-row"><input type="checkbox" name="doc_subcontract" checked> Plan de sous-traitance locale</div>
+        <div class="checkbox-row"><input type="checkbox" name="doc_financing" checked> Justification du financement</div>
+        <div class="checkbox-row"><input type="checkbox" name="doc_feasibility" checked> Étude de faisabilité</div>
+      </div>
+
+      <div class="form-section-title">Critères d'éligibilité déclarés (Art. 7)</div>
+      <div style="display:grid;grid-template-columns:1fr;gap:6px">
+        <div class="checkbox-row"><input type="checkbox" name="art7_jobs"> Création d'emplois directs Camerounais (1 par tranche de 50 M FCFA)</div>
+        <div class="checkbox-row"><input type="checkbox" name="art7_local_inputs"> 50%+ d'intrants nationaux (industriel)</div>
+        <div class="checkbox-row"><input type="checkbox" name="art7_cm_products"> 40%+ de produits camerounais (grande distribution)</div>
+        <div class="checkbox-row"><input type="checkbox" name="art7_value_added"> Valeur ajoutée +30%</div>
+        <div class="checkbox-row"><input type="checkbox" name="art7_exports"> Exportations ≥ 25% du CA HT</div>
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:var(--muted);font-style:italic">
+        Pour un projet nouveau, au moins 2 critères doivent être cochés. Pour une extension, le critère « production +20% » est obligatoire + 1 condition.
+      </div>
+
+      <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end">
+        <button type="button" class="btn ghost" data-screen="all">Annuler</button>
+        <button type="submit" class="btn primary">Enregistrer et soumettre</button>
+      </div>
+    </form>
+  `;
+}
+
+// ============================================================
+// === EVENT HANDLERS
+// ============================================================
+
+document.addEventListener('click', (e) => {
+  // === LOGIN SCREEN ACTIONS ===
+  const langFr = e.target.closest('#langFr');
+  if (langFr) { state.language = 'fr'; render(); return; }
+  const langEn = e.target.closest('#langEn');
+  if (langEn) { state.language = 'en'; render(); return; }
+  const lt = e.target.closest('[data-login-tab]');
+  if (lt) { state.loginTab = lt.dataset.loginTab; render(); return; }
+  const ls = e.target.closest('[data-action="login-staff"]');
+  if (ls) { handleLoginStaff(); return; }
+  const li = e.target.closest('[data-action="login-investor"]');
+  if (li) { handleLoginInvestor(); return; }
+  const qs = e.target.closest('[data-quick-staff]');
+  if (qs) { loginAsStaff(qs.dataset.quickStaff); return; }
+  const qi = e.target.closest('[data-quick-investor]');
+  if (qi) { loginAsInvestor(qi.dataset.quickInvestor); return; }
+
+  // === HEADER ACTIONS ===
+  if (e.target.closest('#langToggle')) {
+    state.language = state.language === 'fr' ? 'en' : 'fr';
+    render(); return;
+  }
+  if (e.target.closest('#notifBell')) {
+    state.notificationsOpen = !state.notificationsOpen;
+    render(); return;
+  }
+  if (e.target.closest('#markAllRead')) {
+    state.notifications.forEach(n => { if (n.forUser === state.currentUser.id) n.read = true; });
+    render(); return;
+  }
+  const notifClick = e.target.closest('.notif[data-notif-id]');
+  if (notifClick) {
+    const id = notifClick.dataset.notifId;
+    const n = state.notifications.find(x => x.id === id);
+    if (n) { n.read = true; }
+    const dId = notifClick.dataset.dossierId;
+    if (dId) {
+      state.selectedDossierId = dId;
+      state.screen = isInvestor() ? 'my_dossier' : 'dossier';
+    }
+    state.notificationsOpen = false;
+    render();
+    return;
+  }
+  // close notif panel on outside click
+  if (state.notificationsOpen && !e.target.closest('#notifPanel') && !e.target.closest('#notifBell')) {
+    state.notificationsOpen = false;
+    render();
+    return;
+  }
+
+  // dismiss banner
+  if (e.target.dataset.action === 'dismiss-banner') {
+    state.bannerDismissed = true;
+    render();
+    return;
+  }
+
+  // user switcher toggle
+  const swEl = document.getElementById('userSwitcher');
+  if (swEl.contains(e.target) && !e.target.closest('.menu')) {
+    swEl.classList.toggle('open');
+    return;
+  } else if (!swEl.contains(e.target)) {
+    swEl.classList.remove('open');
+  }
+
+  // role switch (staff)
+  const roleItem = e.target.closest('.role-item[data-role]');
+  if (roleItem) {
+    loginAsStaff(roleItem.dataset.role);
+    swEl.classList.remove('open');
+    return;
+  }
+  // investor switch
+  const invItem = e.target.closest('.role-item[data-investor]');
+  if (invItem) {
+    loginAsInvestor(invItem.dataset.investor);
+    swEl.classList.remove('open');
+    return;
+  }
+
+  // logout
+  if (e.target.closest('[data-action="logout"]')) {
+    handleLogout();
+    swEl.classList.remove('open');
+    return;
+  }
+
+  // reset
+  if (e.target.closest('[data-action="reset"]')) {
+    if (confirm(state.language === 'fr' ? 'Réinitialiser toutes les données de démonstration ?' : 'Reset all demo data?')) {
+      resetState();
+    }
+    swEl.classList.remove('open');
+    return;
+  }
+
+  // switch-role action button
+  const switchRole = e.target.closest('[data-action="switch-role"]');
+  if (switchRole) {
+    loginAsStaff(switchRole.dataset.role);
+    state.screen = 'dossier';
+    render();
+    return;
+  }
+
+  // doc preview
+  const dp = e.target.closest('[data-action="preview-doc"]');
+  if (dp) {
+    state.docPreview = { dossierId: dp.dataset.id, kind: dp.dataset.kind };
+    render();
+    return;
+  }
+  if (e.target.closest('[data-action="close-doc-preview"]') ||
+      (e.target.id === 'docPreviewOverlay')) {
+    state.docPreview = null;
+    render();
+    return;
+  }
+  const accD = e.target.closest('[data-action="accept-doc"]');
+  if (accD) {
+    handleAcceptDoc(accD.dataset.id, accD.dataset.kind);
+    return;
+  }
+  const rejD = e.target.closest('[data-action="reject-doc"]');
+  if (rejD) {
+    handleRejectDoc(rejD.dataset.id, rejD.dataset.kind);
+    return;
+  }
+  const upD = e.target.closest('[data-action="upload-doc"]');
+  if (upD) {
+    handleUploadDoc(upD.dataset.id, upD.dataset.kind);
+    return;
+  }
+  const subD = e.target.closest('[data-action="submit-investor-dossier"]');
+  if (subD) {
+    handleSubmitInvestorDossier(subD.dataset.id);
+    return;
+  }
+  const openMsg = e.target.closest('[data-action="open-message"]');
+  if (openMsg) {
+    const id = openMsg.dataset.id;
+    const n = state.notifications.find(x => x.id === id);
+    if (n) n.read = true;
+    render();
+    return;
+  }
+
+  // screen navigation
+  const navEl = e.target.closest('[data-screen]');
+  if (navEl) {
+    state.screen = navEl.dataset.screen;
+    if (state.screen !== 'dossier' && state.screen !== 'acte') {
+      state.selectedDossierId = null;
+    }
+    state.selectedTab = 'timeline';
+    render();
+    return;
+  }
+
+  // open dossier
+  const openD = e.target.closest('[data-action="open-dossier"]');
+  if (openD) {
+    state.selectedDossierId = openD.dataset.id;
+    state.screen = 'dossier';
+    state.selectedTab = 'timeline';
+    render();
+    return;
+  }
+
+  // view acte
+  const viewActe = e.target.closest('[data-action="view-acte"]');
+  if (viewActe) {
+    state.selectedDossierId = viewActe.dataset.id;
+    state.screen = 'acte';
+    render();
+    return;
+  }
+
+  // tab switch
+  const tab = e.target.closest('.tab[data-tab]');
+  if (tab) {
+    state.selectedTab = tab.dataset.tab;
+    render();
+    return;
+  }
+
+  // approve & forward
+  const approve = e.target.closest('[data-action="approve-forward"]');
+  if (approve) {
+    handleApprove(approve.dataset.id);
+    return;
+  }
+
+  // return
+  const ret = e.target.closest('[data-action="return-dossier"]');
+  if (ret) {
+    handleReturn(ret.dataset.id);
+    return;
+  }
+
+  // reject
+  const rej = e.target.closest('[data-action="reject-dossier"]');
+  if (rej) {
+    handleReject(rej.dataset.id);
+    return;
+  }
+});
+
+// === Login / Logout handlers ===
+
+function handleLoginStaff() {
+  const roleSel = document.getElementById('loginRoleField');
+  const id = roleSel ? roleSel.value : 'reception';
+  loginAsStaff(id);
+}
+function handleLoginInvestor() {
+  const email = (document.getElementById('loginEmailField')?.value || '').trim().toLowerCase();
+  const matched = INVESTORS.find(i => i.email.toLowerCase() === email);
+  loginAsInvestor((matched && matched.id) || 'inv_tchoua');
+}
+function loginAsStaff(roleId) {
+  const r = ROLES.find(x => x.id === roleId) || ROLES[0];
+  state.authenticated = true;
+  state.currentUser = { type: 'staff', id: r.id, name: r.name, title: r.title, titleEn: r.titleEn, initials: r.initials, stageIndex: r.stageIndex };
+  state.currentRole = r.id;
+  state.screen = 'dashboard';
+  state.selectedDossierId = null;
+  state.notificationsOpen = false;
+  render();
+}
+function loginAsInvestor(invId) {
+  const inv = INVESTORS.find(x => x.id === invId) || INVESTORS[0];
+  state.authenticated = true;
+  state.currentUser = {
+    type: 'investor',
+    id: inv.id, name: inv.name,
+    title: state.language === 'fr' ? 'Investisseur · ' + inv.company : 'Investor · ' + inv.company,
+    initials: inv.initials, email: inv.email, company: inv.company, dossierId: inv.dossierId
+  };
+  state.screen = 'my_dossier';
+  state.selectedDossierId = null;
+  state.notificationsOpen = false;
+  render();
+}
+function handleLogout() {
+  state.authenticated = false;
+  state.currentUser = null;
+  state.notificationsOpen = false;
+  state.docPreview = null;
+  render();
+}
+
+// === Doc verification / upload handlers ===
+
+function handleAcceptDoc(dossierId, kind) {
+  const d = state.dossiers.find(x => x.id === dossierId);
+  if (!d) return;
+  const doc = d.documents.find(x => x.kind === kind);
+  if (!doc) return;
+  const u = currentUser();
+  doc.verification = 'accepted';
+  doc.verifiedBy = u.name;
+  doc.verifiedAt = todayISO();
+  delete doc.rejectionReason;
+  // Notify investor
+  state.notifications.push({
+    id: 'n_' + Date.now() + '_' + kind,
+    forUser: d.investorId, forType: 'investor',
+    icon: '✓', iconCls: 'green',
+    title: (state.language === 'fr' ? 'Pièce acceptée : ' : 'Document accepted: ') + (REQUIRED_DOCS.find(r => r.kind === kind)?.name || doc.name),
+    dossierId: d.id,
+    at: new Date().toISOString(), read: false
+  });
+  saveState();
+  render();
+}
+
+function handleRejectDoc(dossierId, kind) {
+  const reason = prompt(state.language === 'fr' ? 'Motif du rejet (visible par l\'investisseur) :' : 'Rejection reason (visible to the investor):');
+  if (!reason || !reason.trim()) return;
+  const d = state.dossiers.find(x => x.id === dossierId);
+  if (!d) return;
+  const doc = d.documents.find(x => x.kind === kind);
+  if (!doc) return;
+  const u = currentUser();
+  doc.verification = 'rejected';
+  doc.verifiedBy = u.name;
+  doc.verifiedAt = todayISO();
+  doc.rejectionReason = reason.trim();
+  state.notifications.push({
+    id: 'n_' + Date.now() + '_' + kind,
+    forUser: d.investorId, forType: 'investor',
+    icon: '✕', iconCls: 'red',
+    title: (state.language === 'fr' ? 'Pièce rejetée : ' : 'Document rejected: ') + (REQUIRED_DOCS.find(r => r.kind === kind)?.name || doc.name) + ' — ' + reason.trim().slice(0, 80),
+    dossierId: d.id,
+    at: new Date().toISOString(), read: false
+  });
+  saveState();
+  render();
+}
+
+function handleUploadDoc(dossierId, kind) {
+  const d = state.dossiers.find(x => x.id === dossierId);
+  if (!d) return;
+  const reqDef = REQUIRED_DOCS.find(r => r.kind === kind);
+  if (!reqDef) return;
+  // Simulate file upload by setting a placeholder
+  const existing = d.documents.find(x => x.kind === kind);
+  if (existing) {
+    existing.uploaded = todayISO();
+    existing.verification = 'pending';
+    delete existing.verifiedBy;
+    delete existing.verifiedAt;
+    delete existing.rejectionReason;
+  } else {
+    d.documents.push({
+      kind, name: reqDef.name + ' — scan_' + dossierId.replace('/','_') + '.pdf',
+      uploaded: todayISO(),
+      verification: 'pending'
+    });
+  }
+  saveState();
+  render();
+}
+
+function handleSubmitInvestorDossier(dossierId) {
+  const d = state.dossiers.find(x => x.id === dossierId);
+  if (!d) return;
+  const allUploaded = REQUIRED_DOCS.every(rd => d.documents.find(doc => doc.kind === rd.kind));
+  if (!allUploaded) {
+    alert(state.language === 'fr' ? 'Toutes les 6 pièces obligatoires doivent être téléversées.' : 'All 6 mandatory documents must be uploaded.');
+    return;
+  }
+  d.state = 'SUBMITTED';
+  d.submittedAt = todayISO();
+  d.history.push({
+    actor: 'investor', role: state.language === 'fr' ? 'Investisseur' : 'Investor',
+    action: state.language === 'fr' ? 'Dossier soumis en ligne (vérification des pièces en cours)' : 'Application submitted online (document verification pending)',
+    at: new Date().toISOString(), class: ''
+  });
+  // Notify reception
+  state.notifications.push({
+    id: 'n_' + Date.now(),
+    forUser: 'reception', forType: 'staff',
+    icon: '📥', iconCls: 'amber',
+    title: (state.language === 'fr' ? 'Nouveau dossier soumis : ' : 'New dossier submitted: ') + d.id + ' · ' + d.investor.raisonSociale,
+    dossierId: d.id,
+    at: new Date().toISOString(), read: false
+  });
+  saveState();
+  state.screen = 'my_dossier';
+  render();
+}
+
+// === Existing action handlers ===
+
+function handleApprove(dossierId) {
+  const d = state.dossiers.find(x => x.id === dossierId);
+  const u = currentUser();
+  if (!d || STATE_TO_ROLE[d.state] !== u.id) return;
+
+  // Block Reception receipt issuance if any document is not accepted
+  if (u.id === 'reception' && d.state === 'SUBMITTED') {
+    const allAccepted = d.documents.length > 0 && d.documents.every(x => x.verification === 'accepted');
+    if (!allAccepted) {
+      alert(state.language === 'fr'
+        ? 'Le récépissé ne peut être délivré que lorsque toutes les pièces sont acceptées. Allez à l\'onglet « Documents » pour vérifier chaque pièce.'
+        : 'The receipt can only be issued once every document is accepted. Go to the "Documents" tab to verify each item.');
+      return;
+    }
+  }
+
+  const comment = document.getElementById('actionComment')?.value || '';
+  const position = document.getElementById('opinionPosition')?.value || 'favorable';
+  const recepNo = document.getElementById('recepNo')?.value;
+  const agreementNo = document.getElementById('agreementNo')?.value;
+
+  const now = new Date().toISOString();
+
+  // Défavorable branching: tax/customs unfavorable routes back to Chef GU for decision (skips remaining linear advance)
+  if ((u.id === 'tax' || u.id === 'customs') && position === 'unfavorable') {
+    d.avis.push({ admin: u.id, position, signedBy: u.name, signedAt: todayISO(), text: comment || '(Avis défavorable)' });
+    d.history.push({
+      actor: u.id,
+      role: `${u.name} (${STAGES.find(s => s.role === u.id).long})`,
+      action: (u.id === 'tax' ? 'Avis fiscal DÉFAVORABLE émis' : 'Avis douanier DÉFAVORABLE émis') + ' — renvoi en synthèse',
+      comment: comment || undefined,
+      at: now,
+      class: 'return'
+    });
+    d.state = 'CUSTOMS_OPINION_DONE'; // routes to Chef GU
+    d.hasUnfavorable = true;
+    // Notify Chef GU
+    state.notifications.push({
+      id: 'n_' + Date.now(),
+      forUser: 'chef_gu', forType: 'staff',
+      icon: '⚠', iconCls: 'red',
+      title: (state.language === 'fr' ? 'Avis défavorable sur dossier ' : 'Unfavourable opinion on dossier ') + d.id + ' — ' + (state.language === 'fr' ? 'arbitrage requis' : 'arbitration required'),
+      dossierId: d.id,
+      at: new Date().toISOString(), read: false
+    });
+    saveState();
+    render();
+    return;
+  }
+
+  // record history
+  const historyMap = {
+    reception: `Récépissé de dépôt délivré${recepNo ? ' (n° ' + recepNo + ')' : ''}`,
+    instruction: 'Instruction technique terminée — avis ' + positionLabel(position),
+    tax: 'Avis fiscal ' + positionLabel(position) + ' émis',
+    customs: 'Avis douanier ' + positionLabel(position) + ' émis',
+    chef_gu: 'Synthèse validée, transmission au DG pour signature',
+    dg: 'Convention signée — agrément délivré' + (agreementNo ? ' (n° ' + agreementNo + ')' : '')
+  };
+
+  d.history.push({
+    actor: u.id,
+    role: `${u.name} (${STAGES.find(s => s.role === u.id).long})`,
+    action: historyMap[u.id],
+    comment: comment || undefined,
+    at: now,
+    class: ''
+  });
+
+  // updates
+  if (u.id === 'reception') {
+    d.recepisseAt = todayISO();
+    d.recepisseNo = recepNo;
+  }
+  if (u.id === 'instruction') {
+    d.avis.push({ admin: 'instruction', position, signedBy: u.name, signedAt: todayISO(), text: comment || '(Avis émis)' });
+  }
+  if (u.id === 'tax') {
+    d.avis.push({ admin: 'tax', position, signedBy: u.name, signedAt: todayISO(), text: comment || '(Avis émis)' });
+  }
+  if (u.id === 'customs') {
+    d.avis.push({ admin: 'customs', position, signedBy: u.name, signedAt: todayISO(), text: comment || '(Avis émis)' });
+  }
+  if (u.id === 'dg') {
+    d.agreementNo = agreementNo;
+    state.counter++;
+  }
+
+  // advance state
+  d.state = NEXT_STATE[d.state];
+
+  // notify next-stage owner + investor
+  const nextOwner = STATE_TO_ROLE[d.state];
+  if (nextOwner) {
+    state.notifications.push({
+      id: 'n_' + Date.now() + '_n',
+      forUser: nextOwner, forType: 'staff',
+      icon: '📋', iconCls: 'blue',
+      title: (state.language === 'fr' ? 'Dossier transféré : ' : 'Dossier handed over: ') + d.id + ' · ' + d.investor.raisonSociale,
+      dossierId: d.id,
+      at: new Date().toISOString(), read: false
+    });
+  }
+  if (d.investorId) {
+    state.notifications.push({
+      id: 'n_' + Date.now() + '_i',
+      forUser: d.investorId, forType: 'investor',
+      icon: d.state === 'ACCREDITED' ? '🎉' : '📋', iconCls: d.state === 'ACCREDITED' ? 'green' : 'blue',
+      title: d.state === 'ACCREDITED'
+        ? (state.language === 'fr' ? '🎉 Convention d\'investissement signée — votre acte d\'agrément est disponible' : '🎉 Investment Convention signed — your decree is available')
+        : (state.language === 'fr' ? `Votre dossier ${d.id} a progressé : ${STATE_TITLES[d.state]}` : `Your dossier ${d.id} has advanced: ${STATE_TITLES[d.state]}`),
+      dossierId: d.id,
+      at: new Date().toISOString(), read: false
+    });
+  }
+
+  saveState();
+  render();
+}
+
+function positionLabel(p) {
+  return { favorable: 'favorable', favorable_reserve: 'favorable avec réserves', unfavorable: 'défavorable' }[p] || p;
+}
+
+function handleReturn(dossierId) {
+  const d = state.dossiers.find(x => x.id === dossierId);
+  const u = currentUser();
+  if (!d) return;
+  const comment = document.getElementById('actionComment')?.value || '';
+  if (!comment.trim()) {
+    showModal({
+      title: 'Motivation requise',
+      body: 'Veuillez indiquer la raison du retour pour complément dans le champ « Commentaire / motivation ».',
+      actions: [{ label: 'OK', class: 'primary' }]
+    });
+    return;
+  }
+  d.state = 'RETURNED';
+  d.history.push({
+    actor: u.id,
+    role: `${u.name} (${STAGES.find(s => s.role === u.id).long})`,
+    action: 'Dossier retourné à l\'investisseur pour complément',
+    comment,
+    at: new Date().toISOString(),
+    class: 'return'
+  });
+  saveState();
+  render();
+}
+
+function handleReject(dossierId) {
+  const d = state.dossiers.find(x => x.id === dossierId);
+  const u = currentUser();
+  if (!d) return;
+  const comment = document.getElementById('actionComment')?.value || '';
+  if (!comment.trim()) {
+    showModal({
+      title: 'Motivation requise',
+      body: 'Le rejet doit être motivé. Veuillez préciser la raison dans le champ « Commentaire / motivation ».',
+      actions: [{ label: 'OK', class: 'primary' }]
+    });
+    return;
+  }
+  showModal({
+    title: 'Confirmer le rejet',
+    body: `Vous êtes sur le point de rejeter définitivement le dossier ${d.id} (${d.investor.raisonSociale}). Cette action est irréversible dans la démo.`,
+    actions: [
+      { label: 'Annuler', class: 'ghost' },
+      { label: 'Confirmer le rejet', class: 'danger', onClick: () => {
+        d.state = 'REJECTED';
+        d.history.push({
+          actor: u.id,
+          role: `${u.name} (${STAGES.find(s => s.role === u.id).long})`,
+          action: 'Dossier rejeté',
+          comment,
+          at: new Date().toISOString(),
+          class: 'reject'
+        });
+        saveState();
+        render();
+      }}
+    ]
+  });
+}
+
+// === Form submit ===
+
+document.addEventListener('submit', (e) => {
+  if (e.target.id === 'newDossierForm') {
+    e.preventDefault();
+    const f = e.target;
+    const fd = new FormData(f);
+    const amount = parseInt(fd.get('amount'), 10);
+    if (!amount || amount < 1) {
+      alert('Montant invalide.');
+      return;
+    }
+    const docKindMap = {
+      doc_activity: { kind: 'activity_authorization', name: 'Autorisation d\'exercice' },
+      doc_recruitment: { kind: 'recruitment_plan', name: 'Plan de recrutement Camerounais' },
+      doc_tech: { kind: 'tech_transfer_plan', name: 'Plan de transfert de technologies' },
+      doc_subcontract: { kind: 'local_subcontracting', name: 'Plan de sous-traitance locale' },
+      doc_financing: { kind: 'financing_proof', name: 'Justification du financement' },
+      doc_feasibility: { kind: 'feasibility', name: 'Étude de faisabilité' }
+    };
+    const docs = [];
+    Object.entries(docKindMap).forEach(([k, v]) => {
+      if (fd.get(k)) docs.push({ kind: v.kind, name: v.name, uploaded: todayISO() });
+    });
+    const art7 = ['art7_jobs','art7_local_inputs','art7_cm_products','art7_value_added','art7_exports'].filter(k => fd.get(k));
+
+    const newDossier = {
+      id: '2025/' + String(state.counter).padStart(6, '0'),
+      investor: {
+        raisonSociale: fd.get('raisonSociale'),
+        niu: fd.get('niu'),
+        legalForm: fd.get('legalForm'),
+        country: fd.get('country'),
+        contact: { name: fd.get('contactName'), email: fd.get('contactEmail'), phone: '' }
+      },
+      sector: fd.get('sector'),
+      type: fd.get('type'),
+      amount,
+      isZdp: !!fd.get('isZdp'),
+      zdpLocality: fd.get('zdpLocality') || null,
+      objet: fd.get('objet'),
+      installationMonths: parseInt(fd.get('installationMonths'), 10) || 24,
+      eligibility: { art7, criteriaDetails: 'Critères déclarés à la soumission.' },
+      state: 'SUBMITTED',
+      submittedAt: todayISO(),
+      recepisseAt: null,
+      documents: docs,
+      avis: [],
+      history: [
+        { actor: 'investor', role: 'Investisseur', action: 'Dossier soumis via le portail', at: new Date().toISOString(), class: '' }
+      ]
+    };
+    state.dossiers.push(newDossier);
+    state.counter++;
+    state.selectedDossierId = newDossier.id;
+    state.screen = 'dossier';
+    state.selectedTab = 'timeline';
+    saveState();
+    render();
+    setTimeout(() => {
+      showModal({
+        title: 'Dossier créé',
+        body: `Le dossier ${newDossier.id} a été enregistré et soumis. Il apparaît désormais dans la corbeille de la Réception (étape 1/6).`,
+        actions: [{ label: 'OK', class: 'primary' }]
+      });
+    }, 100);
+  }
+});
+
+// === Modal ===
+
+function showModal({ title, body, actions }) {
+  const ov = document.getElementById('modalOverlay');
+  const mc = document.getElementById('modalContent');
+  mc.innerHTML = `
+    <h2>${title}</h2>
+    <p>${body}</p>
+    <div class="modal-actions"></div>
+  `;
+  const actBox = mc.querySelector('.modal-actions');
+  actions.forEach(a => {
+    const b = document.createElement('button');
+    b.className = 'btn ' + (a.class || '');
+    b.textContent = a.label;
+    b.addEventListener('click', () => {
+      ov.classList.remove('open');
+      if (a.onClick) a.onClick();
+    });
+    actBox.appendChild(b);
+  });
+  ov.classList.add('open');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'modalOverlay') {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+});
+
+// === Boot ===
+
+render();
+</script>
+</body>
+</html>

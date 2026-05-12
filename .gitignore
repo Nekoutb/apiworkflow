@@ -1,0 +1,19 @@
+# Source / reference material — not part of the deliverable
+*.pdf
+law.txt
+law.html
+pages/
+*_clean.pdf
+*_repaired.pdf
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Local secrets (never commit)
+.env
+.env.local
+*.pem
+*.key
