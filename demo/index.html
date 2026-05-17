@@ -2089,7 +2089,7 @@ function seedDossiers() {
 // === STATE
 // ============================================================
 
-const APP_KEY = 'apicm_workflow_demo_v2';
+const APP_KEY = 'apicm_workflow_demo_v3_nologin';
 
 let state = loadState();
 
@@ -2117,10 +2117,25 @@ function seedNotifications() {
 }
 
 function freshState() {
+  // === TOUR MODE ===
+  // The demo skips the login screen entirely so the link opens straight
+  // into the app. Real signin/2FA is implemented in /app (the production
+  // codebase) and will be re-enabled at the end of the project.
+  // Default identity: Marie Etoundi (Réception) — switch via the avatar
+  // menu in the top-right (6 staff roles + 4 investor accounts).
+  const defaultStaff = ROLES.find(r => r.id === 'reception');
   return {
-    authenticated: false,
-    currentUser: null,          // { type: 'staff'|'investor', id, name, title, initials, dossierId? }
-    currentRole: 'reception',   // legacy compat for STAFF; equals currentUser.id when type=='staff'
+    authenticated: true,
+    currentUser: {
+      type: 'staff',
+      id: defaultStaff.id,
+      name: defaultStaff.name,
+      title: defaultStaff.title,
+      titleEn: defaultStaff.titleEn,
+      initials: defaultStaff.initials,
+      stageIndex: defaultStaff.stageIndex,
+    },
+    currentRole: defaultStaff.id,
     language: 'fr',
     screen: 'dashboard',
     selectedDossierId: null,
@@ -2270,7 +2285,9 @@ function renderHeader() {
   const titleEl = document.getElementById('userMenuTitle');
   titleEl.textContent = isStaff() ? t('ui.change.role') : t('login.tab.investor');
   document.getElementById('logoutLabel').firstChild.textContent = '';
-  document.getElementById('logoutLabel').innerHTML = `${t('ui.logout')}<span class="sub">${t('ui.logout.sub')}</span>`;
+  const resetLbl = state.language === 'fr' ? 'Réinitialiser ma session' : 'Reset my session';
+  const resetSub = state.language === 'fr' ? 'Retour à l\'utilisateur par défaut (Marie Etoundi)' : 'Back to the default user (Marie Etoundi)';
+  document.getElementById('logoutLabel').innerHTML = `${resetLbl}<span class="sub">${resetSub}</span>`;
   document.getElementById('resetLabel').innerHTML = `${t('ui.reset')}<span class="sub">${t('ui.reset.sub')}</span>`;
   const existing = menu.querySelectorAll('.role-item:not([data-action])');
   existing.forEach(e => e.remove());
@@ -2958,34 +2975,19 @@ function fakeDocBody(kind, doss) {
 function renderDemoBanner() {
   const u = currentUser();
   if (!u) return '';
-  let nudge = '';
-  if (isStaff()) {
-    const inbox = inboxFor(u.id);
-    if (inbox.length > 0) {
-      nudge = state.language === 'fr'
-        ? ` Vous avez <strong>${inbox.length} dossier(s)</strong> en attente d'action.`
-        : ` You have <strong>${inbox.length} dossier(s)</strong> awaiting your action.`;
-    } else {
-      nudge = state.language === 'fr'
-        ? ' Aucun dossier en attente pour ce rôle — utilisez le menu en haut à droite pour changer de rôle.'
-        : ' No dossier awaiting this role — use the top-right menu to switch role.';
-    }
-  } else {
-    const doss = investorDossier();
-    nudge = state.language === 'fr'
-      ? (doss ? ` Votre dossier ${doss.id} est suivi par le Guichet Unique.` : ' Vous n\'avez pas encore créé de demande.')
-      : (doss ? ` Your dossier ${doss.id} is being tracked by the One-Stop Shop.` : ' You have not yet created an application.');
-  }
   const intro = state.language === 'fr'
-    ? `<strong>Mode démonstration.</strong> Vous êtes connecté en tant que <strong>${u.name}</strong> · ${userTitle()}.`
-    : `<strong>Demo mode.</strong> You are signed in as <strong>${u.name}</strong> · ${userTitle()}.`;
+    ? `<strong>Mode tour — pas de connexion requise.</strong> Vous explorez en tant que <strong>${u.name}</strong> · ${userTitle()}.`
+    : `<strong>Tour mode — no login required.</strong> You're browsing as <strong>${u.name}</strong> · ${userTitle()}.`;
+  const cta = state.language === 'fr'
+    ? ' Pour changer d\'utilisateur (6 rôles API + 4 investisseurs), cliquez sur l\'avatar en haut à droite ↗.'
+    : ' To switch user (6 API roles + 4 investors), click the avatar in the top-right ↗.';
   const footer = state.language === 'fr'
-    ? ' Toutes les données sont fictives et stockées localement dans votre navigateur.'
-    : ' All data is fictional and stored locally in your browser.';
+    ? ' La connexion sécurisée sera activée à la fin du projet. Toutes les données sont fictives.'
+    : ' Secure login will be enabled at the end of the project. All data is fictional.';
   return `
     <div class="demo-banner">
       <span>⚙</span>
-      <div>${intro}${nudge}${footer}</div>
+      <div>${intro}${cta}${footer}</div>
       <span class="close" data-action="dismiss-banner">✕</span>
     </div>
   `;
@@ -4274,8 +4276,21 @@ function loginAsInvestor(invId) {
   render();
 }
 function handleLogout() {
-  state.authenticated = false;
-  state.currentUser = null;
+  // Tour mode: "logout" just resets to the default identity (no login screen)
+  const defaultStaff = ROLES.find(r => r.id === 'reception');
+  state.authenticated = true;
+  state.currentUser = {
+    type: 'staff',
+    id: defaultStaff.id,
+    name: defaultStaff.name,
+    title: defaultStaff.title,
+    titleEn: defaultStaff.titleEn,
+    initials: defaultStaff.initials,
+    stageIndex: defaultStaff.stageIndex,
+  };
+  state.currentRole = defaultStaff.id;
+  state.screen = 'dashboard';
+  state.selectedDossierId = null;
   state.notificationsOpen = false;
   state.docPreview = null;
   render();
