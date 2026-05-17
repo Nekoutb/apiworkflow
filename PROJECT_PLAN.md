@@ -75,6 +75,18 @@ Other roles outside the 6 sequential stages:
 ### 2.3 Hard rule across all users
 **Separation of duties is enforced.** No officer can sign their own avis and also countersign the convention. Every state transition is signed and timestamped. The audit trail is append-only and SHA-256-chained.
 
+### 2.4 System sign-offs vs. physical signatures
+Each workflow step requires the responsible officer to **system-sign** their action — clicking "Valider", "Émettre l'avis", "Signer la convention", etc. The system sign-off captures:
+- **Who** (user id, name, role)
+- **When** (server-side timestamp)
+- **What position** (favorable / favorable avec réserves / défavorable, or sign / refuse / return)
+- **Why** (mandatory motivation text for unfavourable, return-for-completion, and reject actions)
+- An **immutable audit-trail entry** chained by SHA-256
+
+The system sign-offs collectively constitute the **legal record of departmental review** for the Comité d'audit, the Cour des Comptes, and donors.
+
+The **investment convention and acte d'agrément** are printed from the system and **physically signed (wet signature)** by the Directeur Général; the wet-signed paper is the legal artifact. The system records the moment the DG clicked "Sign" (which generates the PDF), the PDF hash, and the upload of the scanned wet-signed copy that closes the workflow. **No qualified electronic signature (PKI) is used at any stage.**
+
 ---
 
 ## 3. Interface structure
@@ -301,12 +313,13 @@ Week-by-week (compressed):
 - Public agrément register (read-only transparency portal).
 - Comité d'audit session console (agenda, packets, PV editor, decisions register).
 - Advanced analytics (sector mix, regional mix, SLA performance, fine receipts).
-- ANTIC PKI qualified signatures for DG and Comité PVs.
 - Mobile optimisation pass.
 - Penetration test + remediation.
 - DR/backup tested, runbooks written.
 - Training materials (user guides per role, video walkthroughs).
 - Production go-live (full mode, transitional mode lifted under Art. 50).
+
+**Out of scope (per decision 2026-05-17):** qualified electronic signatures (ANTIC PKI). The investment convention and acte d'agrément are printed and **physically signed** (wet signature) by the Directeur Général; the system records the system sign-off (who clicked "Sign", when, with what comment) as the workflow event, and generates the printable PDF for wet signature, but the legal signature itself is on paper. If the agency adopts qualified e-signature in a future regulatory update, this can be added back as a Phase 4 extension.
 
 **Total elapsed time:** ~34 weeks from kickoff (about 8 months).
 
