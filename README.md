@@ -1,15 +1,18 @@
-# API Cameroun — Internal Workflow Demo
+# API Cameroun — Investment Incentives Portal
 
-Internal accreditation workflow for the **Agence de Promotion des Investissements (API) du Cameroun**, built against [Ordonnance n° 2025/002 du 18 juillet 2025](#).
+Internal + external accreditation portal for the **Agence de Promotion des Investissements (API) du Cameroun**, built against [Ordonnance n° 2025/002 du 18 juillet 2025](#).
 
 ## What's in this repo
 
 | Path | Purpose |
 |---|---|
-| `demo/index.html` | Self-contained click-through demo of the internal portal + investor portal (FR/EN, login, 6-stage workflow, document verification, notifications) |
-| `demo/logo.svg` | Standalone logo asset (override by dropping a real `logo.png` next to it) |
-| `WORKFLOW_DESIGN.md` | Full design document — process maps, role matrix, data model, screen inventory, technical architecture |
-| `.github/workflows/deploy.yml` | GitHub Actions workflow that auto-deploys `demo/` to Hostinger on every push to `main` |
+| **`app/`** | **Production Next.js 15 + TypeScript + PostgreSQL codebase.** See [app/README.md](app/README.md) to run locally. |
+| `demo/index.html` | Self-contained HTML click-through demo of the internal + investor portals — kept as stakeholder reference and design source for the production app |
+| `demo/logo.svg` | Standalone logo asset |
+| `PROJECT_PLAN.md` | Execution plan — phases, stack, hosting, decisions locked |
+| `WORKFLOW_DESIGN.md` | Process maps, role matrix, data model, screen inventory, technical architecture |
+| `.github/workflows/deploy.yml` | Auto-deploys `demo/` to Hostinger on push to `main` |
+| `.github/workflows/app-ci.yml` | Typechecks + builds the production `app/` on push to `main` |
 
 ## Auto-deploy to Hostinger
 

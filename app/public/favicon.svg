@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="20" fill="#1e3a8a"/>
+  <text x="50" y="62" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="32" fill="#fff" text-anchor="middle">API</text>
+  <path d="M 18 80 Q 50 92 82 80" stroke="#fcd116" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-page: #f6f7f9;
+    --bg-surface: #ffffff;
+    --color-ink: #1f2937;
+    --color-muted: #6b7280;
+    --color-cmgreen: #006633;
+    --color-cmred: #ce1126;
+    --color-cmyellow: #fcd116;
+  }
+
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg-page); color: var(--color-ink); }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-cmgreen);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-cmgreen-700 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-cmgreen-800 focus:outline-none;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-surface-sunken;
+  }
+  .card {
+    @apply rounded-xl border border-border bg-surface p-5 shadow-soft;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+}
