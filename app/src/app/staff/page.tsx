@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
-import { LogOut, Inbox, Folder, FilePlus, Activity, Gavel, Scale, Bell } from 'lucide-react';
+import { LogoutButton } from '@/components/auth/LogoutButton';
+import { Inbox, Folder, FilePlus, Activity, Gavel, Scale, Bell } from 'lucide-react';
+import { auth } from '@/lib/auth';
 
 export const metadata = { title: 'Portail interne · API Cameroun' };
 
@@ -13,7 +15,9 @@ const STAGES = [
   { id: 'dg',          label: 'Signature',     long: 'Directeur Général',        count: 0 },
 ];
 
-export default function StaffDashboardPage() {
+export default async function StaffDashboardPage() {
+  const session = await auth();
+  const name = session?.user?.name ?? 'Utilisateur';
   return (
     <div className="min-h-screen">
       <header className="border-b border-border bg-cmgreen-700 text-white">
@@ -27,10 +31,7 @@ export default function StaffDashboardPage() {
             <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/20 hover:bg-black/30">
               <Bell className="h-4 w-4" />
             </button>
-            <Link href="/" className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm hover:bg-white/10">
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </Link>
+            <LogoutButton />
           </div>
         </div>
         <div className="h-1 bg-gradient-to-r from-cmgreen-700 via-cmred to-cmyellow" />
@@ -39,7 +40,7 @@ export default function StaffDashboardPage() {
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold">Tableau de bord</h1>
+            <h1 className="text-2xl font-bold">Tableau de bord — {name}</h1>
             <p className="mt-1 text-sm text-ink-muted">
               Vue d&apos;ensemble des dossiers d&apos;agrément en instruction.
             </p>

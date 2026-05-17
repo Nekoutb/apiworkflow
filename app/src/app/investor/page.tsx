@@ -1,10 +1,14 @@
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
-import { LogOut, FileText, MessageCircle, Activity, Bell } from 'lucide-react';
+import { LogoutButton } from '@/components/auth/LogoutButton';
+import { FileText, MessageCircle, Activity, Bell } from 'lucide-react';
+import { auth } from '@/lib/auth';
 
 export const metadata = { title: 'Mon espace · API Cameroun' };
 
-export default function InvestorDashboardPage() {
+export default async function InvestorDashboardPage() {
+  const session = await auth();
+  const name = session?.user?.name ?? 'Investisseur';
   return (
     <div className="min-h-screen">
       {/* Top bar */}
@@ -22,10 +26,7 @@ export default function InvestorDashboardPage() {
                 2
               </span>
             </button>
-            <Link href="/" className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm hover:bg-white/10">
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </Link>
+            <LogoutButton />
           </div>
         </div>
         <div className="h-1 bg-gradient-to-r from-cmgreen-700 via-cmred to-cmyellow" />
@@ -33,7 +34,7 @@ export default function InvestorDashboardPage() {
 
       <main className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold">Mon espace</h1>
+          <h1 className="text-2xl font-bold">Bienvenue, {name}</h1>
           <p className="mt-1 text-sm text-ink-muted">
             Préparez et suivez votre demande d&apos;agrément aux incitations à l&apos;investissement.
           </p>
