@@ -1,10 +1,31 @@
 # API Cameroun — Investment Incentives Portal
-## Project Plan v1 — for review before implementation
+## Project Plan v2 — DECISIONS LOCKED, ready for Phase 0 build
 
-> **Status:** Draft for review.
+> **Status:** Foundation decisions locked. Cleared to start Phase 0.
 > **Date:** 2026-05-13.
 > **Audience:** API DG, Chef du Guichet Unique, IT lead, project sponsor.
 > **Reading time:** ~15 min.
+
+---
+
+## 🔒 Decisions locked (v2)
+
+The four foundation decisions in §9 and the open assumptions in §10 are resolved as follows. These are the choices most likely to produce a system that *works well in the hands of real users* — speed, reliability, and maintainability optimised over political symbolism (we can migrate later for sovereignty without re-architecting).
+
+| Decision | Locked choice | Reasoning |
+|---|---|---|
+| **Hosting** | **AWS eu-west-3 (Paris)** for MVP through Phase 2. Migration path to sovereign cloud (CAMTEL/ANTIC) documented and scheduled for Phase 3 *if* regulatory requirements demand it. | Lowest latency from Cameroon among hyperscalers, 99.99 % SLA, full set of managed services (RDS Postgres, S3, SES, Secrets Manager), no operational burden on API IT during build. Sovereign cloud maturity in 2026 doesn't yet match AWS for the managed services we need; we keep the option open for Phase 3. |
+| **Identity for staff** | **Standalone account + mandatory 2FA (TOTP)**, with OIDC adapter built in from day one so plugging into an API Active Directory later is a configuration change, not a refactor. | Doesn't depend on the API's directory being ready, secure today, future-proof. |
+| **Identity for investors** | **Email + password + 2FA (TOTP)**, plus optional Google / Microsoft OAuth for convenience. | Lowest friction for foreign investors, no national-ID dependency, 2FA mandatory for legal-stakes account. |
+| **Domain naming** | **`api.cm` subdomains** (assumed available — to verify at Phase 0 kickoff): `investir.api.cm` for the external portal, `workflow.api.cm` for the internal portal, `public.api.cm` for the public agrément register (Phase 3). Fallback if `api.cm` is unavailable: `apicameroun.cm`. | Matches the agency's brand, separates external from internal surface, gives each surface its own WAF policy. |
+| **Disaster recovery** | **Daily encrypted snapshots + weekly off-site copy** for MVP and Phase 2. Quarterly restore tests. **Hot standby in a second AWS region (Frankfurt)** added in Phase 3 with RPO ≤ 15 min / RTO ≤ 1 hr. | Pragmatic for MVP volumes, full DR before high-stakes scale. |
+| **Workshop with stakeholders** | **Deferred — not required to start Phase 0.** Scope will be validated during Phase 1 UAT with real API staff on real test dossiers. The plan's assumptions (§10) are based on the ordinance text. The workshop happens as part of Phase 1 acceptance, not as a Phase 0 prerequisite. | Avoids blocking the build on calendar-coordination; the ordinance text is authoritative enough to start. Any divergence surfaces in UAT and adjusts the build by one sprint. |
+| **Data sovereignty** | All personal data of Cameroonian citizens stored in EU region (Paris); data classified as "highly sensitive" (audit trails, signed conventions) additionally backed up to an off-site location within the EU. Documented compliance with Loi 2010/012. | Best privacy posture available today; migration to CAMTEL in Phase 3 if needed. |
+| **Domain for the *demo* (this repo)** | Stays at `lavender-ram-492325.hostingersite.com/demo/` until the real `api.cm` domain is acquired. The demo is for stakeholder review, not for production traffic. | No further work on the demo URL itself — energy goes into the real build. |
+
+**What this unlocks:** I can begin Phase 0 technical scaffolding (Next.js 15 + TypeScript + PostgreSQL + Prisma + Auth.js skeleton, AWS Paris CI/CD pipeline, design system) **immediately**. No further blocking decisions remain on my side. The build proceeds on the assumptions in §10; any incorrect assumption costs ~1 sprint to correct during UAT.
+
+---
 
 ---
 
