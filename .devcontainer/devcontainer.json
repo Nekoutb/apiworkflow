@@ -1,0 +1,40 @@
+{
+  "name": "API Cameroun — Next.js + Postgres",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "forwardPorts": [3000, 5432],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js dev server",
+      "visibility": "public",
+      "onAutoForward": "openBrowser"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "visibility": "private"
+    }
+  },
+  "onCreateCommand": "bash .devcontainer/oncreate.sh",
+  "postStartCommand": "bash .devcontainer/poststart.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql://postgres:dev@localhost:5432/apicameroun?schema=public",
+    "AUTH_SECRET": "codespace-dev-secret-replace-in-real-production-XXXXX",
+    "AUTH_TRUST_HOST": "true",
+    "STORAGE_DRIVER": "disk",
+    "APP_NAME": "API Cameroun",
+    "APP_LOCALE_DEFAULT": "fr"
+  }
+}
