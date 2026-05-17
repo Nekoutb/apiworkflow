@@ -41,7 +41,6 @@ export async function middleware(req: NextRequest) {
   }
 
   // Role gating
-  // @ts-expect-error custom session field
   const userType: string | undefined = session.user.userType;
 
   if (pathname.startsWith('/investor') && userType !== 'INVESTOR' && userType !== 'STAFF') {

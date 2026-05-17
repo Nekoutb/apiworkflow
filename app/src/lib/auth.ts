@@ -52,18 +52,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        // @ts-expect-error
         token.userType = user.userType;
-        // @ts-expect-error
         token.staffRole = user.staffRole;
       }
       return token;
     },
     async session({ session, token }) {
       // Surface custom fields on session.user
-      // @ts-expect-error
       session.user.userType = token.userType;
-      // @ts-expect-error
       session.user.staffRole = token.staffRole;
       return session;
     },

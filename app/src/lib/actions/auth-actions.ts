@@ -143,7 +143,6 @@ export async function dispatchAfterLogin() {
   if (!session?.user) {
     redirect('/login');
   }
-  // @ts-expect-error custom session fields
   const userType: UserType | undefined = session.user.userType;
   redirect(userType === UserType.STAFF ? '/staff' : '/investor');
 }

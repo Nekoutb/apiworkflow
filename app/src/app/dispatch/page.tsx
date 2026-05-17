@@ -11,7 +11,6 @@ export default async function DispatchPage() {
   if (!session?.user) {
     redirect('/login');
   }
-  // @ts-expect-error custom session field
   const userType: string | undefined = session.user.userType;
   if (userType === 'STAFF') redirect('/staff');
   redirect('/investor');
