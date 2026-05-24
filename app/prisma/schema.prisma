@@ -61,17 +61,20 @@ enum UserType {
   STAFF
 }
 
+// 5-stage workflow roles + system admin
+// Stage 1: SECRETARY (Secrétariat — vérification de complétude)
+// Stage 2: DIR_INVESTMENTS (Directeur des Investissements)
+// Stage 3: DIR_COMPLIANCE (Directeur de la Conformité)
+// Stage 4: DIR_EXTERNAL (Directeur des Relations Extérieures)
+// Stage 5: DG (Directeur Général — signature finale)
+// + ADMIN (gestion des comptes, configuration système)
 enum StaffRole {
-  RECEPTION       // Réceptionniste · Guichet Unique
-  INSTRUCTION     // Instructeur · Service Technique
-  TAX             // Représentant DGI
-  CUSTOMS         // Représentant DGD
-  CHEF_GU         // Chef du Guichet Unique
-  DG              // Directeur Général
-  COMITE_AUDIT    // Membre Comité d'audit et de recours
-  UNITE_TECHNIQUE // Investigateur de l'Unité technique
-  AUDITOR         // Read-only (Cour des Comptes, donors)
-  ADMIN           // System admin
+  SECRETARY
+  DIR_INVESTMENTS
+  DIR_COMPLIANCE
+  DIR_EXTERNAL
+  DG
+  ADMIN
 }
 
 enum UserStatus {
