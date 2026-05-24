@@ -71,21 +71,19 @@ LE_EMAIL=you@yourdomain.com bash /tmp/repo/scripts/vps-bootstrap.sh
 ```
 
 This installs Node 20, PM2, nginx, certbot, UFW, **fail2ban**; creates the
-`deploy` user with a strong random password; prepares the release folder
-layout; configures SSH to allow password auth only for the `deploy` user
-(root stays key-only); and prints the values you need for GitHub Secrets.
+`deploy` user **without** a password; prepares the release folder layout;
+and configures SSH to allow password auth only for the `deploy` user (root
+stays key-only).
 
-**At the end it prints:**
+**This script never touches the deploy user's password.** Set it yourself
+once, then leave it alone:
 
+```bash
+passwd deploy
+# Choose a strong password — this is the value you'll put in VPS_PASSWORD
 ```
-VPS_HOST      = 45.32.150.96
-VPS_USER      = deploy
-VPS_PORT      = 22
-VPS_PASSWORD  = <generated 28-char random password>
-```
 
-The password is also saved to `/root/.deploy-password` (mode 600) so you can
-retrieve it later. To rotate, re-run the bootstrap script.
+Re-running the bootstrap is safe — your existing password is preserved.
 
 ### 2. Fill in the real env vars on the VPS
 
@@ -126,7 +124,7 @@ GitHub → **Settings** → **Secrets and variables** → **Actions** → **New 
 | `VPS_HOST` | `45.32.150.96` |
 | `VPS_USER` | `deploy` |
 | `VPS_PORT` | `22` |
-| `VPS_PASSWORD` | Random password printed by `vps-bootstrap.sh` |
+| `VPS_PASSWORD` | The password you set manually via `passwd deploy` |
 | `VPS_KNOWN_HOSTS` *(optional but recommended)* | Output of `ssh-keyscan -H 45.32.150.96` |
 
 ### 6. Create the `production` environment in GitHub (optional)
@@ -205,7 +203,7 @@ pm2 reload cmipaportal --update-env
 
 | Symptom | Likely cause / fix |
 |---|---|
-| `Permission denied (password)` in GH Actions | `VPS_PASSWORD` mismatches what's on the server. Re-run `vps-bootstrap.sh` to rotate, then update the secret |
+| `Permission denied (password)` in GH Actions | `VPS_PASSWORD` mismatches what's on the server. Update the secret to match (the bootstrap script never changes the password) |
 | `sshpass: command not found` | Workflow step "Setup SSH" failed to apt-install sshpass — check runner image |
 | Locked out by fail2ban | SSH from a different IP and run `fail2ban-client set sshd unbanip <IP>` |
 | Build OK, deploy hangs on "SSH preflight" | UFW blocking SSH from GH runners — `ufw status` and ensure `22/tcp` is allowed |
@@ -222,21 +220,16 @@ pm2 reload cmipaportal --update-env
 - **The `deploy` user has limited sudo** — only `systemctl reload/restart nginx`. It cannot install packages, modify other apps, or touch root-owned files.
 - **Password auth** is enabled **only for the `deploy` user** via a `Match User` block in `/etc/ssh/sshd_config.d/10-cmipaportal.conf`. Root SSH stays key-only (`PermitRootLogin prohibit-password`).
 - **fail2ban** bans IPs after 5 failed SSH attempts in 10 minutes for 1 hour. Tune in `/etc/fail2ban/jail.d/sshd.local`.
-- **`VPS_PASSWORD`** lives in GitHub Secrets (encrypted at rest, masked in logs) and `/root/.deploy-password` on the VPS (mode 600). Rotate by re-running `vps-bootstrap.sh` and updating the secret.
+- **`VPS_PASSWORD`** is set manually by you with `passwd deploy` and lives only in GitHub Secrets (encrypted at rest, masked in logs) + the standard Linux shadow file on the server. **The bootstrap script never reads, writes, or rotates it.**
 - **`.env.production` lives only on the VPS** in `shared/`, mode `600`, owned by `deploy`. It is never copied through GitHub Actions logs or artifacts.
 - **No secrets are baked into the build artifact** — runtime env is loaded from `.env.production` after symlink swap.
 - **HTTPS is enforced** by certbot's `--redirect` flag (HTTP 301 → HTTPS).
 - **Firewall (UFW)** allows only SSH + HTTP + HTTPS.
 
 **Why password auth (not keys)?** Operator preference. Mitigated by:
-1. Random 28-char password (not user-chosen)
-2. Password auth scoped to `deploy` user only (root remains key-only)
-3. fail2ban brute-force protection
-4. Secret stored encrypted in GitHub + 600-mode file on server
-5. Easy rotation via re-running bootstrap
+1. Password auth scoped to `deploy` user only (root remains key-only)
+2. fail2ban brute-force protection (5 fails / 10min → 1h ban)
+3. Secret stored encrypted in GitHub Secrets (masked in logs)
+4. Choose a strong password when you run `passwd deploy`
 
-**If a password is ever exposed:**
-1. Re-run `bash scripts/vps-bootstrap.sh` on the server — generates a fresh password
-2. Copy the new `VPS_PASSWORD` from the bootstrap output
-3. Update the `VPS_PASSWORD` secret in GitHub
-4. Rotate `AUTH_SECRET` in `/var/www/cmipaportal/shared/.env.production` + `pm2 reload cmipaportal`
+**Password management policy:** The bootstrap script will **never** generate, set, or rotate the deploy user's password. You set it once with `passwd deploy` and it persists. If the password needs to be different for any reason, you change it yourself with `passwd deploy` and update the `VPS_PASSWORD` secret in GitHub to match.

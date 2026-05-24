@@ -76,32 +76,33 @@ ufw allow 'Nginx Full'   >/dev/null 2>&1 || true
 yes | ufw enable         >/dev/null 2>&1 || true
 ok "Firewall: SSH + HTTP + HTTPS open"
 
-# ---------- 6. Deploy user (with password for GitHub Actions SSH) ------------
-# Generate (or reuse) a strong random password for the deploy user. Printed at
-# the end of bootstrap — copy into the VPS_PASSWORD GitHub secret.
-DEPLOY_PASS_FILE="/root/.${APP_USER}-password"
-if [[ -f "$DEPLOY_PASS_FILE" ]]; then
-  DEPLOY_PASSWORD="$(cat "$DEPLOY_PASS_FILE")"
-else
-  DEPLOY_PASSWORD="$(openssl rand -base64 30 | tr -d '/+=' | cut -c1-28)"
-  echo -n "$DEPLOY_PASSWORD" > "$DEPLOY_PASS_FILE"
-  chmod 600 "$DEPLOY_PASS_FILE"
-fi
-
+# ---------- 6. Deploy user ---------------------------------------------------
+# NOTE: This script NEVER sets, generates, or rotates the deploy user's
+# password. You set it yourself once via `passwd $APP_USER` after bootstrap,
+# then add that same value to the VPS_PASSWORD GitHub secret. Re-running
+# bootstrap leaves the existing password untouched.
+NEEDS_PASSWORD=0
 if ! id -u "$APP_USER" >/dev/null 2>&1; then
-  log "6/9 · Creating deploy user: $APP_USER"
+  log "6/9 · Creating deploy user: $APP_USER (NO password set — you set it manually)"
   adduser --disabled-password --gecos "" "$APP_USER"
   usermod -aG sudo "$APP_USER"
-  # Allow passwordless restart of the app's PM2 process only
+  # Allow passwordless reload of nginx only — limited scope
   cat >/etc/sudoers.d/${APP_USER}-${APP_NAME} <<EOF
 ${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl reload nginx, /bin/systemctl restart nginx
 EOF
   chmod 440 /etc/sudoers.d/${APP_USER}-${APP_NAME}
+  NEEDS_PASSWORD=1
 fi
 
-# Set / refresh the password (always, so re-running bootstrap rotates it)
-echo "${APP_USER}:${DEPLOY_PASSWORD}" | chpasswd
-ok "Deploy user: $APP_USER (password set)"
+# Detect whether the user currently has a usable password (for the summary msg)
+PW_STATUS="$(passwd -S "$APP_USER" 2>/dev/null | awk '{print $2}')"
+case "$PW_STATUS" in
+  P) PW_STATE="set (unchanged)" ;;
+  L) PW_STATE="locked"; NEEDS_PASSWORD=1 ;;
+  NP) PW_STATE="empty"; NEEDS_PASSWORD=1 ;;
+  *) PW_STATE="unknown ($PW_STATUS)"; NEEDS_PASSWORD=1 ;;
+esac
+ok "Deploy user: $APP_USER · password ${PW_STATE}"
 
 # ---------- 6b. SSH hardening for password auth ------------------------------
 # Enable password auth ONLY for the deploy user, keep root key-only.
@@ -252,11 +253,22 @@ echo
 echo "  VPS_HOST      = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
 echo "  VPS_USER      = $APP_USER"
 echo "  VPS_PORT      = 22"
-echo "  VPS_PASSWORD  = ${DEPLOY_PASSWORD}"
+echo "  VPS_PASSWORD  = (the password you set with passwd ${APP_USER})"
 echo
-echo "  ⚠️  Copy the password above into GitHub Secrets NOW."
-echo "  ⚠️  It is also saved at: $DEPLOY_PASS_FILE  (root-only, 600)"
-echo "  ⚠️  Re-run this script to rotate it (overwrites the secret)."
+if [[ $NEEDS_PASSWORD -eq 1 ]]; then
+  echo "  ⚠️  ACTION REQUIRED — the ${APP_USER} user has no usable password yet."
+  echo "  ⚠️  Set one now (this script will NEVER touch it):"
+  echo
+  echo "        passwd ${APP_USER}"
+  echo
+  echo "  ⚠️  Then add the same value into GitHub Secrets as VPS_PASSWORD."
+else
+  echo "  ✓  The ${APP_USER} user already has a password — leave it as is."
+  echo "  ✓  Make sure GitHub Secrets → VPS_PASSWORD matches it."
+fi
+echo
+echo "  This script DOES NOT rotate passwords. Re-running is safe — your"
+echo "  existing password stays intact."
 echo
 echo "  Then push to main — the workflow will deploy automatically."
 echo "==============================================================="
