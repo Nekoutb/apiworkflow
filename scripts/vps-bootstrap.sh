@@ -76,7 +76,18 @@ ufw allow 'Nginx Full'   >/dev/null 2>&1 || true
 yes | ufw enable         >/dev/null 2>&1 || true
 ok "Firewall: SSH + HTTP + HTTPS open"
 
-# ---------- 6. Deploy user ---------------------------------------------------
+# ---------- 6. Deploy user (with password for GitHub Actions SSH) ------------
+# Generate (or reuse) a strong random password for the deploy user. Printed at
+# the end of bootstrap — copy into the VPS_PASSWORD GitHub secret.
+DEPLOY_PASS_FILE="/root/.${APP_USER}-password"
+if [[ -f "$DEPLOY_PASS_FILE" ]]; then
+  DEPLOY_PASSWORD="$(cat "$DEPLOY_PASS_FILE")"
+else
+  DEPLOY_PASSWORD="$(openssl rand -base64 30 | tr -d '/+=' | cut -c1-28)"
+  echo -n "$DEPLOY_PASSWORD" > "$DEPLOY_PASS_FILE"
+  chmod 600 "$DEPLOY_PASS_FILE"
+fi
+
 if ! id -u "$APP_USER" >/dev/null 2>&1; then
   log "6/9 · Creating deploy user: $APP_USER"
   adduser --disabled-password --gecos "" "$APP_USER"
@@ -87,7 +98,40 @@ ${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl reload nginx, /bin/systemctl res
 EOF
   chmod 440 /etc/sudoers.d/${APP_USER}-${APP_NAME}
 fi
-ok "Deploy user: $APP_USER"
+
+# Set / refresh the password (always, so re-running bootstrap rotates it)
+echo "${APP_USER}:${DEPLOY_PASSWORD}" | chpasswd
+ok "Deploy user: $APP_USER (password set)"
+
+# ---------- 6b. SSH hardening for password auth ------------------------------
+# Enable password auth ONLY for the deploy user, keep root key-only.
+log "    · Enabling password auth for $APP_USER only (root stays key-only)"
+mkdir -p /etc/ssh/sshd_config.d
+cat >/etc/ssh/sshd_config.d/10-${APP_NAME}.conf <<SSHEOF
+# Managed by ${APP_NAME} bootstrap
+PasswordAuthentication yes
+PubkeyAuthentication   yes
+PermitRootLogin        prohibit-password
+Match User ${APP_USER}
+    PasswordAuthentication yes
+SSHEOF
+systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
+
+# Install fail2ban to mitigate brute-force on password auth
+if ! command -v fail2ban-server >/dev/null; then
+  log "    · Installing fail2ban (brute-force protection)"
+  apt-get install -y -qq fail2ban
+  cat >/etc/fail2ban/jail.d/sshd.local <<'F2BEOF'
+[sshd]
+enabled  = true
+port     = ssh
+maxretry = 5
+findtime = 10m
+bantime  = 1h
+F2BEOF
+  systemctl enable --now fail2ban >/dev/null
+  ok   "fail2ban enabled"
+fi
 
 # ---------- 7. Release folder layout (Capistrano-style) ----------------------
 log "7/9 · Preparing release layout under $APP_ROOT"
@@ -119,20 +163,12 @@ mkdir -p /var/log/${APP_NAME}
 chown -R "$APP_USER:$APP_USER" /var/log/${APP_NAME}
 ok "Release layout ready"
 
-# ---------- 8. SSH key for GitHub Actions -----------------------------------
+# ---------- 8. Prepare home/.ssh skeleton (no key needed for password auth) -
 SSH_DIR="/home/${APP_USER}/.ssh"
-KEY_PATH="${SSH_DIR}/github_deploy"
 mkdir -p "$SSH_DIR"
 chmod 700 "$SSH_DIR"
-if [[ ! -f "$KEY_PATH" ]]; then
-  log "8/9 · Generating SSH deploy key for GitHub Actions"
-  sudo -u "$APP_USER" ssh-keygen -t ed25519 -N "" -C "github-actions@${APP_DOMAIN}" -f "$KEY_PATH"
-fi
-touch "$SSH_DIR/authorized_keys"
-chmod 600 "$SSH_DIR/authorized_keys"
-grep -qxF "$(cat ${KEY_PATH}.pub)" "$SSH_DIR/authorized_keys" || cat "${KEY_PATH}.pub" >> "$SSH_DIR/authorized_keys"
 chown -R "$APP_USER:$APP_USER" "$SSH_DIR"
-ok "Deploy key ready"
+ok "8/9 · SSH home prepared (password auth mode — no key needed)"
 
 # ---------- 9. nginx site (HTTP only — certbot will add HTTPS later) --------
 NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}"
@@ -213,14 +249,14 @@ echo "==============================================================="
 echo "  📋  ADD THESE TO GITHUB → Settings → Secrets and variables → Actions"
 echo "==============================================================="
 echo
-echo "  VPS_HOST     = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
-echo "  VPS_USER     = $APP_USER"
-echo "  VPS_PORT     = 22"
-echo "  VPS_SSH_KEY  = (the private key below — copy ENTIRE block including BEGIN/END lines)"
+echo "  VPS_HOST      = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
+echo "  VPS_USER      = $APP_USER"
+echo "  VPS_PORT      = 22"
+echo "  VPS_PASSWORD  = ${DEPLOY_PASSWORD}"
 echo
-echo "  ---------- BEGIN PRIVATE KEY ----------"
-cat "$KEY_PATH"
-echo "  ---------- END PRIVATE KEY ----------"
+echo "  ⚠️  Copy the password above into GitHub Secrets NOW."
+echo "  ⚠️  It is also saved at: $DEPLOY_PASS_FILE  (root-only, 600)"
+echo "  ⚠️  Re-run this script to rotate it (overwrites the secret)."
 echo
 echo "  Then push to main — the workflow will deploy automatically."
 echo "==============================================================="
