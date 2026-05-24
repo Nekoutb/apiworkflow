@@ -92,15 +92,33 @@ export default async function DashboardPage() {
               body="Création et gestion des comptes du personnel API. Accessible aux administrateurs."
             />
           )}
+          {isAdmin ? (
+            <Link
+              href="/admin/data"
+              className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift"
+            >
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">
+                ✓ A3 · Disponible
+              </div>
+              <h3 className="serif text-[19px] font-bold text-ink">Aperçu base de données</h3>
+              <p className="serif mt-2 text-[13px] italic text-ink-3">
+                Modèle de données complet : investisseurs, conventions, documents, workflow, IA. 3 conventions d'exemple.
+              </p>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800 transition group-hover:tracking-[0.18em]">
+                Ouvrir →
+              </div>
+            </Link>
+          ) : (
+            <PlaceholderCard
+              eyebrow="A3 · Admin uniquement"
+              title="Modèle de données"
+              body="Schéma complet de la base. Réservé à l'administrateur pendant la phase de construction."
+            />
+          )}
           <PlaceholderCard
             eyebrow="À venir · A8 – A14"
             title="Workflow d'instruction"
             body="Corbeilles par rôle, vue 3 colonnes avec assistant IA, signatures et transmissions."
-          />
-          <PlaceholderCard
-            eyebrow="À venir · A19"
-            title="Tableau de bord du DG"
-            body="Indicateurs économiques consolidés, registre des conventions, alertes SLA."
             accent
           />
         </div>
@@ -114,6 +132,7 @@ export default async function DashboardPage() {
             <li>• <strong className="not-italic">A0</strong> · Fondations & premier déploiement</li>
             <li>• <strong className="not-italic">A1</strong> · Auth shell (admin / admin · JWT · middleware Edge-safe)</li>
             <li>• <strong className="not-italic">A2</strong> · Gestion du personnel — 5 rôles, création/désactivation, email de bienvenue</li>
+            <li>• <strong className="not-italic">A3</strong> · Modèle de données — investisseurs, conventions, documents, workflow, IA</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{role}</code></li>
           </ul>
         </div>

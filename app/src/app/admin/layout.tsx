@@ -42,9 +42,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </Link>
             <Link
               href="/admin/users"
-              className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink"
+              className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
             >
               Personnel
+            </Link>
+            <Link
+              href="/admin/data"
+              className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
+            >
+              Données
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-4">

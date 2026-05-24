@@ -1,7 +1,14 @@
 // =========================================================
 // API Cameroun — Investment Incentives Portal
-// Database schema (PostgreSQL via Prisma)
-// Based on Ordonnance n° 2025/002 du 18 juillet 2025
+// Prisma schema (PostgreSQL via Neon)
+//
+// Domain model for the 5-stage internal workflow:
+//   SECRETARY → DIR_INVESTMENTS → DIR_COMPLIANCE → DIR_EXTERNAL → DG
+//
+// Every convention is owned by exactly one investor, accumulates
+// documents (each with comments), and is advanced through stages
+// by WorkflowEvent rows.  AI analyses and financial summaries are
+// cached per stage so we never re-call Claude unnecessarily.
 // =========================================================
 
 generator client {
@@ -13,44 +20,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- Auth.js required tables ---
+// ---------------------------------------------------------
+// Auth.js tables
+// ---------------------------------------------------------
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  emailVerified   DateTime?
-  passwordHash    String?
-  name            String?
-  image           String?
-  // Discriminator: 'investor' or 'staff'
-  userType        UserType
-  // For staff: which workflow role
-  staffRole       StaffRole?
-  // 2FA
-  totpSecret      String?
-  totpEnabled     Boolean   @default(false)
-  // Locale preference (overrides browser default)
-  locale          String    @default("fr")
-  // Account state
-  status          UserStatus @default(ACTIVE)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  lastLoginAt     DateTime?
+  id            String     @id @default(cuid())
+  email         String     @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
 
-  // For investor users — link to the investor profile (1-1)
-  investorProfile InvestorProfile?
+  userType      UserType
+  staffRole     StaffRole?
+
+  locale        String     @default("fr")
+  status        UserStatus @default(ACTIVE)
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLoginAt   DateTime?
 
   // Auth.js relations
-  accounts        Account[]
-  sessions        Session[]
+  accounts      Account[]
+  sessions      Session[]
 
   // Domain relations
-  documentsVerified Document[]      @relation("DocumentVerifier")
-  opinionsSigned    Opinion[]       @relation("OpinionSigner")
-  historyEntries    HistoryEntry[]
-  auditTrail        AuditTrailEntry[]
-  notifications     Notification[]
-  recoursesFiled    Recourse[]      @relation("RecourseFiledBy")
+  investor               Investor?
+  documentsVerified      Document[]            @relation("DocumentVerifier")
+  workflowEventsActioned WorkflowEvent[]       @relation("WorkflowActor")
+  conventionsSigned      Convention[]          @relation("ConventionSigner")
+  conventionsImported    Convention[]          @relation("ConventionImporter")
+  commentsAuthored       Comment[]
+  notifications          Notification[]
+  auditTrail             AuditTrailEntry[]
 
   @@index([userType])
   @@index([staffRole])
@@ -61,13 +65,7 @@ enum UserType {
   STAFF
 }
 
-// 5-stage workflow roles + system admin
-// Stage 1: SECRETARY (Secrétariat — vérification de complétude)
-// Stage 2: DIR_INVESTMENTS (Directeur des Investissements)
-// Stage 3: DIR_COMPLIANCE (Directeur de la Conformité)
-// Stage 4: DIR_EXTERNAL (Directeur des Relations Extérieures)
-// Stage 5: DG (Directeur Général — signature finale)
-// + ADMIN (gestion des comptes, configuration système)
+// 5-stage workflow roles + system admin.
 enum StaffRole {
   SECRETARY
   DIR_INVESTMENTS
@@ -83,7 +81,6 @@ enum UserStatus {
   CLOSED
 }
 
-// --- Auth.js OAuth account linking ---
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -119,172 +116,196 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// --- Domain: Investor profile (extends User for investor type) ---
-model InvestorProfile {
+// ---------------------------------------------------------
+// Investor (the company behind every dossier)
+// ---------------------------------------------------------
+
+model Investor {
   id            String  @id @default(cuid())
   userId        String  @unique
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   raisonSociale String
   niu           String? // Numéro d'Identifiant Unique (Cameroon tax ID)
-  legalForm     String? // SARL, SA, SUARL, etc.
+  legalForm     String? // SARL, SA, SUARL, GIE, etc.
   country       String  @default("Cameroun")
-  isResident    Boolean @default(true)
+  region        String?
+  city          String?
+  address       String?
+
+  contactName   String?
   contactPhone  String?
 
-  // KYC / AML status (Art. 49)
-  kycStatus     KycStatus @default(PENDING)
-  kycCompletedAt DateTime?
+  // True for investors whose conventions pre-date this website and were
+  // imported manually (Activity A20).
+  isExisting    Boolean @default(false)
 
-  dossiers      Dossier[]
+  conventions   Convention[]
+  reports       PostIncentiveReport[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([isExisting])
 }
 
-enum KycStatus {
-  PENDING
-  VERIFIED
-  REJECTED
+// ---------------------------------------------------------
+// Convention — the investment-incentive dossier
+// ---------------------------------------------------------
+
+model Convention {
+  id          String   @id @default(cuid())
+  reference   String   @unique // e.g. CV-2026-000123
+
+  investorId  String
+  investor    Investor @relation(fields: [investorId], references: [id], onDelete: Cascade)
+
+  // Project descriptors
+  projectName String
+  sector      Sector
+  region      String?
+  projectType ProjectType @default(NEW)
+
+  // Financials
+  investmentFcfa BigInt
+  jobsPlanned    Int      @default(0)
+  category       Category // A/B/C derived from investmentFcfa
+
+  // Lifecycle
+  status       ConventionStatus @default(DRAFT)
+  currentStage ConventionStage  @default(SECRETARY)
+
+  // Key timestamps
+  submittedAt DateTime?
+  signedAt    DateTime?
+  closedAt    DateTime?
+
+  // Reference numbers issued along the way
+  recepisseNo String?
+  agreementNo String?
+
+  // DG who signed the final convention
+  signerUserId String?
+  signer       User?    @relation("ConventionSigner", fields: [signerUserId], references: [id])
+
+  // Import bookkeeping (for pre-website conventions, A20)
+  isImported       Boolean   @default(false)
+  importedAt       DateTime?
+  importedByUserId String?
+  importedBy       User?     @relation("ConventionImporter", fields: [importedByUserId], references: [id])
+  scannedOriginalUri String?  // PDF of the paper convention, when imported
+
+  // Cached AI outputs (one financial summary, several stage analyses)
+  financialSummary FinancialSummary?
+  aiAnalyses       AiAnalysis[]
+
+  // Children
+  documents      Document[]
+  workflowEvents WorkflowEvent[]
+  comments       Comment[]
+  notifications  Notification[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([currentStage])
+  @@index([investorId])
+  @@index([isImported])
 }
 
-// --- Domain: Dossier (the investment-incentive request) ---
-model Dossier {
-  id                 String        @id @default(cuid())
-  // Sequential ID in YYYY/NNNNNN format (e.g. 2025/000123)
-  reference          String        @unique
-  investorProfileId  String
-  investorProfile    InvestorProfile @relation(fields: [investorProfileId], references: [id])
-
-  regime             Regime        @default(COMMUN)
-  projectType        ProjectType
-  sector             Sector
-  isZdp              Boolean       @default(false)
-  zdpLocality        String?
-  objet              String        @db.Text
-  installationMonths Int           @default(60)
-
-  // Investment amount in FCFA (BigInt because > 2^31 possible)
-  amountFcfa         BigInt
-
-  // Category derived from amountFcfa (A < 1Md, B 1-5Md, C > 5Md)
-  category           Category
-
-  // Lifecycle state
-  state              DossierState  @default(DRAFT)
-
-  // Key timestamps (statutory clocks)
-  submittedAt        DateTime?
-  recepisseAt        DateTime?
-  recepisseNo        String?
-  agreementSignedAt  DateTime?
-  agreementNo        String?
-
-  // Eligibility declarations (free-form JSON for Art. 7 / Art. 8 criteria)
-  eligibilityJson    Json?
-
-  // Relations
-  documents          Document[]
-  opinions           Opinion[]
-  equipmentLists     EquipmentList[]
-  annualReports      AnnualReport[]
-  auditCases         AuditCase[]
-  sanctions          Sanction[]
-  recourses          Recourse[]
-  history            HistoryEntry[]
-  notifications      Notification[]
-
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-
-  @@index([state])
-  @@index([category])
-  @@index([investorProfileId])
+enum ConventionStatus {
+  DRAFT          // investor still filling out / uploading
+  SUBMITTED      // in workflow
+  RETURNED       // bounced back to investor for completion
+  REJECTED       // rejected at some stage
+  SIGNED         // DG signed
+  CLOSED         // archived after signing
 }
 
-enum Regime {
-  COMMUN       // Régime commun — convention d'investissement
-  ZES          // Zone économique
-  PPP          // Partenariat Public-Privé
-  TRANSITOIRE  // Art. 47 migration from prior regime
+enum ConventionStage {
+  SECRETARY
+  DIR_INVESTMENTS
+  DIR_COMPLIANCE
+  DIR_EXTERNAL
+  DG
 }
 
 enum ProjectType {
-  NEW           // Projet nouveau (Art. 7)
-  EXTENSION     // Projet d'extension (Art. 8)
-  MIGRATION     // Art. 47
+  NEW       // Projet nouveau (Art. 7)
+  EXTENSION // Projet d'extension (Art. 8)
 }
 
 enum Sector {
-  AGRICULTURE  // Agriculture, élevage, pêche (Art. 3.1.a)
-  INDUSTRIE    // Industrie lourde, automobile, manufacturière (Art. 3.1.b)
-  ENERGIE      // Eau et énergie (Art. 3.1.c)
-  EDUCATION    // Éducation et santé (Art. 3.1.d)
-  TRANSPORT    // Transport aérien, ferroviaire, maritime (Art. 3.1.e)
-  TOURISME     // Tourisme et loisirs (Art. 3.1.f)
-  DISTRIBUTION // Infrastructures de grande distribution (Art. 3.1.g)
-  NUMERIQUE    // Infrastructures stockage/traitement données (Art. 3.1.h)
+  AGRICULTURE     // Agriculture, élevage, pêche
+  INDUSTRIE       // Industrie lourde, automobile, manufacturière
+  ENERGIE         // Eau et énergie
+  EDUCATION_SANTE // Éducation et santé
+  TRANSPORT       // Transport aérien, ferroviaire, maritime
+  TOURISME        // Tourisme et loisirs
+  DISTRIBUTION    // Infrastructures de grande distribution
+  NUMERIQUE       // Infrastructures stockage/traitement données
 }
 
 enum Category {
-  A  // < 1 Md FCFA
-  B  // 1–5 Md FCFA
-  C  // > 5 Md FCFA
+  A // < 1 Md FCFA
+  B // 1–5 Md FCFA
+  C // > 5 Md FCFA
 }
 
-enum DossierState {
-  DRAFT                    // Investor still preparing
-  SUBMITTED                // Filed, pending document verification
-  DOCS_VERIFICATION        // Reception checking each piece
-  RECEIPT_ISSUED           // Récépissé delivered, clock starts (Art. 30.3)
-  INSTRUCTION_DONE         // Technical instruction complete
-  TAX_OPINION_DONE         // DGI avis émis
-  CUSTOMS_OPINION_DONE     // DGD avis émis
-  SYNTHESIS_DONE           // Chef GU validated
-  ACCREDITED               // DG signed convention
-  REJECTED                 // Rejected at some stage
-  RETURNED                 // Returned to investor for completion
-  SUSPENDED                // Incentives suspended (Art. 41)
-  WITHDRAWN                // Incentives withdrawn (Art. 37)
-}
+// ---------------------------------------------------------
+// Document (uploaded by investor, verified by Secrétariat)
+// ---------------------------------------------------------
 
-// --- Domain: Documents (uploaded by investor, verified by reception) ---
 model Document {
-  id              String  @id @default(cuid())
-  dossierId       String
-  dossier         Dossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  id           String     @id @default(cuid())
+  conventionId String
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
 
-  // Document kind (constrained to the fixed Art. 6 list — enforced in app code)
-  kind            DocumentKind
-  fileName        String
-  storageUri      String  // s3:// path
-  sha256          String
-  sizeBytes       Int
-  mimeType        String
+  kind       DocumentKind
+  fileName   String
+  storageUri String       // Vercel Blob URL (or local path during dev)
+  sha256     String
+  sizeBytes  Int
+  mimeType   String
+  pageCount  Int?
 
-  uploadedAt      DateTime @default(now())
+  // OCR / extracted text (cached output from AI step)
+  ocrText        String?   @db.Text
+  ocrCompletedAt DateTime?
 
-  // Verification flow at Reception
-  verification    VerificationState @default(PENDING)
+  // Verification by Secretariat
+  verification     VerificationState @default(PENDING)
   verifiedByUserId String?
-  verifiedBy      User?    @relation("DocumentVerifier", fields: [verifiedByUserId], references: [id])
-  verifiedAt      DateTime?
-  rejectionReason String?  @db.Text
+  verifiedBy       User?              @relation("DocumentVerifier", fields: [verifiedByUserId], references: [id])
+  verifiedAt       DateTime?
+  rejectionReason  String?            @db.Text
 
-  @@index([dossierId])
+  uploadedAt DateTime @default(now())
+
+  comments    Comment[]
+  aiAnalyses  AiAnalysis[]
+
+  @@index([conventionId])
   @@index([verification])
+  @@index([kind])
 }
 
 enum DocumentKind {
-  ACTIVITY_AUTHORIZATION  // Autorisation d'exercice (Art. 6.1)
-  RECRUITMENT_PLAN        // Plan de recrutement Camerounais (Art. 6.2.a)
-  TECH_TRANSFER_PLAN      // Plan de transfert de technologies (Art. 6.2.a)
-  LOCAL_SUBCONTRACTING    // Plan de sous-traitance locale (Art. 6.2.a)
-  FINANCING_PROOF         // Justification du financement (Art. 6.2.b)
-  FEASIBILITY             // Étude de faisabilité (Art. 6)
-  // Additional supporting documents
-  EQUIPMENT_LIST          // Liste prévisionnelle équipements (Art. 33)
-  ANNUAL_REPORT           // Rapport annuel (Art. 32)
+  // Mandatory document set (Investment Code, Art. 6)
+  REGISTRATION       // RCCM (Registre du Commerce et du Crédit Mobilier)
+  TAX_ID             // Attestation NIU
+  NON_REDEVANCE      // Attestation de non-redevance fiscale
+  COMPANY_STATUTES   // Statuts de la société
+  FEASIBILITY_STUDY  // Étude de faisabilité
+  FINANCING_PROOF    // Justification du financement
+  // Supporting documents
+  RECRUITMENT_PLAN     // Plan de recrutement camerounais
+  TECH_TRANSFER_PLAN   // Plan de transfert de technologies
+  LOCAL_SUBCONTRACTING // Plan de sous-traitance locale
+  ENVIRONMENTAL_STUDY  // Étude d'impact environnemental
+  ACTIVITY_AUTHORIZATION // Autorisation d'exercer
+  ANNUAL_REPORT          // Rapport annuel (Art. 32, post-signature)
   OTHER
 }
 
@@ -294,210 +315,236 @@ enum VerificationState {
   REJECTED
 }
 
-// --- Domain: Opinions (Avis) ---
-model Opinion {
-  id              String       @id @default(cuid())
-  dossierId       String
-  dossier         Dossier      @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+// ---------------------------------------------------------
+// WorkflowEvent — append-only log of stage transitions
+// ---------------------------------------------------------
 
-  admin           AdminBody
-  phase           OpinionPhase
-  position        OpinionPosition
-  reasoning       String       @db.Text
+model WorkflowEvent {
+  id           String     @id @default(cuid())
+  conventionId String
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
 
-  signerUserId    String
-  signer          User         @relation("OpinionSigner", fields: [signerUserId], references: [id])
-  signedAt        DateTime     @default(now())
-
-  @@index([dossierId])
-  @@index([admin])
-}
-
-enum AdminBody {
-  INSTRUCTION  // Service Technique
-  TAX          // DGI
-  CUSTOMS      // DGD
-  TECHNICAL    // Other technical administration (sector-specific)
-}
-
-enum OpinionPhase {
-  CONVENTION           // Initial convention signing
-  EQUIPMENT_LIST       // Equipment list validation (Art. 33)
-  EXTENSION_REQUEST    // Time extension request (Art. 36)
-  AUDIT                // Audit case
-}
-
-enum OpinionPosition {
-  FAVORABLE
-  FAVORABLE_WITH_RESERVE
-  UNFAVORABLE
-}
-
-// --- Domain: Equipment list (Art. 33) ---
-model EquipmentList {
-  id           String   @id @default(cuid())
-  dossierId    String
-  dossier      Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
-
-  phase        String   // 'installation' | 'exploitation'
-  itemsJson    Json     // [{ qty, hsCode, description, unitValueFcfa, ... }]
-  validatedAt  DateTime?
-  validatedByUserId String?
-
-  createdAt    DateTime @default(now())
-}
-
-// --- Domain: Annual reports (Art. 32) ---
-model AnnualReport {
-  id              String   @id @default(cuid())
-  dossierId       String
-  dossier         Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
-
-  fiscalYear      Int      // e.g. 2026
-  submittedAt     DateTime?
-  isLate          Boolean  @default(false)
-  lateMonths      Int      @default(0)
-  // Fine accrual: 1 M FCFA / month of delay (Art. 32.3)
-  fineAccruedFcfa BigInt   @default(0)
-  contentJson     Json?
-
-  @@unique([dossierId, fiscalYear])
-  @@index([fiscalYear])
-}
-
-// --- Domain: Audit cases (Comité d'audit, Art. 39) ---
-model AuditCase {
-  id            String    @id @default(cuid())
-  dossierId     String
-  dossier       Dossier   @relation(fields: [dossierId], references: [id], onDelete: Cascade)
-
-  trigger       String    // 'annual_report' | 'comite_initiative' | 'dg_request'
-  startedAt     DateTime  @default(now())
-  closedAt      DateTime?
-  outcome       String?   // 'CONFORM' | 'NON_CONFORM'
-  findingsJson  Json?
-}
-
-// --- Domain: Sanctions (Art. 41) ---
-model Sanction {
-  id              String     @id @default(cuid())
-  dossierId       String
-  dossier         Dossier    @relation(fields: [dossierId], references: [id], onDelete: Cascade)
-
-  kind            SanctionKind
-  // Fine amount per Art. 41.3 schedule (10/15/25 M FCFA by category)
-  amountFcfa      BigInt?
-  startDate       DateTime?
-  endDate         DateTime?   // null for non-time-bound sanctions
-  pvUri           String?     // procès-verbal URI
-  miseEnDemeureAt DateTime?
-  appliedAt       DateTime?
-  reason          String      @db.Text
-
-  createdAt       DateTime    @default(now())
-}
-
-enum SanctionKind {
-  ABANDONED
-  FINE
-  SUSPENSION   // Max 6 months (Art. 41.3)
-  WITHDRAWAL   // Withdraws agreement; triggers fiscal/customs recovery
-}
-
-// --- Domain: Recourse (Art. 40) ---
-model Recourse {
-  id              String   @id @default(cuid())
-  dossierId       String
-  dossier         Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
-
-  filedByUserId   String
-  filedBy         User     @relation("RecourseFiledBy", fields: [filedByUserId], references: [id])
-  filedAt         DateTime @default(now())
-  subject         String   @db.Text
-  state           String   // 'AMIABLE' | 'CLOSED_AMIABLE' | 'ESCALATED'
-  // 30-day clock (Art. 40.2)
-  amiableDueAt    DateTime?
-  closedAt        DateTime?
-  outcomeJson     Json?
-}
-
-// --- Domain: History (per-dossier event log, user-facing) ---
-model HistoryEntry {
-  id          String   @id @default(cuid())
-  dossierId   String
-  dossier     Dossier  @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  stage  ConventionStage
+  action WorkflowAction
 
   actorUserId String?
-  actor       User?    @relation(fields: [actorUserId], references: [id])
-  action      String
-  comment     String?  @db.Text
-  // Used for UI styling (e.g. 'return', 'reject', 'sign')
-  cssClass    String?
+  actor       User?   @relation("WorkflowActor", fields: [actorUserId], references: [id])
 
-  createdAt   DateTime @default(now())
+  comment String? @db.Text
 
-  @@index([dossierId])
-  @@index([createdAt])
+  // SLA bookkeeping — true after the 72h reminder has been sent for this
+  // particular RECEIVED event (avoids duplicate reminders).
+  reminderSent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([conventionId, createdAt])
+  @@index([stage])
+  @@index([action])
 }
 
-// --- Domain: Notifications ---
+// Each stage emits the same shape of events.
+enum WorkflowAction {
+  RECEIVED   // arrived at this stage
+  SIGNED_OFF // current director signed off (review complete)
+  HANDED_OFF // transferred to the next stage
+  RETURNED   // sent back to investor
+  REJECTED   // rejected at this stage
+}
+
+// ---------------------------------------------------------
+// Comment — polymorphic: attached to a Document OR a Convention
+// ---------------------------------------------------------
+
+model Comment {
+  id String @id @default(cuid())
+
+  // Exactly one of these is set.
+  conventionId String?
+  convention   Convention? @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  authorUserId String
+  author       User   @relation(fields: [authorUserId], references: [id])
+
+  body String @db.Text
+
+  // Threading (optional)
+  parentCommentId String?
+  parent          Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies         Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([documentId])
+  @@index([conventionId])
+}
+
+// ---------------------------------------------------------
+// AI analyses (cached Claude outputs per stage)
+// ---------------------------------------------------------
+
+model AiAnalysis {
+  id String @id @default(cuid())
+
+  conventionId String
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  // Optional document focus (null => convention-level analysis)
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  stage ConventionStage  // which director was looking at the time
+  kind  AiAnalysisKind
+
+  // Free-form structured output from Claude
+  summary    String  @db.Text
+  contentJson Json?
+
+  // Token / cost bookkeeping
+  modelName       String?
+  tokensIn        Int?
+  tokensOut       Int?
+
+  generatedAt DateTime @default(now())
+
+  @@index([conventionId, stage])
+  @@index([documentId])
+  @@index([kind])
+}
+
+enum AiAnalysisKind {
+  OCR_EXTRACTION       // Plain OCR of a scanned document
+  COMPLIANCE_FORM      // Conformité en la forme (Secrétariat / DIR_INVESTMENTS)
+  COMPLIANCE_SUBSTANCE // Conformité au fond (DIR_COMPLIANCE)
+  EXTERNAL_REGS_CHECK  // Réglementations externes (DIR_EXTERNAL)
+  EXECUTIVE_SUMMARY    // Résumé exécutif pour DG
+  FINANCIAL_EXTRACT    // Used by FinancialSummary
+}
+
+// ---------------------------------------------------------
+// FinancialSummary (1 per convention, AI-extracted)
+// ---------------------------------------------------------
+
+model FinancialSummary {
+  id           String     @id @default(cuid())
+  conventionId String     @unique
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  // Aggregates extracted by the AI from feasibility + financing docs
+  totalInvestmentFcfa BigInt?
+  equityFcfa          BigInt?
+  debtFcfa            BigInt?
+  capexFcfa           BigInt?
+  opexYearOneFcfa     BigInt?
+  expectedRevenueFcfa BigInt?
+  paybackMonths       Int?
+
+  jobsDirect   Int?
+  jobsIndirect Int?
+
+  detailJson Json? // raw structured extraction (table rows, currencies, etc.)
+
+  generatedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ---------------------------------------------------------
+// Notification (in-app + email queue)
+// ---------------------------------------------------------
+
 model Notification {
-  id          String   @id @default(cuid())
-  forUserId   String
-  forUser     User     @relation(fields: [forUserId], references: [id], onDelete: Cascade)
+  id        String @id @default(cuid())
+  forUserId String
+  forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
 
-  dossierId   String?
-  dossier     Dossier? @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  conventionId String?
+  convention   Convention? @relation(fields: [conventionId], references: [id], onDelete: Cascade)
 
-  icon        String
-  iconClass   String
-  title       String   @db.Text
-  body        String?  @db.Text
-  read        Boolean  @default(false)
-  emailedAt   DateTime?
+  kind  NotificationKind
+  title String
+  body  String?  @db.Text
+  link  String?
 
-  createdAt   DateTime @default(now())
+  read       Boolean   @default(false)
+  emailed    Boolean   @default(false)
+  emailedAt  DateTime?
+
+  createdAt DateTime @default(now())
 
   @@index([forUserId, read])
   @@index([createdAt])
 }
 
-// --- Audit trail: append-only, every action that touches sensitive data ---
-// SHA-256 chain enforced in application layer
+enum NotificationKind {
+  CONVENTION_SUBMITTED
+  DOCUMENT_INCOMPLETE
+  STAGE_RECEIVED
+  STAGE_HANDOFF
+  STAGE_DELAY_REMINDER // 72h SLA reminder
+  CONVENTION_SIGNED
+  CONVENTION_REJECTED
+  CONVENTION_RETURNED
+  CONVENTION_CLOSED
+  COMMENT_ADDED
+}
+
+// ---------------------------------------------------------
+// Post-incentive annual report (Art. 32 — existing investors)
+// ---------------------------------------------------------
+
+model PostIncentiveReport {
+  id           String     @id @default(cuid())
+  investorId   String
+  investor     Investor   @relation(fields: [investorId], references: [id], onDelete: Cascade)
+
+  // Optional link to the convention this report concerns
+  conventionId String?
+
+  fiscalYear  Int
+  submittedAt DateTime  @default(now())
+
+  jobsActual       Int?
+  investmentActual BigInt?
+
+  reportFileUri String?
+
+  // Late submissions accrue a 1 M FCFA / month fine (Art. 32.3)
+  isLate         Boolean @default(false)
+  monthsLate     Int     @default(0)
+  fineAccruedFcfa BigInt @default(0)
+
+  @@unique([investorId, fiscalYear, conventionId])
+  @@index([fiscalYear])
+}
+
+// ---------------------------------------------------------
+// AuditTrail (security log — every sensitive action)
+// ---------------------------------------------------------
+
 model AuditTrailEntry {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   actorUserId String?
-  actor       User?    @relation(fields: [actorUserId], references: [id])
+  actor       User?   @relation(fields: [actorUserId], references: [id])
 
-  entityType  String   // 'dossier' | 'document' | 'opinion' | 'user' | etc.
-  entityId    String
-  action      String   // 'create' | 'update' | 'sign' | 'verify' | 'read_sensitive' | etc.
-  beforeJson  Json?
-  afterJson   Json?
-  ip          String?
-  userAgent   String?
-  prevHash    String?  // sha256 of previous entry — tamper evidence
-  hash        String   // sha256 of this entry
+  entityType String // 'convention' | 'document' | 'user' | etc.
+  entityId   String
+  action     String // 'create' | 'update' | 'sign' | 'verify' | etc.
+  beforeJson Json?
+  afterJson  Json?
+  ip         String?
+  userAgent  String?
 
-  createdAt   DateTime @default(now())
+  // Tamper-evidence chain (set in app layer)
+  prevHash String?
+  hash     String
+
+  createdAt DateTime @default(now())
 
   @@index([entityType, entityId])
   @@index([createdAt])
   @@index([actorUserId])
-}
-
-// --- Reference data (configurable) ---
-model ZdpLocality {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  region    String?
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-}
-
-model BusinessHoliday {
-  id        String   @id @default(cuid())
-  date      DateTime @unique
-  label     String
-  createdAt DateTime @default(now())
 }
