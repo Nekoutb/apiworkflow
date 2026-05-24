@@ -3,21 +3,12 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { LoginForm } from './LoginForm';
 
-export const metadata = { title: 'Connexion · API Cameroun' };
+export const metadata = { title: 'Connexion personnel · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
-type Tab = 'investor' | 'staff';
-
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ type?: string }>;
-}) {
+export default async function LoginPage() {
   const session = await auth();
   if (session?.user) redirect('/post-login');
-
-  const { type } = await searchParams;
-  const tab: Tab = type === 'investor' ? 'investor' : 'staff';
 
   return (
     <main className="min-h-screen bg-bgsoft">
@@ -93,92 +84,41 @@ export default async function LoginPage({
         {/* ====== RIGHT: sign-in card ====== */}
         <section className="flex items-center justify-center bg-white px-8 py-16">
           <div className="w-full max-w-[420px]">
-            {/* Tabs */}
-            <div role="tablist" className="mb-7 flex border border-line-2">
-              <TabLink href="/login?type=investor" active={tab === 'investor'}>
-                Espace Investisseur
-              </TabLink>
-              <TabLink href="/login?type=staff" active={tab === 'staff'}>
-                Personnel API
-              </TabLink>
+            <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
+              Portail interne
+            </div>
+            <h2 className="serif mb-2 text-[28px] font-semibold tracking-[-0.4px] text-ink">
+              Connexion personnel
+            </h2>
+            <p className="serif mb-7 text-[13.5px] italic text-ink-3">
+              Identifiez-vous pour accéder à votre espace de travail.
+            </p>
+
+            <LoginForm />
+
+            <div className="mt-7 border-t border-line pt-5 text-center">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-ink-4">
+                Mode développement
+              </p>
+              <p className="serif mt-1.5 text-[13px] italic text-ink-3">
+                Comptes&nbsp;: <strong className="font-mono not-italic text-ink">admin</strong>,{' '}
+                <strong className="font-mono not-italic text-ink">dg</strong>,{' '}
+                <strong className="font-mono not-italic text-ink">arrivee</strong>,{' '}
+                <strong className="font-mono not-italic text-ink">depart</strong>,{' '}
+                <strong className="font-mono not-italic text-ink">antenne.littoral</strong>
+                <br />
+                Mot de passe&nbsp;: <strong className="font-mono not-italic text-ink">admin</strong>
+              </p>
             </div>
 
-            {tab === 'investor' ? (
-              <>
-                <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-                  ⚜ Espace Investisseur
-                </div>
-                <h2 className="serif mb-2 text-[28px] font-semibold tracking-[-0.4px] text-ink">
-                  Connexion à votre dossier
-                </h2>
-                <p className="serif mb-7 text-[13.5px] italic text-ink-3">
-                  Accédez à votre espace pour téléverser des pièces ou suivre l&apos;instruction.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-                  Portail interne
-                </div>
-                <h2 className="serif mb-2 text-[28px] font-semibold tracking-[-0.4px] text-ink">
-                  Connexion personnel
-                </h2>
-                <p className="serif mb-7 text-[13.5px] italic text-ink-3">
-                  Identifiez-vous pour accéder à votre corbeille de travail.
-                </p>
-              </>
-            )}
-
-            <LoginForm tab={tab} />
-
-            {tab === 'investor' ? (
-              <div className="mt-7 border-t border-line pt-5 text-center">
-                <p className="serif text-[13px] italic text-ink-3">
-                  Pas encore inscrit&nbsp;?{' '}
-                  <Link href="/signup" className="font-semibold not-italic text-cmgreen-800 hover:underline">
-                    Créer un compte investisseur →
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <div className="mt-7 border-t border-line pt-5 text-center">
-                <p className="text-[11px] uppercase tracking-[0.2em] text-ink-4">
-                  Mode développement
-                </p>
-                <p className="serif mt-1.5 text-[13px] italic text-ink-3">
-                  Compte de test&nbsp;:{' '}
-                  <strong className="font-mono not-italic text-ink">admin</strong> ·{' '}
-                  <strong className="font-mono not-italic text-ink">admin</strong>
-                </p>
-              </div>
-            )}
+            <div className="mt-4 text-center">
+              <Link href="/" className="text-[11px] uppercase tracking-[0.14em] text-ink-3 hover:text-ink">
+                ← Retour à l&apos;accueil
+              </Link>
+            </div>
           </div>
         </section>
       </div>
     </main>
-  );
-}
-
-function TabLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={
-        'flex-1 px-4 py-3 text-center text-[11.5px] font-bold uppercase tracking-[0.14em] transition ' +
-        (active
-          ? 'bg-obsidian text-gold-500'
-          : 'bg-white text-ink-3 hover:bg-bgsoft hover:text-ink')
-      }
-    >
-      {children}
-    </Link>
   );
 }

@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workflow de traitement des dossiers — API Cameroun</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { font-size: 14px; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", BlinkMacSystemFont, Inter, Roboto, sans-serif;
+    color: #0c1220;
+    background: #f4f6f8;
+    line-height: 1.45;
+  }
+
+  :root {
+    --green: #006b3a;
+    --green-dk: #003e25;
+    --green-soft: #e6f5ed;
+    --gold: #c1973f;
+    --gold-dk: #a47e2c;
+    --gold-soft: #fbf5e6;
+    --red: #b03b3b;
+    --red-soft: #fdeaea;
+    --blue: #1d4ed8;
+    --blue-soft: #e0ecff;
+    --purple: #6b21a8;
+    --purple-soft: #f3e8ff;
+    --ink: #0c1220;
+    --ink-2: #1f2937;
+    --ink-3: #475569;
+    --ink-4: #64748b;
+    --ink-5: #94a3b8;
+    --line: #c8cfd8;
+    --line-soft: #e5e9ee;
+    --bg-soft: #f5f6f8;
+  }
+
+  .page {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 24px 28px 60px;
+    background: #fff;
+    border: 1px solid var(--line-soft);
+  }
+
+  /* ============== GOV HEADER ============== */
+  .gov-bar {
+    background: var(--ink);
+    color: #fff;
+    text-align: center;
+    padding: 8px 12px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: -24px -28px 0;
+  }
+  .gov-bar .seal { color: var(--gold); margin: 0 10px; }
+  .header {
+    text-align: center;
+    padding: 26px 0 18px;
+    border-bottom: 3px solid var(--green);
+    margin-bottom: 30px;
+  }
+  .header .country {
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700;
+  }
+  .header h1 {
+    font-family: Georgia, serif;
+    font-size: 28px; margin: 8px 0 4px;
+    color: var(--green); letter-spacing: -0.01em;
+  }
+  .header .sub {
+    font-style: italic; color: var(--ink-4); font-size: 12.5px; line-height: 1.6;
+  }
+
+  /* ============== SECTION HEADINGS ============== */
+  h2.section-title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    color: var(--green);
+    margin: 40px 0 4px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--green);
+  }
+  .section-sub {
+    font-style: italic;
+    color: var(--ink-4);
+    font-size: 12.5px;
+    margin-bottom: 22px;
+  }
+
+  /* ============== VUE D'ENSEMBLE — 5 phases ============== */
+  .overview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    align-items: stretch;
+  }
+  .ov-phase {
+    position: relative;
+    padding: 16px 14px 14px;
+    border: 1px solid var(--line);
+    background: #fff;
+    text-align: center;
+  }
+  .ov-phase + .ov-phase { border-left: 0; }
+  .ov-phase::after {
+    content: "▶";
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--green);
+    font-size: 18px;
+    background: #fff;
+    width: 20px;
+    text-align: center;
+    z-index: 1;
+  }
+  .ov-phase:last-child::after { display: none; }
+  .ov-phase .ph-num {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    color: var(--gold);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .ov-phase .ph-name {
+    font-family: Georgia, serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--green);
+    margin-top: 4px;
+    line-height: 1.25;
+  }
+  .ov-phase .ph-actor {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    margin-top: 8px;
+    font-weight: 700;
+  }
+  .ov-phase .ph-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--ink-3);
+    line-height: 1.4;
+  }
+
+  /* ============== ACTOR LEGEND ============== */
+  .actors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .actor {
+    border: 1px solid var(--line);
+    border-left: 4px solid;
+    background: #fff;
+    padding: 10px 12px;
+    font-size: 11.5px;
+  }
+  .actor .lab {
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .actor .who { color: var(--ink-2); font-weight: 600; font-size: 12.5px; }
+  .actor .role { color: var(--ink-4); font-size: 10.5px; font-style: italic; margin-top: 3px; }
+
+  .actor.source { border-left-color: var(--ink-5); }
+  .actor.source .lab { color: var(--ink-4); }
+  .actor.courrier { border-left-color: var(--blue); }
+  .actor.courrier .lab { color: var(--blue); }
+  .actor.ai { border-left-color: var(--purple); }
+  .actor.ai .lab { color: var(--purple); }
+  .actor.dg { border-left-color: var(--ink); }
+  .actor.dg .lab { color: var(--ink); }
+  .actor.direction { border-left-color: var(--gold); }
+  .actor.direction .lab { color: var(--gold-dk); }
+  .actor.staff { border-left-color: var(--green); }
+  .actor.staff .lab { color: var(--green); }
+
+  /* ============== DETAILED FLOW ============== */
+  .phase {
+    margin: 36px 0;
+    border: 1px solid var(--green);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .phase-head {
+    background: var(--green);
+    color: #fff;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .phase-head .num {
+    font-family: Georgia, serif;
+    font-size: 24px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .phase-head .meta { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.85; }
+  .phase-head .ttl { font-family: Georgia, serif; font-size: 15.5px; font-weight: 700; }
+
+  .phase-body {
+    padding: 24px;
+    background: var(--bg-soft);
+  }
+
+  /* Step list — vertical flow with connectors */
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  .step {
+    position: relative;
+    padding-left: 56px;
+    margin-bottom: 18px;
+  }
+  .step:last-child { margin-bottom: 0; }
+  .step::before {
+    content: "";
+    position: absolute;
+    left: 22px;
+    top: 38px;
+    bottom: -18px;
+    width: 2px;
+    background: var(--line);
+  }
+  .step:last-child::before { display: none; }
+
+  .step-num {
+    position: absolute;
+    left: 8px;
+    top: 4px;
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    border: 2px solid var(--green);
+    color: var(--green);
+    border-radius: 50%;
+    font-family: "Consolas", monospace;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+
+  .step-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 12px 14px;
+    border-left-width: 4px;
+    border-left-style: solid;
+  }
+  .step-card .who-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .step-card .who-tag {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 2px;
+  }
+  .step-card h4 {
+    margin: 0;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    color: var(--ink);
+  }
+  .step-card .desc {
+    font-size: 12px;
+    color: var(--ink-2);
+    margin: 6px 0 0;
+    line-height: 1.5;
+  }
+  .step-card .out {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--line-soft);
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+  .step-card .out strong {
+    color: var(--gold-dk);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-right: 6px;
+  }
+
+  /* Actor color variants on step cards */
+  .step-card.source { border-left-color: var(--ink-5); }
+  .step-card.source .who-tag { background: #e5e9ee; color: var(--ink-3); }
+  .step-card.courrier { border-left-color: var(--blue); }
+  .step-card.courrier .who-tag { background: var(--blue-soft); color: var(--blue); }
+  .step-card.ai { border-left-color: var(--purple); background: var(--purple-soft); }
+  .step-card.ai .who-tag { background: var(--purple); color: #fff; }
+  .step-card.ai h4 { color: var(--purple); }
+  .step-card.dg { border-left-color: var(--ink); background: #fff; }
+  .step-card.dg .who-tag { background: var(--ink); color: var(--gold); }
+  .step-card.direction { border-left-color: var(--gold); background: var(--gold-soft); }
+  .step-card.direction .who-tag { background: var(--gold); color: var(--ink); }
+  .step-card.staff { border-left-color: var(--green); background: var(--green-soft); }
+  .step-card.staff .who-tag { background: var(--green); color: #fff; }
+
+  /* Conditional/Decision branch */
+  .branch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .branch .opt {
+    background: #fff;
+    border: 1px dashed var(--gold);
+    padding: 8px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+  }
+  .branch .opt strong { display: block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-dk); margin-bottom: 3px; }
+
+  /* AI INSIGHT panel */
+  .ai-insight {
+    background: var(--purple-soft);
+    border-left: 4px solid var(--purple);
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--ink-2);
+  }
+  .ai-insight .ail {
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--purple);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  /* Note bubble */
+  .note {
+    background: var(--gold-soft);
+    border-left: 3px solid var(--gold);
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--ink-2);
+    border-radius: 2px;
+  }
+  .note strong { color: var(--gold-dk); }
+
+  /* Phase transition arrow */
+  .arrow-down {
+    text-align: center;
+    margin: -8px 0 -8px;
+    color: var(--green);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* RULES */
+  .rules {
+    margin: 36px 0 0;
+    border: 1px solid var(--gold);
+    background: var(--gold-soft);
+    padding: 18px 22px;
+  }
+  .rules h3 {
+    font-family: Georgia, serif;
+    color: var(--gold-dk);
+    margin: 0 0 10px;
+    font-size: 16px;
+  }
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .rule {
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    font-size: 11.5px;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .rule .ico {
+    font-size: 16px;
+    margin-right: 6px;
+  }
+  .rule strong { color: var(--ink); }
+
+  /* Footer */
+  .footer {
+    margin-top: 36px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-5);
+  }
+
+  @media print {
+    body { background: #fff; }
+    .page { border: 0; max-width: 100%; padding: 8px; }
+    .gov-bar { margin: 0; }
+    .phase { page-break-inside: avoid; }
+    @page { size: A4 portrait; margin: 12mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="gov-bar">
+    République du Cameroun
+    <span class="seal">⚜</span>
+    Présidence de la République
+    <span class="seal">⚜</span>
+    Agence de Promotion des Investissements
+  </div>
+
+  <header class="header">
+    <div class="country">Workflow officiel · Traitement des dossiers</div>
+    <h1>Circuit de traitement des dossiers — API</h1>
+    <div class="sub">
+      Aligné sur l'organigramme du 02 juillet 2020 — Service du Courrier (Art. 15) en entrée,<br>
+      Direction Générale (Art. 1) en chef d'orchestre, IA Claude pour OCR &amp; aide à la décision.
+    </div>
+  </header>
+
+  <!-- ============================================================
+       1. VUE D'ENSEMBLE — 5 phases en bandeau
+       ============================================================ -->
+  <h2 class="section-title">1. Vue d'ensemble</h2>
+  <p class="section-sub">Cinq grandes phases du circuit, de la réception jusqu'à la clôture.</p>
+
+  <div class="overview">
+    <div class="ov-phase">
+      <div class="ph-num">1</div>
+      <div class="ph-name">Réception &amp; accusé</div>
+      <div class="ph-actor">Service du Courrier</div>
+      <div class="ph-tag">Entrée online ou physique<br>Accusé systématique &amp; scan</div>
+    </div>
+    <div class="ov-phase">
+      <div class="ph-num">2</div>
+      <div class="ph-name">Analyse IA &amp; Assignation</div>
+      <div class="ph-actor">DG + IA Claude</div>
+      <div class="ph-tag">OCR · Résumé · Suggestion<br>Validation &amp; instructions</div>
+    </div>
+    <div class="ov-phase">
+      <div class="ph-num">3</div>
+      <div class="ph-name">Instruction</div>
+      <div class="ph-actor">Direction · Staff</div>
+      <div class="ph-tag">Handoff vertical &amp; horizontal<br>Commentaires &amp; pièces</div>
+    </div>
+    <div class="ov-phase">
+      <div class="ph-num">4</div>
+      <div class="ph-name">Décision DG</div>
+      <div class="ph-actor">Directeur Général</div>
+      <div class="ph-tag">Examen du dossier traité<br>Action finale</div>
+    </div>
+    <div class="ov-phase">
+      <div class="ph-num">5</div>
+      <div class="ph-name">Réponse &amp; Clôture</div>
+      <div class="ph-actor">Courrier → Émetteur</div>
+      <div class="ph-tag">Courrier « Départ »<br>Archivage ou maintien ouvert</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2. ACTEURS
+       ============================================================ -->
+  <h2 class="section-title">2. Acteurs du workflow</h2>
+  <p class="section-sub">Code couleur appliqué à chaque étape de la phase de détail.</p>
+
+  <div class="actors">
+    <div class="actor source">
+      <div class="lab">Source du document</div>
+      <div class="who">Émetteur externe</div>
+      <div class="role">Toute personne, entreprise, administration ou autre partie qui adresse un document à l'API</div>
+    </div>
+    <div class="actor courrier">
+      <div class="lab">Art. 15 – 18</div>
+      <div class="who">Service du Courrier</div>
+      <div class="role">Bureau Arrivée · Bureau Départ · Bureau Archives</div>
+    </div>
+    <div class="actor ai">
+      <div class="lab">⚡ IA</div>
+      <div class="who">Anthropic Claude — OCR &amp; analyse</div>
+      <div class="role">OCR · résumé · classification · suggestion d'assignation</div>
+    </div>
+    <div class="actor dg">
+      <div class="lab">Art. 1</div>
+      <div class="who">Directeur Général</div>
+      <div class="role">Réception, assignation, décision finale, signature</div>
+    </div>
+    <div class="actor direction">
+      <div class="lab">Art. 20 · 30 · 37 · 41</div>
+      <div class="who">Directeur / Division / Antenne</div>
+      <div class="role">Reçoit du DG · oriente vers Sous-dir / Service / autre Direction</div>
+    </div>
+    <div class="actor staff">
+      <div class="lab">Sous-dir · Service · Bureau</div>
+      <div class="who">Personnel d'instruction</div>
+      <div class="role">Traite le dossier, ajoute commentaires et pièces</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       3. DÉTAIL DES PHASES
+       ============================================================ -->
+  <h2 class="section-title">3. Détail des phases</h2>
+  <p class="section-sub">Chaque étape précise l'acteur, l'action et les sorties (notifications, état du dossier).</p>
+
+  <!-- ============ PHASE 1 ============ -->
+  <div class="phase">
+    <div class="phase-head">
+      <div class="num">1</div>
+      <div>
+        <div class="meta">Phase 1 · Réception &amp; accusé</div>
+        <div class="ttl">Tout document entrant — en ligne ou physique — transite par le Service du Courrier</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+
+        <li class="step">
+          <div class="step-num">1.1</div>
+          <div class="step-card source">
+            <div class="who-row">
+              <span class="who-tag">Émetteur du document</span>
+            </div>
+            <h4>Arrivée du document à l'API</h4>
+            <p class="desc">Le document parvient à l'API par l'une des deux voies acceptées. Le système ne distingue pas la qualité de l'émetteur&nbsp;: la procédure est strictement la même quelle que soit la source.</p>
+            <div class="branch">
+              <div class="opt"><strong>Voie A — En ligne</strong>Téléversement direct sur la plateforme (formulaire web, dépôt sécurisé, email institutionnel intégré au portail). Ouvert à tout émetteur.</div>
+              <div class="opt"><strong>Voie B — Physique</strong>Dépôt en personne au siège, par voie postale, ou via une Antenne régionale (Art. 41-44).</div>
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">1.2</div>
+          <div class="step-card courrier">
+            <div class="who-row">
+              <span class="who-tag">Bureau Courrier « Arrivée » · Art. 16</span>
+            </div>
+            <h4>Réception &amp; enregistrement</h4>
+            <p class="desc">Le Bureau du Courrier « Arrivée » réceptionne le document, l'enregistre dans le chrono, lui attribue un numéro unique et l'inscrit au tableau de bord de circulation.</p>
+            <div class="out">
+              <strong>Sortie</strong>N° de courrier généré · entrée au registre Arrivée.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">1.3</div>
+          <div class="step-card courrier">
+            <div class="who-row">
+              <span class="who-tag">Service du Courrier · Art. 15</span>
+            </div>
+            <h4>Numérisation des documents physiques</h4>
+            <p class="desc">Si le document a été reçu en version papier (voie B), le Service du Courrier le scanne et l'attache au workflow. Les documents reçus en ligne (voie A) sont déjà numériques — pas de scan nécessaire.</p>
+            <div class="out">
+              <strong>Sortie</strong>PDF unique attaché au dossier dans le système.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">1.4</div>
+          <div class="step-card courrier">
+            <div class="who-row">
+              <span class="who-tag">Service du Courrier · Art. 15</span>
+            </div>
+            <h4>Accusé de réception systématique</h4>
+            <p class="desc">Un accusé de réception est émis automatiquement pour <strong>tout document entrant, sans exception</strong>. Il reprend le n° de courrier, la date et l'heure d'enregistrement et est envoyé à l'émetteur par email (et par courrier physique si l'adresse postale est connue).</p>
+            <div class="note">
+              <strong>Règle&nbsp;:</strong> aucun document ne peut entrer dans la chaîne d'instruction sans avoir donné lieu à un accusé de réception préalable. La règle est uniforme&nbsp;: peu importe l'émetteur, peu importe la voie d'entrée.
+            </div>
+            <div class="out">
+              <strong>Sortie</strong>Accusé → émetteur · état du document&nbsp;: <em>REÇU</em>.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">1.5</div>
+          <div class="step-card courrier">
+            <div class="who-row">
+              <span class="who-tag">Service du Courrier · Art. 15</span>
+            </div>
+            <h4>Transmission au Directeur Général</h4>
+            <p class="desc">Le document — numérique dans tous les cas — est handed off au DG. Il apparaît dans le tableau de bord du DG, signalé comme nouveau document en attente d'analyse.</p>
+            <div class="out">
+              <strong>Sortie</strong>Notification DG · état du document&nbsp;: <em>EN ATTENTE D'ANALYSE DG</em>.
+            </div>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </div>
+
+  <div class="arrow-down">▼</div>
+
+  <!-- ============ PHASE 2 ============ -->
+  <div class="phase">
+    <div class="phase-head">
+      <div class="num">2</div>
+      <div>
+        <div class="meta">Phase 2 · Analyse IA &amp; Assignation</div>
+        <div class="ttl">Le DG, assisté de l'IA Claude, oriente le document vers la bonne direction</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+
+        <li class="step">
+          <div class="step-num">2.1</div>
+          <div class="step-card ai">
+            <div class="who-row">
+              <span class="who-tag">⚡ IA · Anthropic Claude</span>
+            </div>
+            <h4>OCR &amp; lecture intégrale du document</h4>
+            <p class="desc">Dès l'arrivée du document dans la file du DG, l'IA Claude exécute un OCR du PDF (utile pour les documents scannés) puis une lecture intégrale du contenu.</p>
+            <div class="out">
+              <strong>Sortie</strong>Texte intégral indexé · cache <em>AiAnalysis</em>.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">2.2</div>
+          <div class="step-card ai">
+            <div class="who-row">
+              <span class="who-tag">⚡ IA · Anthropic Claude</span>
+            </div>
+            <h4>Résumé exécutif pour le DG</h4>
+            <p class="desc">L'IA génère un résumé court (3 à 5 phrases) du document&nbsp;: objet, source, montants ou enjeux clés, urgences éventuelles, secteur ou thématique principale.</p>
+            <div class="out">
+              <strong>Sortie</strong>Résumé visible sur la carte du document dans le tableau de bord DG.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">2.3</div>
+          <div class="step-card ai">
+            <div class="who-row">
+              <span class="who-tag">⚡ IA · Anthropic Claude</span>
+            </div>
+            <h4>Suggestion d'assignation</h4>
+            <p class="desc">À partir de l'organigramme et des rôles/responsabilités définis par la Résolution du 02 juillet 2020, l'IA propose au DG la direction, sous-direction ou service le plus pertinent pour traiter le document — avec une courte justification.</p>
+            <div class="ai-insight">
+              <div class="ail">Exemple de suggestion IA</div>
+              « Dossier d'agrément · Industrie agro-alimentaire · 1,8 Md FCFA → <strong>Direction de la Facilitation, Assistance &amp; Coopération (Art. 30)</strong> ; en sous-traitance vers le <strong>Service des Agréments (Art. 33)</strong>. »
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">2.4</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG</span>
+            </div>
+            <h4>Le DG consulte le document sur son tableau de bord</h4>
+            <p class="desc">Le document est mis en évidence (badge « nouveau »). Le DG voit le résumé IA, la suggestion d'assignation et peut consulter le document complet en un clic.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">2.5</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG</span>
+            </div>
+            <h4>Validation ou modification de l'assignation</h4>
+            <p class="desc">Le DG peut&nbsp;:</p>
+            <div class="branch">
+              <div class="opt"><strong>Confirmer</strong>Un clic sur « Confirmer la suggestion IA » assigne le document au destinataire proposé.</div>
+              <div class="opt"><strong>Modifier</strong>Le DG choisit lui-même la direction / sous-direction / service à partir d'une liste dérivée de l'organigramme.</div>
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">2.6</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG</span>
+            </div>
+            <h4>Instructions spécifiques (optionnel)</h4>
+            <p class="desc">Le DG peut joindre des instructions écrites au handoff (priorité, deadline, points d'attention particuliers, demande d'avis croisé, etc.). Ces instructions accompagnent le document.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">2.7</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG → Directeur destinataire</span>
+            </div>
+            <h4>Handoff au destinataire</h4>
+            <p class="desc">Le DG valide. Le document sort de sa file et apparaît dans la corbeille du Directeur destinataire (ou de l'unité destinataire).</p>
+            <div class="out">
+              <strong>Sortie</strong>Notification au Directeur destinataire (in-app + email) · état du document&nbsp;: <em>ASSIGNÉ</em>.
+            </div>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </div>
+
+  <div class="arrow-down">▼</div>
+
+  <!-- ============ PHASE 3 ============ -->
+  <div class="phase">
+    <div class="phase-head">
+      <div class="num">3</div>
+      <div>
+        <div class="meta">Phase 3 · Instruction</div>
+        <div class="ttl">Le destinataire traite le document — handoff vertical et horizontal autorisés</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+
+        <li class="step">
+          <div class="step-num">3.1</div>
+          <div class="step-card direction">
+            <div class="who-row">
+              <span class="who-tag">Directeur · Direction destinataire</span>
+            </div>
+            <h4>Réception &amp; lecture du document</h4>
+            <p class="desc">Le Directeur destinataire est notifié et voit le document dans sa corbeille avec le résumé IA, les instructions du DG et l'historique des étapes précédentes.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">3.2</div>
+          <div class="step-card direction">
+            <div class="who-row">
+              <span class="who-tag">Directeur</span>
+            </div>
+            <h4>Choix de traitement</h4>
+            <p class="desc">Le Directeur décide&nbsp;:</p>
+            <div class="branch">
+              <div class="opt"><strong>A · Traitement direct</strong>Il traite lui-même le document (cas simple ou stratégique).</div>
+              <div class="opt"><strong>B · Handoff vertical descendant</strong>Il transmet à une Sous-direction ou un Service de sa propre direction.</div>
+            </div>
+            <div class="branch" style="margin-top:6px">
+              <div class="opt"><strong>C · Handoff horizontal</strong>Il transmet à un autre Directeur pour avis ou co-instruction (communication entre directions).</div>
+              <div class="opt"><strong>D · Renvoi au DG</strong>Si la demande sort de son périmètre, il renvoie au DG avec motif.</div>
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">3.3</div>
+          <div class="step-card staff">
+            <div class="who-row">
+              <span class="who-tag">Sous-dir / Service / Bureau</span>
+            </div>
+            <h4>Traitement effectif</h4>
+            <p class="desc">Le personnel d'instruction (Sous-directeur, Chef de Service, agents) travaille le document conformément à ses attributions définies par l'organigramme (Art. 21-44).</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">3.4</div>
+          <div class="step-card staff">
+            <div class="who-row">
+              <span class="who-tag">Tous les niveaux</span>
+            </div>
+            <h4>Commentaires &amp; pièces complémentaires</h4>
+            <p class="desc">À chaque niveau, l'agent peut ajouter des commentaires écrits et joindre de nouvelles pièces (notes internes, avis, projets de décision, etc.). Ces ajouts sont horodatés et tracés.</p>
+            <div class="out">
+              <strong>Visibilité</strong>Visibles par la hiérarchie supérieure et par le destinataire du document (cf. règles ci-dessous).
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">3.5</div>
+          <div class="step-card staff">
+            <div class="who-row">
+              <span class="who-tag">Staff → Sous-dir → Directeur</span>
+            </div>
+            <h4>Remontée hiérarchique</h4>
+            <p class="desc">Une fois l'instruction terminée à son niveau, l'agent fait remonter le document à son supérieur immédiat (Sous-directeur, puis Directeur), avec ses conclusions.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">3.6</div>
+          <div class="step-card direction">
+            <div class="who-row">
+              <span class="who-tag">Directeur → DG</span>
+            </div>
+            <h4>Renvoi au DG avec document traité</h4>
+            <p class="desc">Le Directeur valide l'instruction, consolide les commentaires et pièces ajoutées, puis renvoie le document au DG avec sa recommandation finale.</p>
+            <div class="out">
+              <strong>Sortie</strong>Notification DG · état&nbsp;: <em>TRAITÉ — EN ATTENTE DE DÉCISION DG</em>.
+            </div>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </div>
+
+  <div class="arrow-down">▼</div>
+
+  <!-- ============ PHASE 4 ============ -->
+  <div class="phase">
+    <div class="phase-head">
+      <div class="num">4</div>
+      <div>
+        <div class="meta">Phase 4 · Décision DG</div>
+        <div class="ttl">Le Directeur Général prend l'action finale</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+
+        <li class="step">
+          <div class="step-num">4.1</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG</span>
+            </div>
+            <h4>Examen du document traité</h4>
+            <p class="desc">Le DG consulte la chronologie complète, les commentaires, les pièces ajoutées et la recommandation du Directeur.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">4.2</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG</span>
+            </div>
+            <h4>Action finale</h4>
+            <p class="desc">Le DG prend la décision&nbsp;: signature d'un acte, validation d'une réponse écrite, demande de précisions, rejet motivé, transmission externe (ex. à une autre administration), etc.</p>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </div>
+
+  <div class="arrow-down">▼</div>
+
+  <!-- ============ PHASE 5 ============ -->
+  <div class="phase">
+    <div class="phase-head">
+      <div class="num">5</div>
+      <div>
+        <div class="meta">Phase 5 · Réponse &amp; Clôture</div>
+        <div class="ttl">Le Service du Courrier expédie la réponse, le document est archivé ou maintenu ouvert</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+
+        <li class="step">
+          <div class="step-num">5.1</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG → Bureau Courrier « Départ »</span>
+            </div>
+            <h4>Transmission de la réponse au Service du Courrier</h4>
+            <p class="desc">Le DG hand off la réponse signée au Service du Courrier (Bureau Départ · Art. 17) qui se charge de l'expédition.</p>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">5.2</div>
+          <div class="step-card courrier">
+            <div class="who-row">
+              <span class="who-tag">Bureau Courrier « Départ » · Art. 17</span>
+            </div>
+            <h4>Expédition à l'émetteur initial</h4>
+            <p class="desc">Le Bureau Départ enregistre la sortie au registre, expédie la réponse par email (signée numériquement) et/ou par courrier physique, puis classe l'acte signé.</p>
+            <div class="out">
+              <strong>Sortie</strong>Réponse → émetteur · entrée au registre Départ · état du document&nbsp;: <em>RÉPONSE TRANSMISE</em>.
+            </div>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step-num">5.3</div>
+          <div class="step-card dg">
+            <div class="who-row">
+              <span class="who-tag">DG</span>
+            </div>
+            <h4>Clôture ou maintien ouvert</h4>
+            <p class="desc">Le DG décide&nbsp;:</p>
+            <div class="branch">
+              <div class="opt"><strong>Clôturer</strong>Si aucune autre action n'est attendue de l'émetteur ou de l'API, le document est marqué <em>CLOS</em> et transféré aux Archives (Art. 18).</div>
+              <div class="opt"><strong>Maintenir ouvert</strong>Si une réponse de l'émetteur est attendue (compléments, justificatifs, paiement), le document reste actif jusqu'à la prochaine entrée par le Courrier « Arrivée ».</div>
+            </div>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       4. RÈGLES TRANSVERSALES
+       ============================================================ -->
+  <div class="rules">
+    <h3>Règles transversales · applicables à toutes les phases</h3>
+    <div class="rules-grid">
+      <div class="rule">
+        <span class="ico">📩</span><strong>Accusé de réception pour tout document.</strong>
+        Sans exception et sans distinction de l'émetteur. Tout document entrant — qu'il vienne en ligne ou en version physique — donne lieu à un accusé de réception émis automatiquement par le Service du Courrier avant tout traitement.
+      </div>
+      <div class="rule">
+        <span class="ico">🌐</span><strong>Voie en ligne ouverte à tous.</strong>
+        Le portail accepte les documents en ligne de tout émetteur, sans condition d'inscription ni qualification préalable. La voie physique reste disponible en parallèle.
+      </div>
+      <div class="rule">
+        <span class="ico">👁</span><strong>Visibilité hiérarchique top-down.</strong>
+        Un Directeur voit toute l'activité de ses Sous-directions et Services. Une Sous-direction ne voit ni les activités du Directeur ni celles d'une autre Sous-direction. La règle s'applique récursivement.
+      </div>
+      <div class="rule">
+        <span class="ico">↔</span><strong>Communication horizontale au niveau Directeur.</strong>
+        Un Directeur peut transmettre un document (ou demander un avis) à un autre Directeur. Ce handoff horizontal est tracé et notifié au DG.
+      </div>
+      <div class="rule">
+        <span class="ico">💬</span><strong>Commentaires &amp; pièces — propagation.</strong>
+        Chaque rôle dispose d'une zone pour ajouter commentaires et pièces. Ces ajouts sont visibles par la hiérarchie supérieure et par le destinataire suivant du document.
+      </div>
+      <div class="rule">
+        <span class="ico">🔔</span><strong>Notifications à chaque handoff.</strong>
+        Notification in-app + email envoyés au destinataire à chaque transfert. Le DG est notifié à la remontée finale (Phase 3.6).
+      </div>
+      <div class="rule">
+        <span class="ico">⚡</span><strong>IA Claude — assistance, jamais décision.</strong>
+        L'IA produit OCR, résumé et suggestion d'assignation. La décision finale d'assignation revient toujours au DG, qui peut confirmer ou modifier.
+      </div>
+      <div class="rule">
+        <span class="ico">🗂</span><strong>Le DG est le seul point de pivot externe.</strong>
+        Aucun document ne quitte l'API sans passer par le DG → Service du Courrier (Départ). Aucun document n'entre dans l'API sans passer par le Courrier (Arrivée) → DG.
+      </div>
+      <div class="rule">
+        <span class="ico">📜</span><strong>Traçabilité intégrale.</strong>
+        Chaque action (handoff, commentaire, ajout de pièce, décision) est horodatée, attribuée à un acteur, et conservée dans le journal d'audit du document.
+      </div>
+      <div class="rule">
+        <span class="ico">⏱</span><strong>Délais &amp; SLA.</strong>
+        Les délais légaux applicables (selon la nature du document) s'appliquent quand pertinent. Le système surveille les délais à chaque étape et alerte la hiérarchie en cas de risque de dépassement.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    ⚜ Workflow officiel · API Cameroun · à lire en complément de l'Organigramme du 02 juillet 2020 ⚜
+  </div>
+
+</div>
+</body>
+</html>

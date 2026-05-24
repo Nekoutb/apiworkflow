@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Organigramme & Responsabilités — Agence de Promotion des Investissements · Cameroun</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { font-size: 14px; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", BlinkMacSystemFont, Inter, Roboto, sans-serif;
+    color: #0c1220;
+    background: #f4f6f8;
+    line-height: 1.4;
+  }
+
+  :root {
+    --green: #006b3a;
+    --green-dk: #003e25;
+    --green-soft: #e6f5ed;
+    --gold: #c1973f;
+    --gold-dk: #a47e2c;
+    --gold-soft: #fbf5e6;
+    --red: #b03b3b;
+    --ink: #0c1220;
+    --ink-2: #1f2937;
+    --ink-3: #475569;
+    --ink-4: #64748b;
+    --ink-5: #94a3b8;
+    --line: #c8cfd8;
+    --line-soft: #e5e9ee;
+    --bg-soft: #f5f6f8;
+    --connector: #6b7480;
+  }
+
+  .page {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 24px 24px 60px;
+    background: #fff;
+    border: 1px solid var(--line-soft);
+  }
+
+  /* ============== GOV HEADER ============== */
+  .gov-bar {
+    background: var(--ink);
+    color: #fff;
+    text-align: center;
+    padding: 8px 12px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: -24px -24px 0;
+  }
+  .gov-bar .seal { color: var(--gold); margin: 0 10px; }
+  .header {
+    text-align: center;
+    padding: 24px 0 16px;
+    border-bottom: 3px solid var(--green);
+    margin-bottom: 24px;
+  }
+  .header .country {
+    font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--ink-3); font-weight: 700;
+  }
+  .header h1 {
+    font-family: Georgia, serif;
+    font-size: 26px; margin: 8px 0 4px;
+    color: var(--green); letter-spacing: -0.01em;
+  }
+  .header .sub {
+    font-style: italic; color: var(--ink-4); font-size: 12.5px; line-height: 1.5;
+  }
+  .header .hint {
+    margin-top: 10px;
+    display: inline-block;
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold-dk);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    padding: 4px 10px;
+  }
+
+  /* ============== NAVIGATION TABS ============== */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--green);
+    margin-bottom: 28px;
+  }
+  .tabs a {
+    flex: 1;
+    text-align: center;
+    padding: 12px 16px;
+    text-decoration: none;
+    color: var(--ink-3);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid var(--line-soft);
+    border-bottom: 0;
+    background: var(--bg-soft);
+    transition: background 0.15s;
+  }
+  .tabs a:hover { background: #fff; color: var(--green); }
+
+  /* ============== SCROLL WRAP ============== */
+  .scroll-wrap {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 20px 0;
+    border: 1px solid var(--line-soft);
+  }
+  .chart-inner {
+    display: inline-block;
+    min-width: 100%;
+    padding: 0 24px;
+  }
+
+  /* ============== ORG CHART CORE ============== */
+  .chart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 6px;
+    position: relative;
+  }
+  .children {
+    display: flex;
+    position: relative;
+    padding-top: 28px;
+    margin-top: 14px;
+  }
+  .children::before {
+    content: "";
+    position: absolute;
+    top: -14px; left: 50%;
+    width: 0; height: 14px;
+    border-left: 1.5px solid var(--connector);
+  }
+  .children > .cell::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    border-top: 1.5px solid var(--connector);
+  }
+  .children > .cell::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 50%;
+    width: 0; height: 28px;
+    border-left: 1.5px solid var(--connector);
+  }
+  .children > .cell:first-child::before { left: 50%; }
+  .children > .cell:last-child::before  { right: 50%; }
+  .children > .cell:only-child::before  { display: none; }
+
+  /* ============== NODE BOX ============== */
+  .box {
+    width: 140px;
+    min-height: 56px;
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 6px 8px;
+    text-align: center;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .box:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  }
+  .box .art {
+    font-family: "Consolas", "JetBrains Mono", monospace;
+    font-size: 9.5px;
+    color: var(--ink-4);
+    letter-spacing: 0.02em;
+    margin-bottom: 3px;
+  }
+  .box .nm {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--ink-2);
+  }
+  .box .tag {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 8.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    border: 1px solid var(--line-soft);
+    padding: 1px 4px;
+    background: var(--bg-soft);
+    align-self: center;
+  }
+
+  /* === Variants === */
+  .box.dg {
+    background: var(--ink);
+    color: #fff; border-color: var(--ink);
+    width: 260px; min-height: 84px;
+    border-bottom: 4px solid var(--gold);
+    padding: 12px;
+  }
+  .box.dg .art { color: var(--gold); opacity: 0.95; font-size: 10px; letter-spacing: 0.18em; }
+  .box.dg .nm { color: #fff; font-family: Georgia, serif; font-size: 18px; }
+  .box.dg .role { color: rgba(255,255,255,0.78); font-size: 10.5px; font-style: italic; margin-top: 4px; }
+
+  .box.direction {
+    background: var(--gold); color: var(--ink); border-color: var(--gold-dk);
+    border-bottom: 3px solid var(--gold-dk);
+    width: 175px; min-height: 64px;
+  }
+  .box.direction .nm { font-weight: 700; font-size: 11.5px; color: var(--ink); }
+  .box.direction .art { color: var(--ink-2); background: rgba(255,255,255,0.45); padding: 1px 5px; display: inline-block; align-self: center; border: 1px solid rgba(0,0,0,0.10); }
+
+  .box.division {
+    background: var(--gold-soft); border-color: var(--gold-dk);
+    border-left: 3px solid var(--gold-dk);
+    width: 165px; min-height: 60px;
+  }
+  .box.division .nm { color: var(--gold-dk); font-weight: 700; font-size: 11px; }
+
+  .box.audit {
+    background: #fff; border: 1px solid var(--gold-dk);
+    border-left: 4px solid var(--gold-dk);
+    width: 140px;
+  }
+  .box.audit .nm { color: var(--gold-dk); font-weight: 700; }
+
+  .box.sousdir {
+    background: var(--green-soft); border-color: var(--green);
+    width: 160px;
+  }
+  .box.sousdir .nm { color: var(--green); font-weight: 600; }
+
+  .box.cellule {
+    background: var(--gold-soft); border-color: var(--gold);
+    width: 150px;
+  }
+  .box.cellule .nm { color: var(--gold-dk); font-weight: 600; }
+
+  .box.service {
+    background: #fff; border-color: var(--line);
+    width: 145px;
+  }
+
+  .box.bureau {
+    background: var(--bg-soft); border-color: var(--line-soft);
+    width: 145px; min-height: 50px;
+  }
+  .box.bureau .nm { color: var(--ink-3); font-size: 10.5px; }
+
+  .box.attache {
+    background: #fff; border-left: 4px solid var(--green);
+    width: 140px;
+  }
+
+  /* ============== RESPONSABILITÉS — DETAILED CARDS ============== */
+  .resp-section {
+    margin: 60px 0 0;
+  }
+  .resp-section h2 {
+    font-family: Georgia, serif;
+    color: var(--green);
+    font-size: 22px;
+    margin: 0 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--green);
+  }
+  .resp-section .sub-h2 {
+    font-style: italic;
+    color: var(--ink-4);
+    font-size: 12.5px;
+    margin-bottom: 24px;
+  }
+
+  .titre-block {
+    margin: 32px 0;
+  }
+  .titre-banner {
+    background: var(--green);
+    color: #fff;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-radius: 3px;
+  }
+  .titre-banner .roman {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+  .titre-banner .meta { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.85; }
+  .titre-banner .ttl { font-family: Georgia, serif; font-size: 15px; font-weight: 700; }
+
+  .resp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+
+  .resp-card {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: #fff;
+    padding: 14px 16px;
+    position: relative;
+    scroll-margin-top: 80px;
+  }
+  .resp-card:target {
+    border-color: var(--gold);
+    background: var(--gold-soft);
+    box-shadow: 0 0 0 3px rgba(193,151,63,0.15);
+  }
+  .resp-card .head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .resp-card .ref {
+    font-family: "Consolas", "JetBrains Mono", monospace;
+    font-size: 10.5px;
+    background: var(--bg-soft);
+    color: var(--ink-3);
+    padding: 2px 7px;
+    border: 1px solid var(--line-soft);
+    letter-spacing: 0.02em;
+  }
+  .resp-card .lvl {
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-4);
+    font-weight: 700;
+  }
+  .resp-card h3 {
+    margin: 4px 0 8px;
+    font-family: Georgia, serif;
+    font-size: 14.5px;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .resp-card .miss {
+    font-size: 11px;
+    color: var(--ink-3);
+    margin: 0 0 8px;
+    font-style: italic;
+  }
+  .resp-card ul {
+    margin: 0;
+    padding: 0 0 0 18px;
+    font-size: 11.5px;
+    color: var(--ink-2);
+    line-height: 1.5;
+  }
+  .resp-card li { margin-bottom: 3px; }
+  .resp-card li::marker { color: var(--green); }
+
+  /* Color the card edge by hierarchy level */
+  .resp-card.lvl-dir { border-left: 4px solid var(--gold); }
+  .resp-card.lvl-div { border-left: 4px solid var(--gold-dk); }
+  .resp-card.lvl-aud { border-left: 4px solid var(--gold-dk); }
+  .resp-card.lvl-sub { border-left: 4px solid var(--green); }
+  .resp-card.lvl-cel { border-left: 4px solid var(--gold); }
+  .resp-card.lvl-srv { border-left: 4px solid var(--line); }
+  .resp-card.lvl-bur { border-left: 4px solid var(--ink-5); }
+  .resp-card.lvl-att { border-left: 4px solid var(--green); }
+
+  /* Anchors visual hint */
+  .anchor-hint { color: var(--gold-dk); font-size: 10px; margin-left: auto; }
+
+  /* Legend */
+  .legend {
+    margin: 28px 0 0;
+    padding: 14px 16px;
+    background: var(--bg-soft);
+    border-left: 4px solid var(--green);
+    font-size: 11.5px;
+    color: var(--ink-3);
+  }
+  .legend strong { color: var(--ink); font-family: Georgia, serif; }
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px 18px;
+    list-style: none;
+    margin: 10px 0 0; padding: 0;
+  }
+  .legend-grid li { display: flex; align-items: center; gap: 8px; }
+  .sw { width: 18px; height: 14px; border: 1px solid var(--line); flex: none; }
+  .sw.dg { background: var(--ink); border-bottom: 2px solid var(--gold); }
+  .sw.dir { background: var(--gold); border-color: var(--gold-dk); }
+  .sw.div { background: var(--gold-soft); border-color: var(--gold-dk); border-left: 3px solid var(--gold-dk); }
+  .sw.aud { background: #fff; border-left: 4px solid var(--gold-dk); }
+  .sw.sub { background: var(--green-soft); border-color: var(--green); }
+  .sw.cel { background: var(--gold-soft); border-color: var(--gold); }
+  .sw.ser { background: #fff; }
+  .sw.bur { background: var(--bg-soft); }
+  .sw.att { background: #fff; border-left: 4px solid var(--green); }
+
+  .footer {
+    margin-top: 28px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-5);
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff; }
+    .page { border: 0; padding: 8px; max-width: 100%; }
+    .gov-bar { margin: 0; }
+    .scroll-wrap { overflow: visible; border: 0; }
+    .chart-inner { transform: scale(0.45); transform-origin: top left; }
+    .resp-grid { grid-template-columns: 1fr 1fr; }
+    .titre-block { page-break-inside: avoid; }
+    @page { size: A3 landscape; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="gov-bar">
+    République du Cameroun
+    <span class="seal">⚜</span>
+    Présidence de la République
+    <span class="seal">⚜</span>
+    Agence de Promotion des Investissements
+  </div>
+
+  <header class="header">
+    <div class="country">Organigramme & Rôles · Responsabilités</div>
+    <h1>Agence de Promotion des Investissements</h1>
+    <div class="sub">
+      Résolution du Conseil d'Administration · 5<sup>ᵉ</sup> session extraordinaire · 02 juillet 2020<br>
+      Décret n° 2019/074 du 18 février 2019 · 48 articles
+    </div>
+    <div class="hint">Cliquez sur une boîte de l'arbre pour atteindre sa fiche détaillée</div>
+  </header>
+
+  <nav class="tabs">
+    <a href="#arbre">Arbre hiérarchique</a>
+    <a href="#titre2">Titre II · Services Rattachés</a>
+    <a href="#titre3">Titre III · Administration Centrale</a>
+    <a href="#titre4">Titre IV · Services Déconcentrés</a>
+  </nav>
+
+  <!-- ============== TREE DIAGRAM ============== -->
+  <h2 id="arbre" style="font-family:Georgia,serif;color:var(--green);margin:0 0 12px;font-size:20px;">
+    1. Arbre hiérarchique
+  </h2>
+
+  <div class="scroll-wrap">
+    <div class="chart-inner">
+      <div class="chart">
+        <div class="cell">
+          <a href="#dg" class="box dg">
+            <div class="art">⚜ EXÉCUTIF · ART. 1 ⚜</div>
+            <div class="nm">DIRECTION GÉNÉRALE</div>
+            <div class="role">Directeur Général · Directeur Général Adjoint</div>
+          </a>
+          <div class="children">
+
+            <div class="cell">
+              <a href="#art3" class="box attache">
+                <div class="art">Art. 3</div>
+                <div class="nm">Attachés</div>
+              </a>
+            </div>
+
+            <div class="cell">
+              <a href="#art4" class="box audit">
+                <div class="art">Art. 4</div>
+                <div class="nm">Auditeur Interne</div>
+                <div class="tag">rang Directeur</div>
+              </a>
+            </div>
+
+            <div class="cell">
+              <a href="#art5" class="box sousdir">
+                <div class="art">Art. 5</div>
+                <div class="nm">Sous-direction Communication &amp; Relations Publiques</div>
+              </a>
+              <div class="children">
+                <div class="cell"><a href="#art6" class="box service"><div class="art">Art. 6</div><div class="nm">Service de la Communication</div></a></div>
+                <div class="cell"><a href="#art7" class="box service"><div class="art">Art. 7</div><div class="nm">Service Relations Publiques &amp; Protocole</div></a></div>
+              </div>
+            </div>
+
+            <div class="cell">
+              <a href="#art8" class="box cellule">
+                <div class="art">Art. 8</div>
+                <div class="nm">Cellule Traduction &amp; Promotion du Bilinguisme</div>
+                <div class="tag">rang Sous-dir.</div>
+              </a>
+            </div>
+
+            <div class="cell">
+              <a href="#art9" class="box sousdir">
+                <div class="art">Art. 9</div>
+                <div class="nm">Sous-direction des Affaires Générales</div>
+              </a>
+              <div class="children">
+                <div class="cell"><a href="#art10" class="box service"><div class="art">Art. 10</div><div class="nm">Service Administratif &amp; Financier</div></a></div>
+                <div class="cell"><a href="#art11" class="box service"><div class="art">Art. 11</div><div class="nm">Service des Ressources Humaines</div></a></div>
+                <div class="cell"><a href="#art12" class="box service"><div class="art">Art. 12</div><div class="nm">Service Informatique &amp; Multimédia</div></a></div>
+                <div class="cell"><a href="#art13" class="box service"><div class="art">Art. 13</div><div class="nm">Service Matériel &amp; Comptabilité-Matières</div></a></div>
+              </div>
+            </div>
+
+            <div class="cell">
+              <a href="#art14" class="box service"><div class="art">Art. 14</div><div class="nm">Service des Affaires Juridiques</div></a>
+            </div>
+
+            <div class="cell">
+              <a href="#art15" class="box sousdir">
+                <div class="art">Art. 15</div>
+                <div class="nm">Service du Courrier</div>
+              </a>
+              <div class="children">
+                <div class="cell"><a href="#art16" class="box bureau"><div class="art">Art. 16</div><div class="nm">Bureau Courrier « Arrivée »</div></a></div>
+                <div class="cell"><a href="#art17" class="box bureau"><div class="art">Art. 17</div><div class="nm">Bureau Courrier « Départ »</div></a></div>
+                <div class="cell"><a href="#art18" class="box bureau"><div class="art">Art. 18</div><div class="nm">Bureau des Archives</div></a></div>
+              </div>
+            </div>
+
+            <div class="cell">
+              <a href="#art20" class="box direction">
+                <div class="art">Art. 20</div>
+                <div class="nm">Direction de la Promotion des Investissements</div>
+              </a>
+              <div class="children">
+                <div class="cell">
+                  <a href="#art21" class="box sousdir"><div class="art">Art. 21</div><div class="nm">Sous-direction Promotion Locale</div></a>
+                  <div class="children">
+                    <div class="cell"><a href="#art22" class="box service"><div class="art">Art. 22</div><div class="nm">Service Secteur Primaire</div></a></div>
+                    <div class="cell"><a href="#art23" class="box service"><div class="art">Art. 23</div><div class="nm">Service Secteur Secondaire</div></a></div>
+                    <div class="cell"><a href="#art24" class="box service"><div class="art">Art. 24</div><div class="nm">Service Secteur Tertiaire</div></a></div>
+                  </div>
+                </div>
+                <div class="cell">
+                  <a href="#art25" class="box sousdir"><div class="art">Art. 25</div><div class="nm">Sous-direction Promotion à l'Étranger</div></a>
+                  <div class="children">
+                    <div class="cell"><a href="#art26" class="box service"><div class="art">Art. 26</div><div class="nm">Service Zone Europe</div></a></div>
+                    <div class="cell"><a href="#art27" class="box service"><div class="art">Art. 27</div><div class="nm">Service Zone Amérique</div></a></div>
+                    <div class="cell"><a href="#art28" class="box service"><div class="art">Art. 28</div><div class="nm">Service Zone M.O.-Asie-Pacifique</div></a></div>
+                    <div class="cell"><a href="#art29" class="box service"><div class="art">Art. 29</div><div class="nm">Service Zone Afrique</div></a></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cell">
+              <a href="#art30" class="box direction">
+                <div class="art">Art. 30</div>
+                <div class="nm">Direction Facilitation, Assistance &amp; Coopération</div>
+              </a>
+              <div class="children">
+                <div class="cell">
+                  <a href="#art31" class="box sousdir"><div class="art">Art. 31</div><div class="nm">Sous-direction de la Facilitation</div></a>
+                  <div class="children">
+                    <div class="cell"><a href="#art32" class="box service"><div class="art">Art. 32</div><div class="nm">Service Accueil &amp; Assistance</div></a></div>
+                    <div class="cell"><a href="#art33" class="box service"><div class="art">Art. 33</div><div class="nm">Service des Agréments</div></a></div>
+                  </div>
+                </div>
+                <div class="cell">
+                  <a href="#art34" class="box sousdir"><div class="art">Art. 34</div><div class="nm">Sous-direction de la Coopération</div></a>
+                  <div class="children">
+                    <div class="cell"><a href="#art35" class="box service"><div class="art">Art. 35</div><div class="nm">Service Coopération Bilatérale</div></a></div>
+                    <div class="cell"><a href="#art36" class="box service"><div class="art">Art. 36</div><div class="nm">Service Coopération Multilatérale</div></a></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cell">
+              <a href="#art37" class="box division">
+                <div class="art">Art. 37</div>
+                <div class="nm">Division Suivi-Évaluation &amp; Stratégie</div>
+                <div class="tag">rang Directeur</div>
+              </a>
+              <div class="children">
+                <div class="cell"><a href="#art38" class="box cellule"><div class="art">Art. 38</div><div class="nm">Cellule Suivi-Évaluation</div></a></div>
+                <div class="cell"><a href="#art39" class="box cellule"><div class="art">Art. 39</div><div class="nm">Cellule Stratégie</div></a></div>
+              </div>
+            </div>
+
+            <div class="cell">
+              <a href="#art41" class="box sousdir">
+                <div class="art">Art. 41</div>
+                <div class="nm">Antennes Régionales</div>
+                <div class="tag">Chef d'Antenne</div>
+              </a>
+              <div class="children">
+                <div class="cell"><a href="#art42" class="box bureau"><div class="art">Art. 42</div><div class="nm">Bureau Promotion des Investissements</div></a></div>
+                <div class="cell"><a href="#art43" class="box bureau"><div class="art">Art. 43</div><div class="nm">Bureau Accueil des Investisseurs</div></a></div>
+                <div class="cell"><a href="#art44" class="box bureau"><div class="art">Art. 44</div><div class="nm">Bureau Facilitation, Assist. &amp; Suivi</div></a></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== LEGEND ============== -->
+  <div class="legend">
+    <strong>Légende des niveaux · Art. 46 — rangs et prérogatives</strong>
+    <ul class="legend-grid">
+      <li><span class="sw dg"></span> Direction Générale (DG + DGA)</li>
+      <li><span class="sw dir"></span> Direction — rang Directeur</li>
+      <li><span class="sw div"></span> Division — rang Directeur</li>
+      <li><span class="sw aud"></span> Auditeur Interne — rang Directeur</li>
+      <li><span class="sw att"></span> Attachés — rang Sous-directeur</li>
+      <li><span class="sw sub"></span> Sous-direction — Sous-directeur</li>
+      <li><span class="sw cel"></span> Cellule — rang Sous-directeur</li>
+      <li><span class="sw ser"></span> Service — Chef de Service</li>
+      <li><span class="sw bur"></span> Bureau — Chef de Bureau</li>
+    </ul>
+  </div>
+
+  <!-- ============== ROLES & RESPONSIBILITIES ============== -->
+  <section class="resp-section">
+    <h2>2. Rôles et Responsabilités · article par article</h2>
+    <div class="sub-h2">
+      Extrait fidèle de la Résolution du Conseil d'Administration du 02 juillet 2020.
+    </div>
+
+    <!-- DG -->
+    <div class="resp-card lvl-dir" id="dg">
+      <div class="head">
+        <span class="ref">Art. 1</span>
+        <span class="lvl">Exécutif</span>
+      </div>
+      <h3>Direction Générale</h3>
+      <p class="miss">L'API est placée sous l'autorité d'un Conseil d'Administration et d'une Direction Générale (DG · DGA · Attachés). Pour l'exécution de ses missions, l'API dispose de Services Rattachés à la Direction Générale, d'une Administration Centrale, et de Services Déconcentrés. Conformément à l'Art. 40, les Services Déconcentrés exercent leurs activités sous la supervision de la Direction Générale qui planifie leurs objectifs, assure leur suivi et évalue leurs performances. L'Administration Centrale est, par construction, sous la même autorité.</p>
+    </div>
+
+    <!-- ============== TITRE II ============== -->
+    <div class="titre-block" id="titre2">
+      <div class="titre-banner">
+        <div class="roman">II</div>
+        <div>
+          <div class="meta">Titre II · Articles 2 à 18</div>
+          <div class="ttl">Services Rattachés à la Direction Générale</div>
+        </div>
+      </div>
+
+      <div class="resp-grid">
+
+        <div class="resp-card lvl-att" id="art3">
+          <div class="head"><span class="ref">Art. 3</span><span class="lvl">Attaché</span></div>
+          <h3>Attachés</h3>
+          <p class="miss">Auprès du Président du Conseil d'Administration, du Directeur Général et du Directeur Général Adjoint.</p>
+          <ul>
+            <li>Affaires réservées du PCA, du DG et du DGA</li>
+            <li>Toutes autres missions confiées par ceux-ci</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-aud" id="art4">
+          <div class="head"><span class="ref">Art. 4</span><span class="lvl">Auditeur · rang Directeur</span></div>
+          <h3>Auditeur Interne</h3>
+          <ul>
+            <li>Analyse et synthèse des informations comptables et RH</li>
+            <li>Accompagnement de l'API dans l'amélioration de ses procédures et résultats</li>
+            <li>Vérification de l'exactitude des informations organisationnelles et financières</li>
+            <li>Proposition des procédures de contrôle et de bonne gouvernance</li>
+            <li>Participation à la définition de nouveaux objectifs de gestion</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art5">
+          <div class="head"><span class="ref">Art. 5</span><span class="lvl">Sous-direction</span></div>
+          <h3>Sous-direction de la Communication et des Relations Publiques</h3>
+          <ul>
+            <li>Conception et mise en œuvre de la stratégie de communication de l'API</li>
+            <li>Conception des outils et actions promouvant l'image de l'API (intérieur / extérieur)</li>
+            <li>Gestion des communications internes et externes</li>
+            <li>Relations avec les médias et autres organes de communication</li>
+            <li>Alimentation des sites web et réseaux sociaux en liaison avec les unités opérationnelles</li>
+            <li>Traitement des dossiers de sponsoring en relation avec le service administratif et financier</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art6">
+          <div class="head"><span class="ref">Art. 6</span><span class="lvl">Service</span></div>
+          <h3>Service de la Communication</h3>
+          <ul>
+            <li>Conception et mise en œuvre de la stratégie de communication</li>
+            <li>Outils et actions de communication pour promouvoir l'image de l'API</li>
+            <li>Gestion des communications internes et externes</li>
+            <li>Relations avec les médias et autres organes de communication</li>
+            <li>Alimentation des sites web et réseaux sociaux</li>
+            <li>Traitement des dossiers de sponsoring</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art7">
+          <div class="head"><span class="ref">Art. 7</span><span class="lvl">Service</span></div>
+          <h3>Service des Relations Publiques et du Protocole</h3>
+          <ul>
+            <li>Renforcement et promotion de l'image de marque de l'API auprès des investisseurs potentiels et autres administrations</li>
+            <li>Collaboration avec les médias en liaison avec le service de la Communication</li>
+            <li>Suivi du planning des évènements de la Direction Générale</li>
+            <li>Conception, élaboration et suivi de la mise en œuvre de la stratégie des relations publiques</li>
+            <li>Accueil des hôtes de la Direction Générale</li>
+            <li>Organisation des cérémonies officielles auxquelles assiste la Direction Générale</li>
+            <li>Invitations de la Direction Générale</li>
+            <li>Préparation des missions et voyages de la Direction Générale</li>
+            <li>Organisation des cérémonies de signature des conventions</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-cel" id="art8">
+          <div class="head"><span class="ref">Art. 8</span><span class="lvl">Cellule · rang Sous-directeur</span></div>
+          <h3>Cellule de la Traduction et de la Promotion du Bilinguisme</h3>
+          <ul>
+            <li>Contribution à l'expansion du bilinguisme</li>
+            <li>Introduction et application des technologies nouvelles en matière de traduction (avec le service informatique)</li>
+            <li>Contrôle de la qualité linguistique de tous les documents élaborés par l'API</li>
+            <li>Travaux de traduction et d'interprétation confiés</li>
+            <li>Préparation des plans de formation du personnel en français, anglais ou autre langue</li>
+            <li>Traduction en français, anglais ou toute autre langue de tous les documents confiés</li>
+            <li>Qualité de la traduction</li>
+            <li>Comprend un ou plusieurs Chargés d'Études Assistants (FR &amp; EN)</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art9">
+          <div class="head"><span class="ref">Art. 9</span><span class="lvl">Sous-direction</span></div>
+          <h3>Sous-direction des Affaires Générales</h3>
+          <ul>
+            <li>Préparation et suivi de l'exécution du budget</li>
+            <li>Identification des besoins et programmation des marchés publics</li>
+            <li>Suivi de l'application des procédures de gestion financière et comptable</li>
+            <li>Gestion et contrôle du patrimoine</li>
+            <li>Gestion des stocks</li>
+            <li>Sécurité des infrastructures et équipements</li>
+            <li>Gestion et développement des ressources humaines</li>
+            <li>Promotion et suivi des activités sociales et de la solidarité</li>
+            <li>Conception et mise en œuvre d'un système informatique et multimédia</li>
+            <li>Études, exploitation et maintenance du réseau informatique de l'API</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art10">
+          <div class="head"><span class="ref">Art. 10</span><span class="lvl">Service</span></div>
+          <h3>Service Administratif et Financier</h3>
+          <ul>
+            <li>Engagements comptables</li>
+            <li>Identification des besoins et programmation des marchés publics</li>
+            <li>Promotion et suivi des activités sociales et de la solidarité</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art11">
+          <div class="head"><span class="ref">Art. 11</span><span class="lvl">Service</span></div>
+          <h3>Service des Ressources Humaines</h3>
+          <ul>
+            <li>Gestion et développement des ressources humaines</li>
+            <li>Centralisation et mise à jour permanente du fichier du personnel</li>
+            <li>Préparation des profils d'affectation du personnel</li>
+            <li>Suivi des plans de carrière du personnel</li>
+            <li>Élaboration des plans de formation des personnels</li>
+            <li>Préparation des actes de gestion des personnels</li>
+            <li>Préparation des dossiers disciplinaires des personnels</li>
+            <li>Saisie et prise en charge des actes de recrutement, promotion, nomination, avancement</li>
+            <li>Saisie et validation des indemnités et primes diverses</li>
+            <li>Instruction des dossiers et préparation des actes (rentes d'accidents de travail et maladies professionnelles)</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art12">
+          <div class="head"><span class="ref">Art. 12</span><span class="lvl">Service</span></div>
+          <h3>Service Informatique et Multimédia</h3>
+          <ul>
+            <li>Conception et mise en œuvre du système informatique et multimédia</li>
+            <li>Choix des équipements en matière d'informatique</li>
+            <li>Suivi, sécurisation et disponibilité du site web et des réseaux sociaux</li>
+            <li>Veille technologique en matière d'informatique</li>
+            <li>Études, développement, exploitation et maintenance des applications et du réseau</li>
+            <li>Actualisation permanente de la banque d'idées et de données de projets</li>
+            <li>Mise à jour du site web et réseaux sociaux (image de marque, opportunités)</li>
+            <li>Gestion des technologies de l'information et communication, réseaux et maintenance</li>
+            <li>Administration technique des sites web, réseaux sociaux, intranet, extranet</li>
+            <li>Centralisation des besoins de formation et recyclage en informatique</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art13">
+          <div class="head"><span class="ref">Art. 13</span><span class="lvl">Service</span></div>
+          <h3>Service du Matériel et de la Comptabilité-Matières</h3>
+          <ul>
+            <li>Gestion des stocks</li>
+            <li>Inventaires</li>
+            <li>Réception des livraisons</li>
+            <li>Protection du patrimoine, conservation, distribution du matériel</li>
+            <li>Élaboration du compte de gestion matières</li>
+            <li>Gestion et contrôle du patrimoine</li>
+            <li>Sécurisation des infrastructures et équipements</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art14">
+          <div class="head"><span class="ref">Art. 14</span><span class="lvl">Service</span></div>
+          <h3>Service des Affaires Juridiques</h3>
+          <ul>
+            <li>Veiller au respect de la légalité et de la régularité juridique des actes engageant l'API</li>
+            <li>Émission des avis juridiques sur les textes, accords et conventions initiés ou conclus par l'API</li>
+            <li>Étude, mise en forme et suivi des accords et conventions concernant l'API</li>
+            <li>Promotion et vulgarisation de la culture juridique</li>
+            <li>Saisine et représentation de l'API en justice en cas de nécessité</li>
+            <li>Évaluation permanente des dispositions légales et règlementaires relatives à la promotion de l'investissement et leur actualisation</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art15">
+          <div class="head"><span class="ref">Art. 15</span><span class="lvl">Service du Courrier</span></div>
+          <h3>Service du Courrier</h3>
+          <ul>
+            <li>Réception, tri, enregistrement, traitement et ventilation du courrier</li>
+            <li>Reproduction, diffusion, classement et conservation des actes signés</li>
+            <li>Notification des actes individuels et ventilation des actes règlementaires, ainsi que tout autre document de service</li>
+            <li>Organisation et bonne tenue des chronos, registres et fichiers</li>
+            <li>Conservation de tous les documents</li>
+            <li>Proposition des procédures ou supports permettant de mieux conserver les documents</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-bur" id="art16">
+          <div class="head"><span class="ref">Art. 16</span><span class="lvl">Bureau</span></div>
+          <h3>Bureau du Courrier « Arrivée »</h3>
+          <ul>
+            <li>Réception, enregistrement, traitement et ventilation du courrier « Arrivée »</li>
+            <li>Classement et archivage du courrier Arrivée</li>
+            <li>Organisation et bonne tenue des chronos, registres et fichiers</li>
+            <li>Tenue du tableau de bord de la circulation du courrier Arrivée dans les services</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-bur" id="art17">
+          <div class="head"><span class="ref">Art. 17</span><span class="lvl">Bureau</span></div>
+          <h3>Bureau du Courrier « Départ »</h3>
+          <ul>
+            <li>Réception, enregistrement, traitement et ventilation du courrier « Départ » vers les Administrations et autres structures concernées</li>
+            <li>Classement et archivage du courrier « Départ »</li>
+            <li>Organisation et bonne tenue des chronos, registres et fichiers</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-bur" id="art18">
+          <div class="head"><span class="ref">Art. 18</span><span class="lvl">Bureau</span></div>
+          <h3>Bureau des Archives</h3>
+          <ul>
+            <li>Conservation de tous les documents</li>
+            <li>Proposition des procédures ou supports permettant de mieux conserver les documents</li>
+            <li>Organisation et fonctionnement du centre de documentation</li>
+            <li>Acquisition, gestion et conservation des ouvrages relatifs à l'économie et aux investissements</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============== TITRE III ============== -->
+    <div class="titre-block" id="titre3">
+      <div class="titre-banner">
+        <div class="roman">III</div>
+        <div>
+          <div class="meta">Titre III · Articles 19 à 39</div>
+          <div class="ttl">Administration Centrale</div>
+        </div>
+      </div>
+
+      <div class="resp-grid">
+
+        <div class="resp-card lvl-dir" id="art20">
+          <div class="head"><span class="ref">Art. 20</span><span class="lvl">Direction · Chap. I</span></div>
+          <h3>Direction de la Promotion des Investissements</h3>
+          <ul>
+            <li>Conception et déploiement des instruments et outils de la promotion des Investissements</li>
+            <li>Recherche des opportunités d'investissement dans les différentes chaînes de valeurs</li>
+            <li>Collecte des informations relatives aux opportunités d'investissement au Cameroun</li>
+            <li>Constitution (avec le Service Informatique) d'une banque de données de projets et d'opportunités</li>
+            <li>Recherche et identification des investisseurs au Cameroun et à l'étranger</li>
+            <li>Vulgarisation des mesures visant à favoriser le développement des entreprises nationales</li>
+            <li>Collecte, traitement et production de toute documentation sur les opportunités d'investissement (par secteur et par région, diffusion multimédia)</li>
+            <li>Collecte et synthèse des informations sur l'actualité nationale et internationale concernant les secteurs d'activités</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art21">
+          <div class="head"><span class="ref">Art. 21</span><span class="lvl">Sous-direction</span></div>
+          <h3>Sous-direction de la Promotion Locale</h3>
+          <ul>
+            <li>Conception et élaboration des études sur la promotion des investissements au Cameroun (avec la Division Suivi-Évaluation)</li>
+            <li>Participation à la promotion des investissements privés (avec ambassades et consulats à l'étranger)</li>
+            <li>Collecte des informations sur les opportunités auprès des milieux d'affaires nationaux</li>
+            <li>Constitution de la banque d'idées et de données de projets (avec Service Informatique)</li>
+            <li>Vulgarisation des mesures d'incitation auprès des entreprises nationales</li>
+            <li>Préparation et organisation des manifestations de promotion au Cameroun</li>
+            <li>Préparation et participation aux manifestations organisées par d'autres partenaires / institutions</li>
+            <li>Recherche des opportunités dans les différentes chaînes de valeur</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art22">
+          <div class="head"><span class="ref">Art. 22</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion du Secteur Primaire</h3>
+          <ul>
+            <li>Recherche des opportunités d'investissement dans les chaînes de valeur du secteur primaire</li>
+            <li>Mise en place d'une banque d'idées de projets du secteur primaire</li>
+            <li>Participation aux foires et fora axés sur le secteur primaire</li>
+            <li>Liaisons avec les organismes et ministères techniques impliqués</li>
+            <li>Contribution (sous supervision DG) à l'organisation du Cameroon Investment Forum (CIF)</li>
+            <li>Collecte des informations sur les opportunités du secteur primaire</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art23">
+          <div class="head"><span class="ref">Art. 23</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion du Secteur Secondaire</h3>
+          <ul>
+            <li>Recherche des opportunités dans les chaînes de valeur du secteur secondaire</li>
+            <li>Mise en place d'une banque d'idées de projets industriels</li>
+            <li>Participation aux foires et fora industriels</li>
+            <li>Liaison avec les organismes et ministères techniques de l'industrie</li>
+            <li>Contribution à l'organisation du CIF</li>
+            <li>Vulgarisation des mesures favorisant le développement de l'industrie nationale</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art24">
+          <div class="head"><span class="ref">Art. 24</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion du Secteur Tertiaire</h3>
+          <ul>
+            <li>Recherche des opportunités dans les chaînes de valeurs du secteur tertiaire</li>
+            <li>Participation aux foires et fora axés sur le secteur tertiaire</li>
+            <li>Contribution à l'organisation du CIF</li>
+            <li>Collecte des informations sur les opportunités du secteur tertiaire</li>
+            <li>Vulgarisation des mesures favorisant le développement des entreprises nationales dans le secteur tertiaire</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art25">
+          <div class="head"><span class="ref">Art. 25</span><span class="lvl">Sous-direction</span></div>
+          <h3>Sous-direction de la Promotion à l'Étranger</h3>
+          <ul>
+            <li>Promotion de l'image de marque du Cameroun à l'étranger</li>
+            <li>Préparation aux manifestations de promotion organisées par l'API à l'étranger ou par d'autres institutions</li>
+            <li>Vulgarisation à l'étranger des mesures d'incitation à l'investissement privé</li>
+            <li>Diffusion des supports promotionnels et documentation auprès des investisseurs potentiels étrangers</li>
+            <li>Collecte et mise en forme des idées et données de projets (avec Sous-direction Promotion Locale)</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art26">
+          <div class="head"><span class="ref">Art. 26</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion · Zone Europe</h3>
+          <ul>
+            <li>Promotion de l'image de marque du Cameroun en Europe</li>
+            <li>Préparation et participation aux manifestations en Europe</li>
+            <li>Participation à la promotion des investissements privés en Europe</li>
+            <li>Vulgarisation en Europe des mesures d'incitation</li>
+            <li>Diffusion des supports promotionnels auprès des investisseurs européens</li>
+            <li>Collecte et mise en forme des idées et données de projets pour milieux d'affaires européens</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art27">
+          <div class="head"><span class="ref">Art. 27</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion · Zone Amérique</h3>
+          <ul>
+            <li>Promotion de l'image de marque du Cameroun en Amérique</li>
+            <li>Préparation et participation aux manifestations en Amérique</li>
+            <li>Participation à la promotion des investissements privés en Amérique</li>
+            <li>Vulgarisation en Amérique des mesures d'incitation</li>
+            <li>Diffusion des supports promotionnels auprès des investisseurs américains</li>
+            <li>Collecte et mise en forme des idées et données de projets pour milieux d'affaires américains</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art28">
+          <div class="head"><span class="ref">Art. 28</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion · Zone Moyen-Orient · Asie · Pacifique</h3>
+          <ul>
+            <li>Promotion de l'image de marque au Moyen-Orient, en Asie et le Pacifique</li>
+            <li>Préparation et participation aux manifestations en zone MOAP</li>
+            <li>Participation à la promotion des investissements privés en zone MOAP</li>
+            <li>Vulgarisation des mesures d'incitation en zone MOAP</li>
+            <li>Diffusion des supports promotionnels en zone MOAP</li>
+            <li>Collecte et mise en forme des idées et données de projets pour milieux d'affaires de la zone</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art29">
+          <div class="head"><span class="ref">Art. 29</span><span class="lvl">Service</span></div>
+          <h3>Service de la Promotion · Zone Afrique</h3>
+          <ul>
+            <li>Promotion de l'image de marque du Cameroun en Afrique</li>
+            <li>Préparation et participation aux manifestations en Afrique</li>
+            <li>Participation à la promotion des investissements privés en Afrique</li>
+            <li>Vulgarisation en Afrique des mesures d'incitation</li>
+            <li>Diffusion des supports promotionnels auprès des investisseurs africains</li>
+            <li>Collecte et mise en forme des idées et données de projets pour milieux d'affaires africains</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-dir" id="art30">
+          <div class="head"><span class="ref">Art. 30</span><span class="lvl">Direction · Chap. II</span></div>
+          <h3>Direction de la Facilitation, de l'Assistance et de la Coopération</h3>
+          <ul>
+            <li>Réception, instruction et suivi jusqu'à l'aboutissement des dossiers de demande d'agrément introduits par les Investisseurs</li>
+            <li>Préparation des dossiers de demande d'agrément en vue de leur transmission au Ministre en charge des finances pour avis, dans les délais prévus par la loi</li>
+            <li>Contrôle de régularité, conformité et faisabilité des dossiers de demande d'agrément</li>
+            <li>Assistance des Investisseurs dans toutes les étapes de la mise sur pieds des projets</li>
+            <li>Relations avec les institutions bilatérales et multilatérales impliquées</li>
+            <li>Promotion des partenariats publics-privés</li>
+            <li>Assistance dans les démarches administratives complémentaires (visas, accès aux installations publiques)</li>
+            <li>Collecte des informations sur la disponibilité des terrains industriels</li>
+            <li>Assistance dans les formalités d'accès au foncier et de construction d'usines</li>
+            <li>Développement et promotion des nouvelles coopérations</li>
+            <li>Suivi des relations avec les points focaux, institutions bilatérales et multilatérales</li>
+            <li>Suivi des relations avec les groupements patronaux et chambres consulaires</li>
+            <li>Développement de partenariats entre investisseurs étrangers et nationaux</li>
+            <li>Facilitation des joint-ventures entre investisseurs nationaux et étrangers</li>
+            <li>Préparation des projets de conventions</li>
+            <li>Suivi des redevances annuelles dues par les entreprises agréées (avec l'Agence Comptable et le SAF)</li>
+            <li>Accueil des délégations étrangères à leur arrivée sur le territoire national</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art31">
+          <div class="head"><span class="ref">Art. 31</span><span class="lvl">Sous-direction</span></div>
+          <h3>Sous-direction de la Facilitation</h3>
+          <ul>
+            <li>Accueil des délégations étrangères à leur arrivée sur le territoire national</li>
+            <li>Assistance et orientation des Investisseurs dans toutes les étapes des projets</li>
+            <li>Obtention des visas nécessaires à l'exécution des programmes d'investissement (et accès aux installations publiques)</li>
+            <li>Contrôle de régularité, conformité et faisabilité des dossiers d'agrément</li>
+            <li>Instruction et suivi jusqu'à l'aboutissement des dossiers de demande d'agrément</li>
+            <li>Préparation des dossiers pour transmission aux administrations partenaires pour avis</li>
+            <li>Information des Investisseurs sur la suite réservée à leurs dossiers</li>
+            <li>Préparation des projets de conventions</li>
+            <li>Suivi des redevances annuelles (avec Agent Comptable et SAF)</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art32">
+          <div class="head"><span class="ref">Art. 32</span><span class="lvl">Service</span></div>
+          <h3>Service de l'Accueil et de l'Assistance</h3>
+          <ul>
+            <li>Assistance et orientation des Investisseurs dans toutes les étapes des projets</li>
+            <li>Accueil des délégations étrangères à leur arrivée</li>
+            <li>Assistance dans les formalités d'accès au foncier et de construction d'usines</li>
+            <li>Obtention des visas nécessaires pour l'exécution des programmes</li>
+            <li>Mise en relation d'affaires entre entreprises nationales et investisseurs étrangers</li>
+            <li>Contrôle de régularité, conformité et faisabilité des dossiers de demande d'agrément</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art33">
+          <div class="head"><span class="ref">Art. 33</span><span class="lvl">Service</span></div>
+          <h3>Service des Agréments</h3>
+          <ul>
+            <li>Instruction et suivi jusqu'à l'aboutissement des dossiers de demande d'agrément introduits par les Investisseurs</li>
+            <li>Préparation des dossiers pour transmission aux administrations partenaires pour avis</li>
+            <li>Information des Investisseurs sur la suite réservée à leurs dossiers</li>
+            <li>Préparation des projets de conventions</li>
+            <li>Suivi des redevances annuelles dues par les entreprises agréées (avec Agent Comptable et SAF)</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-sub" id="art34">
+          <div class="head"><span class="ref">Art. 34</span><span class="lvl">Sous-direction</span></div>
+          <h3>Sous-direction de la Coopération</h3>
+          <ul>
+            <li>Relations avec les institutions bilatérales et multilatérales</li>
+            <li>Promotion des partenariats publics-privés</li>
+            <li>Suivi des relations avec les points focaux à l'étranger</li>
+            <li>Suivi des relations avec les points focaux locaux</li>
+            <li>Suivi des relations avec les institutions multilatérales</li>
+            <li>Suivi des relations avec les groupements patronaux et chambres consulaires (locaux et étrangers)</li>
+            <li>Développement de partenariats entre investisseurs étrangers et nationaux</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art35">
+          <div class="head"><span class="ref">Art. 35</span><span class="lvl">Service</span></div>
+          <h3>Service de la Coopération Bilatérale</h3>
+          <ul>
+            <li>Suivi des relations avec les chambres consulaires locales impliquées</li>
+            <li>Suivi de la coopération avec les institutions bilatérales impliquées</li>
+            <li>Suivi des relations avec les missions diplomatiques étrangères installées au Cameroun</li>
+            <li>Suivi des accords de partenariat signés avec des institutions locales</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-srv" id="art36">
+          <div class="head"><span class="ref">Art. 36</span><span class="lvl">Service</span></div>
+          <h3>Service de la Coopération Multilatérale</h3>
+          <ul>
+            <li>Suivi des relations avec les institutions multilatérales impliquées</li>
+            <li>Développement et promotion des nouvelles coopérations</li>
+            <li>Suivi des relations avec les points focaux à l'étranger</li>
+            <li>Suivi des accords de partenariat signés avec des institutions locales</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-div" id="art37">
+          <div class="head"><span class="ref">Art. 37</span><span class="lvl">Division · Chap. III · rang Directeur</span></div>
+          <h3>Division du Suivi-Évaluation et de la Stratégie</h3>
+          <ul>
+            <li>Suivi et évaluation des entreprises agréées</li>
+            <li>Suivi des tendances internationales des Investissements Directs Étrangers (IDE) et des agences concurrentes</li>
+            <li>Suivi et veille au respect des engagements souscrits par les entreprises agréées</li>
+            <li>Conception et mise en œuvre d'un dispositif de suivi-évaluation</li>
+            <li>Suivi et contrôle du respect des engagements souscrits dans l'acte d'agrément</li>
+            <li>Suivi des lois affectant les investissements (renforcement du cadre juridique)</li>
+            <li>Analyse de l'environnement des affaires</li>
+            <li>Proposition des mesures visant à améliorer le climat des affaires</li>
+            <li>Élaboration du rapport annuel sur les investissements</li>
+            <li>Préparation du rapport annuel sur la promotion des investissements et le développement des entreprises agréées</li>
+            <li>Collecte des statistiques (avec Direction de la Facilitation)</li>
+            <li>Analyse de l'environnement (benchmarking avec d'autres API)</li>
+            <li>Élaboration des stratégies pour un environnement incitatif et favorable</li>
+            <li>Conception et élaboration des études sur la promotion des investissements (avec Direction de la Promotion)</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-cel" id="art38">
+          <div class="head"><span class="ref">Art. 38</span><span class="lvl">Cellule</span></div>
+          <h3>Cellule du Suivi-Évaluation</h3>
+          <ul>
+            <li>Contrôle et évaluation du respect des engagements pris par les entreprises agréées</li>
+            <li>Suivi du respect des engagements souscrits par les entreprises agréées</li>
+            <li>Suivi et évaluation des entreprises agréées</li>
+            <li>Suivi des tendances internationales des IDE et des agences concurrentes</li>
+            <li>Conception et élaboration des fiches de suivi-évaluation des entreprises agréées</li>
+            <li>Préparation du rapport annuel sur la promotion des investissements et le développement des entreprises agréées</li>
+            <li>Collecte des statistiques sur le développement des entreprises agréées (avec Direction de la Facilitation)</li>
+            <li>Élaboration du rapport annuel sur les investissements au Cameroun</li>
+            <li>Comprend des Chargés d'Études Assistants</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-cel" id="art39">
+          <div class="head"><span class="ref">Art. 39</span><span class="lvl">Cellule</span></div>
+          <h3>Cellule de la Stratégie</h3>
+          <ul>
+            <li>Élaboration de la stratégie de promotion des investissements de l'API (avec la Direction Générale)</li>
+            <li>Élaboration des stratégies pour un environnement incitatif et favorable</li>
+            <li>Suivi des lois affectant les investissements (renforcement du cadre juridique)</li>
+            <li>Analyse de l'environnement visant à faire du Cameroun une meilleure destination</li>
+            <li>Proposition des mesures visant à améliorer le climat des affaires</li>
+            <li>Analyse de l'environnement (benchmarking avec d'autres API)</li>
+            <li>Conception et élaboration des études sur la promotion (avec Direction de la Promotion)</li>
+            <li>Comprend des Chargés d'Études Assistants</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============== TITRE IV ============== -->
+    <div class="titre-block" id="titre4">
+      <div class="titre-banner">
+        <div class="roman">IV</div>
+        <div>
+          <div class="meta">Titre IV · Articles 40 à 44</div>
+          <div class="ttl">Services Déconcentrés · sous supervision de la Direction Générale</div>
+        </div>
+      </div>
+
+      <div class="resp-grid">
+
+        <div class="resp-card lvl-sub" id="art41">
+          <div class="head"><span class="ref">Art. 41</span><span class="lvl">Antenne · Chef d'Antenne</span></div>
+          <h3>Antennes Régionales</h3>
+          <p class="miss">Placée sous l'autorité d'un Chef d'Antenne, l'Antenne est chargée, sous l'autorité de la Direction Générale.</p>
+          <ul>
+            <li>Promotion de l'image de marque du Cameroun</li>
+            <li>Vulgarisation des mesures d'incitation à l'investissement privé au Cameroun</li>
+            <li>Accueil, information et orientation des investisseurs</li>
+            <li>Contrôle du respect des engagements pris par les entreprises agréées (avec la Direction de la Facilitation, Assistance et Suivi)</li>
+            <li>Mise à la disposition des investisseurs des supports promotionnels et documentation</li>
+            <li>Représentation de la Direction Générale</li>
+            <li>Réception et examen des pièces des dossiers de demandes d'agrément en vue de leur transmission à la Direction Générale</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-bur" id="art42">
+          <div class="head"><span class="ref">Art. 42</span><span class="lvl">Bureau</span></div>
+          <h3>Bureau de la Promotion des Investissements</h3>
+          <ul>
+            <li>Participation aux évènements promotionnels dans le ressort territorial</li>
+            <li>Mise à la disposition des investisseurs des supports promotionnels et de la documentation</li>
+            <li>Vulgarisation des mesures d'incitation à l'investissement privé au Cameroun</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-bur" id="art43">
+          <div class="head"><span class="ref">Art. 43</span><span class="lvl">Bureau</span></div>
+          <h3>Bureau d'Accueil des Investisseurs</h3>
+          <ul>
+            <li>Accueil, information et orientation des Investisseurs</li>
+            <li>Mise à la disposition des Investisseurs des documents promotionnels et documentation sur les opportunités d'investissements au Cameroun</li>
+          </ul>
+        </div>
+
+        <div class="resp-card lvl-bur" id="art44">
+          <div class="head"><span class="ref">Art. 44</span><span class="lvl">Bureau</span></div>
+          <h3>Bureau de la Facilitation, de l'Assistance et du Suivi des entreprises agréées</h3>
+          <ul>
+            <li>Contrôle du respect des engagements pris par les entreprises agréées dans le ressort territorial (avec Direction de la Facilitation, Assistance et Coopération)</li>
+            <li>Réception des dossiers de demande d'agrément des investisseurs en vue de leur transmission à la Direction Générale</li>
+            <li>Réception et examen des pièces des dossiers de demandes d'agrément en vue de leur transmission à la Direction Générale</li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+
+  <div class="footer">
+    ⚜ Adopté à l'unanimité · Yaoundé · 02 juillet 2020 · Art. 48 : mise en œuvre par le Directeur Général ⚜
+  </div>
+
+</div>
+</body>
+</html>

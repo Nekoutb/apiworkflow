@@ -1,11 +1,12 @@
 import Link from 'next/link';
 
+export const metadata = { title: 'API Cameroun · Portail officiel' };
+
 export default function LandingPage() {
   return (
     <main>
       {/* ====== STAGE — editorial hero ====== */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white via-[#f3f8f5] to-[#e8f1ec]">
-        {/* subtle textures */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
@@ -23,15 +24,11 @@ export default function LandingPage() {
           }}
         />
 
-        {/* Top marquee */}
         <header className="relative z-10 flex items-center justify-between border-b border-line bg-white/80 px-14 py-5 backdrop-blur">
           <div className="flex items-center gap-3.5">
             <div className="relative flex h-11 w-11 items-center justify-center border border-obsidian bg-obsidian text-gold-500 font-display text-lg font-bold tracking-wide">
               A
-              <span
-                aria-hidden
-                className="pointer-events-none absolute inset-[3px] border border-gold-500/45"
-              />
+              <span aria-hidden className="pointer-events-none absolute inset-[3px] border border-gold-500/45" />
             </div>
             <div className="leading-tight">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
@@ -43,9 +40,8 @@ export default function LandingPage() {
             </div>
           </div>
           <nav className="flex items-center gap-7 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-3">
-            <a className="hover:text-cmgreen-800" href="#">Cadre légal</a>
-            <a className="hover:text-cmgreen-800" href="#">Secteurs prioritaires</a>
-            <a className="hover:text-cmgreen-800" href="#">Incitations</a>
+            <a className="hover:text-cmgreen-800" href="#">À propos</a>
+            <a className="hover:text-cmgreen-800" href="#">Organigramme</a>
             <a className="hover:text-cmgreen-800" href="#">Contact</a>
             <div className="inline-flex border border-line-2">
               <button className="bg-obsidian px-2.5 py-1 text-[10.5px] font-bold tracking-wide text-gold-500">FR</button>
@@ -54,38 +50,33 @@ export default function LandingPage() {
           </nav>
         </header>
 
-        {/* Hero body */}
         <div className="relative z-10 grid grid-cols-[1.45fr_0.55fr]">
           <div className="border-r border-line px-14 py-24">
             <div className="mb-6 inline-flex items-center gap-3 text-[10.5px] font-bold uppercase tracking-[0.26em] text-gold-700">
-              Portail officiel · Ordonnance n° 2025/002
+              Portail officiel
               <span className="h-px w-11 bg-gold-600" />
             </div>
             <h1 className="serif mb-7 max-w-[640px] text-[clamp(44px,5vw,64px)] font-semibold leading-[1.06] tracking-[-0.022em] text-ink">
-              L&apos;investissement<br />au Cameroun,
-              <br />
-              <span className="text-cmgreen-800 italic">une affaire de souveraineté.</span>
+              Soumettez votre dossier<br />
+              <span className="italic text-cmgreen-800">au Cameroun, en ligne.</span>
             </h1>
             <p className="mb-8 max-w-[560px] text-[16px] leading-[1.65] text-ink-2">
-              Plateforme officielle de soumission, d&apos;instruction et de suivi des conventions
-              d&apos;investissement entre l&apos;État du Cameroun et les investisseurs nationaux et
-              internationaux. Filer un dossier en ligne, suivre son parcours à toutes les étapes,
-              recevoir votre acte d&apos;agrément sans déplacement.
+              Toute personne, entreprise, administration ou institution peut adresser un document à l'API
+              par cette plateforme. Le Service du Courrier en accuse réception, le Directeur Général
+              l'oriente vers l'unité compétente, et vous recevez la réponse officielle par retour.
             </p>
             <div className="serif inline-flex items-center gap-2.5 border-l-2 border-gold-600 pl-4 text-[14.5px] italic text-gold-700">
-              « Promouvoir l&apos;investissement productif, accélérer la croissance partagée. »
+              « Conformité, traçabilité, célérité — au service du développement. »
             </div>
           </div>
 
           <aside className="flex flex-col bg-white px-12 py-24">
-            <Stat num="10" unit="j ouvrés" label="Délai légal après récépissé · Art. 30.3" />
-            <Stat num="5" label="Étapes de validation · Secrétariat → DG" />
-            <Stat num="8" label="Secteurs prioritaires éligibles · Art. 3" />
+            <Stat num="5" label="Phases du circuit · Réception → Clôture" />
+            <Stat num="37" label="Rôles dans l'organigramme · Art. 1-46" />
             <Stat num="II" unit="langues" label="Français · English" last />
           </aside>
         </div>
 
-        {/* Footer */}
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-white px-14 py-5 text-[10.5px] uppercase tracking-[0.14em] text-ink-3">
           <div className="flex flex-wrap items-center gap-5">
             <Seal icon="⚜">République du Cameroun</Seal>
@@ -96,7 +87,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ====== Below-the-fold: two doors (Investor / Personnel) ====== */}
+      {/* ====== Below the fold — two doors ====== */}
       <section className="bg-white py-24">
         <div className="mx-auto max-w-6xl px-8">
           <div className="mb-12 text-center">
@@ -104,23 +95,25 @@ export default function LandingPage() {
               Accès au portail
             </div>
             <h2 className="serif text-4xl font-semibold tracking-tight text-ink">
-              Identifiez-vous selon votre profil
+              Que souhaitez-vous faire ?
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <DoorCard
-              href="/login?type=investor"
-              eyebrow="Pour les entreprises"
-              title="Espace Investisseur"
-              body="Déposer votre dossier de demande d'agrément, téléverser les pièces obligatoires, suivre l'avancement de votre dossier et récupérer votre convention signée."
-              cta="Espace Investisseur →"
+              href="/submit"
+              eyebrow="Tout émetteur · sans inscription"
+              title="Soumettre un document"
+              body="Adressez un dossier ou un courrier à l'API. Vous recevrez un accusé de réception automatique et un numéro de suivi pour consulter l'avancement."
+              cta="Soumettre un document →"
+              disabled
+              disabledNote="Disponible à l'activité B4"
             />
             <DoorCard
-              href="/login?type=staff"
+              href="/login"
               eyebrow="Pour le personnel API"
-              title="Portail Interne"
-              body="Workflow d'instruction des conventions, examen des pièces, assistance IA pour la conformité, signature finale du Directeur Général et pilotage de la performance."
-              cta="Portail Interne →"
+              title="Connexion Personnel"
+              body="Accédez à votre tableau de bord, à votre corbeille et aux dossiers en cours dans votre périmètre selon l'organigramme."
+              cta="Connexion Personnel →"
               accent
             />
           </div>
@@ -138,17 +131,7 @@ export default function LandingPage() {
   );
 }
 
-function Stat({
-  num,
-  unit,
-  label,
-  last,
-}: {
-  num: string;
-  unit?: string;
-  label: string;
-  last?: boolean;
-}) {
+function Stat({ num, unit, label, last }: { num: string; unit?: string; label: string; last?: boolean }) {
   return (
     <div className={last ? 'py-6' : 'border-b border-line py-6'}>
       <div className="flex items-baseline gap-1.5">
@@ -172,17 +155,12 @@ function Seal({ icon, children }: { icon: string; children: React.ReactNode }) {
 }
 
 function DoorCard({
-  href, eyebrow, title, body, cta, accent,
+  href, eyebrow, title, body, cta, accent, disabled, disabledNote,
 }: {
-  href: string; eyebrow: string; title: string; body: string; cta: string; accent?: boolean;
+  href: string; eyebrow: string; title: string; body: string; cta: string; accent?: boolean; disabled?: boolean; disabledNote?: string;
 }) {
-  return (
-    <Link
-      href={href}
-      className={`group block border p-10 transition hover:shadow-lift ${
-        accent ? 'border-obsidian bg-obsidian text-white' : 'border-line bg-white'
-      }`}
-    >
+  const inner = (
+    <>
       <div className={`mb-3 text-[10.5px] font-bold uppercase tracking-[0.26em] ${accent ? 'text-gold-500' : 'text-gold-700'}`}>
         {eyebrow}
       </div>
@@ -190,13 +168,17 @@ function DoorCard({
         {title}
       </h3>
       <p className={`mb-6 text-[14px] leading-[1.65] ${accent ? 'text-white/75' : 'text-ink-2'}`}>{body}</p>
-      <div
-        className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold uppercase tracking-[0.16em] transition group-hover:gap-3 ${
-          accent ? 'text-gold-500' : 'text-cmgreen-800'
-        }`}
-      >
+      <div className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold uppercase tracking-[0.16em] transition group-hover:gap-3 ${accent ? 'text-gold-500' : 'text-cmgreen-800'}`}>
         {cta}
       </div>
-    </Link>
+      {disabled && disabledNote && (
+        <div className={`mt-3 text-[10.5px] uppercase tracking-[0.14em] ${accent ? 'text-white/55' : 'text-ink-4'}`}>
+          {disabledNote}
+        </div>
+      )}
+    </>
   );
+  const cls = `group block border p-10 transition hover:shadow-lift ${accent ? 'border-obsidian bg-obsidian text-white' : 'border-line bg-white'} ${disabled ? 'pointer-events-none opacity-60' : ''}`;
+  if (disabled) return <div className={cls}>{inner}</div>;
+  return <Link href={href} className={cls}>{inner}</Link>;
 }

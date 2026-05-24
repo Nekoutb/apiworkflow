@@ -1,27 +1,17 @@
 /**
- * Seed — build-mode users + 3 sample conventions in mixed workflow states.
+ * Seed — v2 schema · document-centric workflow
  *
- * Users: 1 admin + 5 staff (one per role) + 3 investors.
- * Password is always `admin`.  Login accepts the local-part shortcut
- * (typing "secretariat" auto-maps to secretariat@api.cm).
+ * Provisions the minimal cast needed to exercise the new circuit:
+ * - 1 admin (admin/admin shortcut)
+ * - 1 DG  (apex of the organigramme)
+ * - 1 Chef Bureau Arrivée (entry point)
+ * - 1 Chef Bureau Départ (outbound)
+ * - 1 Chef d'Antenne (1 sample antenna)
+ * - 1 sample Document already received (visible on /admin/data)
  *
- * Sample conventions:
- *   - CV-2026-000001 · TechCam SARL · DRAFT (investor still uploading)
- *   - CV-2026-000002 · AgroVert SA · SUBMITTED · stage DIR_COMPLIANCE
- *   - CV-2026-000003 · Cameroun Solar Power · SIGNED by DG
+ * Larger seed (1 user per role) lands in B2.
  */
-import {
-  PrismaClient,
-  UserType,
-  StaffRole,
-  Sector,
-  Category,
-  ConventionStatus,
-  ConventionStage,
-  WorkflowAction,
-  DocumentKind,
-  VerificationState,
-} from '@prisma/client';
+import { PrismaClient, UserType, StaffRole, SourceChannel, DocumentNature, DocumentStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const db = new PrismaClient();
@@ -29,81 +19,46 @@ const db = new PrismaClient();
 type SeedStaff = { email: string; name: string; role: StaffRole };
 
 const STAFF: SeedStaff[] = [
-  { email: 'admin@api.cm',           name: 'Administrateur',    role: 'ADMIN' },
-  { email: 'secretariat@api.cm',     name: 'Marie Etoundi',     role: 'SECRETARY' },
-  { email: 'investissements@api.cm', name: 'Paul Nkomo',        role: 'DIR_INVESTMENTS' },
-  { email: 'conformite@api.cm',      name: 'Jeanne Mballa',     role: 'DIR_COMPLIANCE' },
-  { email: 'exterieur@api.cm',       name: 'Christine Abena',   role: 'DIR_EXTERNAL' },
-  { email: 'dg@api.cm',              name: 'Dr. Pierre Eyenga', role: 'DG' },
+  { email: 'admin@api.cm',         name: 'Administrateur',        role: 'ADMIN' },
+  { email: 'dg@api.cm',            name: 'Dr. Pierre Eyenga',     role: 'DG' },
+  { email: 'arrivee@api.cm',       name: 'Marie Etoundi',         role: 'CHEF_BUREAU_ARRIVEE' },
+  { email: 'depart@api.cm',        name: 'Paul Nkomo',            role: 'CHEF_BUREAU_DEPART' },
+  { email: 'antenne.littoral@api.cm', name: 'Hervé Bissek',       role: 'CHEF_ANTENNE' },
 ];
-
-type SeedInvestor = {
-  email: string;
-  name: string;
-  raisonSociale: string;
-  niu: string;
-  legalForm: string;
-  region: string;
-  city: string;
-  contactName: string;
-  contactPhone: string;
-  isExisting?: boolean;
-};
-
-const INVESTORS: SeedInvestor[] = [
-  {
-    email: 'contact@techcam.cm',
-    name: 'Mireille Tagne',
-    raisonSociale: 'TechCam SARL',
-    niu: 'M021412345678P',
-    legalForm: 'SARL',
-    region: 'Centre',
-    city: 'Yaoundé',
-    contactName: 'Mireille Tagne',
-    contactPhone: '+237 6 77 12 34 56',
-  },
-  {
-    email: 'contact@agrovert.cm',
-    name: 'Hervé Bissek',
-    raisonSociale: 'AgroVert SA',
-    niu: 'M021498765432A',
-    legalForm: 'SA',
-    region: 'Littoral',
-    city: 'Douala',
-    contactName: 'Hervé Bissek',
-    contactPhone: '+237 6 99 88 77 66',
-  },
-  {
-    email: 'contact@solarcm.cm',
-    name: 'Aïcha Bouba',
-    raisonSociale: 'Cameroun Solar Power',
-    niu: 'M021455667788S',
-    legalForm: 'SA',
-    region: 'Nord',
-    city: 'Garoua',
-    contactName: 'Aïcha Bouba',
-    contactPhone: '+237 6 55 44 33 22',
-    isExisting: true,
-  },
-];
-
-function categoryFor(amount: bigint): Category {
-  if (amount < 1_000_000_000n) return 'A';
-  if (amount <= 5_000_000_000n) return 'B';
-  return 'C';
-}
 
 async function main() {
-  console.log('🌱 Seeding API Cameroun…\n');
+  console.log('🌱 Seeding API Cameroun · v2 (document-centric)\n');
 
   const passwordHash = await bcrypt.hash('admin', 10);
 
+  // ---- Antenna (Littoral) ----
+  const antenne = await db.antenne.upsert({
+    where: { name: 'Antenne Littoral' },
+    update: {},
+    create: {
+      name: 'Antenne Littoral',
+      region: 'Littoral',
+      ville: 'Douala',
+      address: 'Bonanjo, immeuble API Littoral',
+      active: true,
+    },
+  });
+  console.log(`   ✓ Antenne · ${antenne.name}`);
+
   // ---- Staff ----
-  console.log('Personnel API:');
+  console.log('\nPersonnel:');
+  let chefAntenneUserId: string | null = null;
   for (const u of STAFF) {
-    await db.user.upsert({
+    const user = await db.user.upsert({
       where: { email: u.email },
-      update: { passwordHash, name: u.name, userType: 'STAFF', staffRole: u.role, status: 'ACTIVE' },
+      update: {
+        passwordHash,
+        name: u.name,
+        userType: UserType.STAFF,
+        staffRole: u.role,
+        status: 'ACTIVE',
+        antenneId: u.role === 'CHEF_ANTENNE' ? antenne.id : null,
+      },
       create: {
         email: u.email,
         passwordHash,
@@ -111,290 +66,83 @@ async function main() {
         userType: UserType.STAFF,
         staffRole: u.role,
         emailVerified: new Date(),
+        antenneId: u.role === 'CHEF_ANTENNE' ? antenne.id : null,
       },
     });
-    console.log(`   ✓ ${u.email.padEnd(28)} ${u.role}`);
+    if (u.role === 'CHEF_ANTENNE') chefAntenneUserId = user.id;
+    console.log(`   ✓ ${u.email.padEnd(32)} ${u.role}`);
   }
 
-  // ---- Investors (User + Investor row) ----
-  console.log('\nInvestisseurs:');
-  const investorRecords = [];
-  for (const i of INVESTORS) {
-    const user = await db.user.upsert({
-      where: { email: i.email },
-      update: { passwordHash, name: i.name, userType: 'INVESTOR', status: 'ACTIVE' },
-      create: {
-        email: i.email,
-        passwordHash,
-        name: i.name,
-        userType: UserType.INVESTOR,
-        emailVerified: new Date(),
-      },
+  // Tie the antenna's chefUserId
+  if (chefAntenneUserId) {
+    await db.antenne.update({
+      where: { id: antenne.id },
+      data: { chefUserId: chefAntenneUserId },
     });
-
-    const investor = await db.investor.upsert({
-      where: { userId: user.id },
-      update: {
-        raisonSociale: i.raisonSociale,
-        niu: i.niu,
-        legalForm: i.legalForm,
-        region: i.region,
-        city: i.city,
-        contactName: i.contactName,
-        contactPhone: i.contactPhone,
-        isExisting: i.isExisting ?? false,
-      },
-      create: {
-        userId: user.id,
-        raisonSociale: i.raisonSociale,
-        niu: i.niu,
-        legalForm: i.legalForm,
-        region: i.region,
-        city: i.city,
-        contactName: i.contactName,
-        contactPhone: i.contactPhone,
-        isExisting: i.isExisting ?? false,
-      },
-    });
-    investorRecords.push(investor);
-    console.log(`   ✓ ${i.email.padEnd(28)} ${i.raisonSociale}${i.isExisting ? ' · existant' : ''}`);
   }
 
-  const [techcam, agrovert, solar] = investorRecords;
+  // ---- Sample document (online submission) ----
+  await db.document.deleteMany({ where: { reference: 'COURRIER-2026-000001' } });
 
-  // ---- Wipe sample conventions so the seed is idempotent ----
-  await db.convention.deleteMany({
-    where: { reference: { in: ['CV-2026-000001', 'CV-2026-000002', 'CV-2026-000003', 'CV-2026-000004', 'CV-2026-000005'] } },
-  });
-
-  // ---- Sample convention 1: DRAFT (still being prepared) ----
-  console.log('\nConventions:');
-  const cv1Amount = 850_000_000n;
-  const cv1 = await db.convention.create({
+  const sampleDoc = await db.document.create({
     data: {
-      reference: 'CV-2026-000001',
-      investorId: techcam.id,
-      projectName: 'Hub data Centre Yaoundé',
-      sector: Sector.NUMERIQUE,
-      region: 'Centre',
-      investmentFcfa: cv1Amount,
-      jobsPlanned: 42,
-      category: categoryFor(cv1Amount),
-      status: ConventionStatus.DRAFT,
-      currentStage: ConventionStage.SECRETARY,
-    },
-  });
-  // 3 of 6 documents uploaded
-  await db.document.createMany({
-    data: [
-      { conventionId: cv1.id, kind: DocumentKind.REGISTRATION,     fileName: 'rccm-techcam.pdf',           storageUri: 'seed://rccm-techcam.pdf',           sha256: 'a'.repeat(64), sizeBytes: 184_320, mimeType: 'application/pdf', verification: 'PENDING' },
-      { conventionId: cv1.id, kind: DocumentKind.TAX_ID,           fileName: 'niu-techcam.pdf',            storageUri: 'seed://niu-techcam.pdf',            sha256: 'b'.repeat(64), sizeBytes:  98_750, mimeType: 'application/pdf', verification: 'PENDING' },
-      { conventionId: cv1.id, kind: DocumentKind.COMPANY_STATUTES, fileName: 'statuts-techcam.pdf',        storageUri: 'seed://statuts-techcam.pdf',        sha256: 'c'.repeat(64), sizeBytes: 320_998, mimeType: 'application/pdf', verification: 'PENDING' },
-    ],
-  });
-  console.log(`   ✓ ${cv1.reference} · TechCam SARL · DRAFT (3/6 docs)`);
-
-  // ---- Sample convention 2: SUBMITTED · at DIR_COMPLIANCE ----
-  // Submitted 11 days ago, récépissé délivré 10 days ago (1-day verification window).
-  const cv2Amount = 3_200_000_000n;
-  const cv2 = await db.convention.create({
-    data: {
-      reference: 'CV-2026-000002',
-      investorId: agrovert.id,
-      projectName: 'Complexe agro-industriel Edéa',
-      sector: Sector.AGRICULTURE,
-      region: 'Littoral',
-      investmentFcfa: cv2Amount,
-      jobsPlanned: 187,
-      category: categoryFor(cv2Amount),
-      status: ConventionStatus.SUBMITTED,
-      currentStage: ConventionStage.DIR_COMPLIANCE,
-      submittedAt: daysAgo(11),
-      recepisseAt: daysAgo(10),
-      recepisseNo: 'REC-2026-000002',
-      financialSummary: {
+      reference: 'COURRIER-2026-000001',
+      subject: 'Demande d\'agrément · Projet Centrale Solaire 50 MW',
+      nature: DocumentNature.AGREMENT_REQUEST,
+      status: DocumentStatus.AWAITING_DG_ANALYSIS,
+      sourceChannel: SourceChannel.ONLINE,
+      submittedAt: hoursAgo(2),
+      acknowledgedAt: hoursAgo(2),
+      submission: {
         create: {
-          totalInvestmentFcfa: cv2Amount,
-          equityFcfa:  1_500_000_000n,
-          debtFcfa:    1_700_000_000n,
-          capexFcfa:   2_800_000_000n,
-          opexYearOneFcfa: 420_000_000n,
-          expectedRevenueFcfa: 1_900_000_000n,
-          paybackMonths: 52,
-          jobsDirect: 187,
-          jobsIndirect: 240,
+          senderName: 'Aïcha Bouba',
+          senderEmail: 'contact@solarcm.cm',
+          senderOrganization: 'Cameroun Solar Power SA',
+          senderPhone: '+237 6 55 44 33 22',
+          senderType: 'Investisseur',
+          submittedVia: SourceChannel.ONLINE,
+          registeredAt: hoursAgo(2),
+          acknowledgementSentAt: hoursAgo(2),
+          acknowledgementCode: 'COURRIER-2026-000001',
+        },
+      },
+      versions: {
+        create: {
+          kind: 'ORIGINAL',
+          fileName: 'demande-agrement-solar.pdf',
+          storageUri: 'seed://demande-agrement-solar.pdf',
+          sha256: 'a'.repeat(64),
+          sizeBytes: 482_300,
+          mimeType: 'application/pdf',
         },
       },
     },
   });
-  // All 6 mandatory docs accepted
-  const cv2DocKinds: DocumentKind[] = [
-    'REGISTRATION', 'TAX_ID', 'NON_REDEVANCE', 'COMPANY_STATUTES', 'FEASIBILITY_STUDY', 'FINANCING_PROOF',
-  ];
-  await db.document.createMany({
-    data: cv2DocKinds.map((kind, idx) => ({
-      conventionId: cv2.id,
-      kind,
-      fileName: `${kind.toLowerCase()}-agrovert.pdf`,
-      storageUri: `seed://${kind.toLowerCase()}-agrovert.pdf`,
-      sha256: String.fromCharCode(97 + idx).repeat(64),
-      sizeBytes: 200_000 + idx * 25_000,
-      mimeType: 'application/pdf',
-      verification: VerificationState.ACCEPTED,
-      verifiedAt: daysAgo(10),
-    })),
-  });
-  // Workflow trace — note the explicit RECEIPT_ISSUED step at Secrétariat.
-  await db.workflowEvent.createMany({
-    data: [
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'RECEIVED',       createdAt: daysAgo(11), comment: 'Dossier soumis par l\'investisseur.' },
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'RECEIPT_ISSUED', createdAt: daysAgo(10), comment: 'Récépissé REC-2026-000002 délivré — 6/6 pièces conformes. Délai légal de 10 j ouvrés démarré.' },
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'SIGNED_OFF',     createdAt: daysAgo(9),  comment: 'Instruction Secrétariat clôturée.' },
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'HANDED_OFF',     createdAt: daysAgo(9) },
-      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',       createdAt: daysAgo(9) },
-      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'SIGNED_OFF',     createdAt: daysAgo(5),  comment: 'Projet conforme à l\'article 7 · avis favorable' },
-      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'HANDED_OFF',     createdAt: daysAgo(5) },
-      { conventionId: cv2.id, stage: 'DIR_COMPLIANCE',  action: 'RECEIVED',       createdAt: daysAgo(5) },
-    ],
-  });
-  console.log(`   ✓ ${cv2.reference} · AgroVert SA · SUBMITTED · stage DIR_COMPLIANCE (J+5)`);
 
-  // ---- Sample convention 3: SIGNED ----
-  const cv3Amount = 12_000_000_000n;
-  const dg = await db.user.findUnique({ where: { email: 'dg@api.cm' } });
-  const cv3 = await db.convention.create({
+  // Initial handoff: Bureau Arrivée → DG
+  const arriveeUser = await db.user.findUnique({ where: { email: 'arrivee@api.cm' } });
+  await db.handoff.create({
     data: {
-      reference: 'CV-2026-000003',
-      investorId: solar.id,
-      projectName: 'Centrale solaire 50 MW · Maroua',
-      sector: Sector.ENERGIE,
-      region: 'Extrême-Nord',
-      investmentFcfa: cv3Amount,
-      jobsPlanned: 312,
-      category: categoryFor(cv3Amount),
-      status: ConventionStatus.SIGNED,
-      currentStage: ConventionStage.DG,
-      submittedAt: daysAgo(45),
-      recepisseAt: daysAgo(44),
-      signedAt: daysAgo(3),
-      signerUserId: dg?.id,
-      recepisseNo: 'REC-2026-000003',
-      agreementNo: 'CV-2026-000003',
+      documentId: sampleDoc.id,
+      type: 'COURRIER_TO_DG',
+      fromRole: 'CHEF_BUREAU_ARRIVEE',
+      fromUserId: arriveeUser?.id ?? null,
+      toRole: 'DG',
+      reason: 'Document reçu en ligne · transmis pour analyse DG.',
     },
   });
-  await db.workflowEvent.createMany({
-    data: [
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'RECEIVED',       createdAt: daysAgo(45), comment: 'Dossier soumis par l\'investisseur.' },
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'RECEIPT_ISSUED', createdAt: daysAgo(44), comment: 'Récépissé REC-2026-000003 délivré.' },
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'SIGNED_OFF',     createdAt: daysAgo(40), comment: 'Instruction Secrétariat clôturée.' },
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'HANDED_OFF',     createdAt: daysAgo(40) },
-      { conventionId: cv3.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',   createdAt: daysAgo(40) },
-      { conventionId: cv3.id, stage: 'DIR_INVESTMENTS', action: 'SIGNED_OFF', createdAt: daysAgo(32), comment: 'Conformité Art. 7 · favorable' },
-      { conventionId: cv3.id, stage: 'DIR_INVESTMENTS', action: 'HANDED_OFF', createdAt: daysAgo(32) },
-      { conventionId: cv3.id, stage: 'DIR_COMPLIANCE',  action: 'RECEIVED',   createdAt: daysAgo(32) },
-      { conventionId: cv3.id, stage: 'DIR_COMPLIANCE',  action: 'SIGNED_OFF', createdAt: daysAgo(22), comment: 'Conformité au fond · favorable' },
-      { conventionId: cv3.id, stage: 'DIR_COMPLIANCE',  action: 'HANDED_OFF', createdAt: daysAgo(22) },
-      { conventionId: cv3.id, stage: 'DIR_EXTERNAL',    action: 'RECEIVED',   createdAt: daysAgo(22) },
-      { conventionId: cv3.id, stage: 'DIR_EXTERNAL',    action: 'SIGNED_OFF', createdAt: daysAgo(12), comment: 'Réglementations externes · favorable' },
-      { conventionId: cv3.id, stage: 'DIR_EXTERNAL',    action: 'HANDED_OFF', createdAt: daysAgo(12) },
-      { conventionId: cv3.id, stage: 'DG',              action: 'RECEIVED',   createdAt: daysAgo(12) },
-      { conventionId: cv3.id, stage: 'DG',              action: 'SIGNED_OFF', actorUserId: dg?.id ?? undefined, createdAt: daysAgo(3), comment: 'Convention signée · agrément délivré' },
-    ],
-  });
-  console.log(`   ✓ ${cv3.reference} · Cameroun Solar Power · SIGNED par DG`);
 
-  // ---- Sample convention 4: SUBMITTED · awaiting récépissé at SECRETARY ----
-  // Investor submitted 18 hours ago — récépissé not yet issued.
-  const cv4Amount = 1_700_000_000n;
-  const cv4 = await db.convention.create({
-    data: {
-      reference: 'CV-2026-000004',
-      investorId: techcam.id,
-      projectName: 'Data-Center Douala',
-      sector: Sector.NUMERIQUE,
-      region: 'Littoral',
-      investmentFcfa: cv4Amount,
-      jobsPlanned: 65,
-      category: categoryFor(cv4Amount),
-      status: ConventionStatus.SUBMITTED,
-      currentStage: ConventionStage.SECRETARY,
-      submittedAt: hoursAgo(18),
-    },
-  });
-  // 6 docs uploaded
-  const cv4DocKinds: DocumentKind[] = ['REGISTRATION', 'TAX_ID', 'NON_REDEVANCE', 'COMPANY_STATUTES', 'FEASIBILITY_STUDY', 'FINANCING_PROOF'];
-  await db.document.createMany({
-    data: cv4DocKinds.map((kind, i) => ({
-      conventionId: cv4.id,
-      kind,
-      fileName: `${kind.toLowerCase()}-techcam2.pdf`,
-      storageUri: `seed://${kind.toLowerCase()}-techcam2.pdf`,
-      sha256: String.fromCharCode(65 + i).repeat(64),
-      sizeBytes: 150_000 + i * 20_000,
-      mimeType: 'application/pdf',
-      verification: 'PENDING',
-    })),
-  });
-  await db.workflowEvent.create({
-    data: { conventionId: cv4.id, stage: 'SECRETARY', action: 'RECEIVED', createdAt: hoursAgo(18), comment: 'Dossier soumis par l\'investisseur.' },
-  });
-  console.log(`   ✓ ${cv4.reference} · TechCam · SUBMITTED · à vérifier (Secrétariat, J-0h18)`);
+  console.log('\nDocuments:');
+  console.log(`   ✓ ${sampleDoc.reference} · ${sampleDoc.subject}`);
 
-  // ---- Sample convention 5: SUBMITTED · at DIR_INVESTMENTS ----
-  // Récépissé issued 3 days ago, Secrétariat signed off 2 days ago, currently at Investments.
-  const cv5Amount = 2_400_000_000n;
-  const cv5 = await db.convention.create({
-    data: {
-      reference: 'CV-2026-000005',
-      investorId: agrovert.id,
-      projectName: 'Plateforme logistique Bafoussam',
-      sector: Sector.DISTRIBUTION,
-      region: 'Ouest',
-      investmentFcfa: cv5Amount,
-      jobsPlanned: 95,
-      category: categoryFor(cv5Amount),
-      status: ConventionStatus.SUBMITTED,
-      currentStage: ConventionStage.DIR_INVESTMENTS,
-      submittedAt: daysAgo(4),
-      recepisseAt: daysAgo(3),
-      recepisseNo: 'REC-2026-000005',
-    },
-  });
-  const cv5DocKinds: DocumentKind[] = ['REGISTRATION', 'TAX_ID', 'NON_REDEVANCE', 'COMPANY_STATUTES', 'FEASIBILITY_STUDY', 'FINANCING_PROOF'];
-  await db.document.createMany({
-    data: cv5DocKinds.map((kind, i) => ({
-      conventionId: cv5.id, kind, fileName: `${kind.toLowerCase()}-bafoussam.pdf`,
-      storageUri: `seed://${kind.toLowerCase()}-bafoussam.pdf`, sha256: String.fromCharCode(73 + i).repeat(64),
-      sizeBytes: 180_000 + i * 22_000, mimeType: 'application/pdf', verification: 'ACCEPTED', verifiedAt: daysAgo(2),
-    })),
-  });
-  await db.workflowEvent.createMany({
-    data: [
-      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'RECEIVED',       createdAt: daysAgo(4), comment: 'Dossier soumis.' },
-      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'RECEIPT_ISSUED', createdAt: daysAgo(3), comment: 'Récépissé REC-2026-000005 délivré.' },
-      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'SIGNED_OFF',     createdAt: daysAgo(2), comment: '6/6 pièces conformes.' },
-      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'HANDED_OFF',     createdAt: daysAgo(2) },
-      { conventionId: cv5.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',       createdAt: daysAgo(2) },
-    ],
-  });
-  console.log(`   ✓ ${cv5.reference} · AgroVert · SUBMITTED · stage DIR_INVESTMENTS (J+2)`);
-
-  console.log('\n✅ Done. All accounts use password: admin');
-  console.log('   Login shortcut: "admin", "secretariat", "dg"… auto-appends @api.cm');
+  console.log('\n✅ Done. Mot de passe universel : admin');
+  console.log('   Identifiants courts : admin · dg · arrivee · depart · antenne.littoral');
 }
 
-function daysAgo(n: number): Date {
-  return new Date(Date.now() - n * 24 * 60 * 60 * 1000);
-}
 function hoursAgo(n: number): Date {
   return new Date(Date.now() - n * 60 * 60 * 1000);
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await db.$disconnect();
-  });
+  .catch((e) => { console.error(e); process.exit(1); })
+  .finally(async () => { await db.$disconnect(); });

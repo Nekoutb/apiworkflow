@@ -35,9 +35,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
-          // `role` carries either a StaffRole or the sentinel 'INVESTOR'.
-          // Layout guards and /post-login routing both rely on this.
-          role: user.staffRole ?? 'INVESTOR',
+          // `role` carries the StaffRole enum (or undefined if missing).
+          // In v2 only STAFF users hold accounts.
+          role: user.staffRole ?? undefined,
         };
       },
     }),

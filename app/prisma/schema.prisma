@@ -1,14 +1,7 @@
 // =========================================================
-// API Cameroun — Investment Incentives Portal
-// Prisma schema (PostgreSQL via Neon)
-//
-// Domain model for the 5-stage internal workflow:
-//   SECRETARY → DIR_INVESTMENTS → DIR_COMPLIANCE → DIR_EXTERNAL → DG
-//
-// Every convention is owned by exactly one investor, accumulates
-// documents (each with comments), and is advanced through stages
-// by WorkflowEvent rows.  AI analyses and financial summaries are
-// cached per stage so we never re-call Claude unnecessarily.
+// API Cameroun — Document Workflow · Schema v2
+// Document-centric · organigramme-aware
+// Adopted 2026-05-24 (re-baseline)
 // =========================================================
 
 generator client {
@@ -21,7 +14,7 @@ datasource db {
 }
 
 // ---------------------------------------------------------
-// Auth.js tables
+// Auth.js core
 // ---------------------------------------------------------
 
 model User {
@@ -32,46 +25,111 @@ model User {
   name          String?
   image         String?
 
-  userType      UserType
+  userType      UserType   @default(STAFF)
   staffRole     StaffRole?
+
+  // Optional binding to an antenna (Chef d'Antenne and antenna staff)
+  antenneId     String?
+  antenne       Antenne?   @relation("AntenneStaff", fields: [antenneId], references: [id])
 
   locale        String     @default("fr")
   status        UserStatus @default(ACTIVE)
-
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   lastLoginAt   DateTime?
 
-  // Auth.js relations
+  // Auth.js
   accounts      Account[]
   sessions      Session[]
 
-  // Domain relations
-  investor               Investor?
-  documentsVerified      Document[]            @relation("DocumentVerifier")
-  workflowEventsActioned WorkflowEvent[]       @relation("WorkflowActor")
-  conventionsSigned      Convention[]          @relation("ConventionSigner")
-  conventionsImported    Convention[]          @relation("ConventionImporter")
-  commentsAuthored       Comment[]
-  notifications          Notification[]
-  auditTrail             AuditTrailEntry[]
+  // Document workflow relations
+  assignmentsAssigned   Assignment[]           @relation("AssignedTo")
+  assignmentsAssignedBy Assignment[]           @relation("AssignedBy")
+  handoffsFrom          Handoff[]              @relation("HandoffFrom")
+  handoffsTo            Handoff[]              @relation("HandoffTo")
+  comments              Comment[]
+  attachments           Attachment[]
+  versionsUploaded      DocumentVersion[]      @relation("VersionUploader")
+  submissionsRegistered Submission[]           @relation("RegisteredBy")
+  notifications         Notification[]
+  auditTrail            AuditTrailEntry[]
+  externalSent          ExternalTransmission[] @relation("ExtSentBy")
+  antennesAsChef        Antenne[]              @relation("AntenneChef")
 
   @@index([userType])
   @@index([staffRole])
 }
 
 enum UserType {
-  INVESTOR
-  STAFF
+  STAFF    // API personnel
+  EXTERNAL // External submitter (investor, partner, citizen, other admin)
 }
 
-// 5-stage workflow roles + system admin.
+// 37 organigramme roles + ADMIN.
+// Order = top-down per Résolution du 02 juillet 2020.
 enum StaffRole {
-  SECRETARY
-  DIR_INVESTMENTS
-  DIR_COMPLIANCE
-  DIR_EXTERNAL
+  // --- Direction Générale (Art. 1)
   DG
+  DGA
+
+  // --- Auprès du DG
+  ATTACHE                  // Art. 3
+  AUDITEUR_INTERNE         // Art. 4
+
+  // --- Sous-direction Communication (Art. 5-7)
+  CHEF_SOUSDIR_COMM
+  CHEF_SERVICE_COMM
+  CHEF_SERVICE_RP
+
+  // --- Cellule Traduction (Art. 8)
+  CHEF_CELL_TRAD
+
+  // --- Sous-direction Affaires Générales (Art. 9-13)
+  CHEF_SOUSDIR_AG
+  CHEF_SERVICE_SAF
+  CHEF_SERVICE_RH
+  CHEF_SERVICE_INFO
+  CHEF_SERVICE_MATERIEL
+
+  // --- Affaires Juridiques (Art. 14)
+  CHEF_SERVICE_JUR
+
+  // --- Service du Courrier (Art. 15-18)
+  CHEF_SERVICE_COURRIER
+  CHEF_BUREAU_ARRIVEE
+  CHEF_BUREAU_DEPART
+  CHEF_BUREAU_ARCHIVES
+
+  // --- Direction Promotion (Art. 20-29)
+  DIR_PROMOTION
+  CHEF_SOUSDIR_LOCALE
+  CHEF_SERVICE_PRIMAIRE
+  CHEF_SERVICE_SECONDAIRE
+  CHEF_SERVICE_TERTIAIRE
+  CHEF_SOUSDIR_ETRANGER
+  CHEF_SERVICE_EUROPE
+  CHEF_SERVICE_AMERIQUE
+  CHEF_SERVICE_MOAP
+  CHEF_SERVICE_AFRIQUE
+
+  // --- Direction Facilitation (Art. 30-36)
+  DIR_FACILITATION
+  CHEF_SOUSDIR_FACILITATION
+  CHEF_SERVICE_ACCUEIL
+  CHEF_SERVICE_AGREMENTS
+  CHEF_SOUSDIR_COOPERATION
+  CHEF_SERVICE_BILATERALE
+  CHEF_SERVICE_MULTILATERALE
+
+  // --- Division Suivi-Évaluation (Art. 37-39)
+  CHEF_DIV_SUIVI
+  CHEF_CELL_SUIVI_EVAL
+  CHEF_CELL_STRATEGIE
+
+  // --- Antennes (Art. 41)
+  CHEF_ANTENNE
+
+  // --- Administration système
   ADMIN
 }
 
@@ -117,273 +175,268 @@ model VerificationToken {
 }
 
 // ---------------------------------------------------------
-// Investor (the company behind every dossier)
+// Antenne (regional offices · Art. 41-44)
 // ---------------------------------------------------------
 
-model Investor {
-  id            String  @id @default(cuid())
-  userId        String  @unique
-  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  raisonSociale String
-  niu           String? // Numéro d'Identifiant Unique (Cameroon tax ID)
-  legalForm     String? // SARL, SA, SUARL, GIE, etc.
-  country       String  @default("Cameroun")
-  region        String?
-  city          String?
-  address       String?
-
-  contactName   String?
-  contactPhone  String?
-
-  // True for investors whose conventions pre-date this website and were
-  // imported manually (Activity A20).
-  isExisting    Boolean @default(false)
-
-  conventions   Convention[]
-  annualReports AnnualReport[]
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([isExisting])
-}
-
-// ---------------------------------------------------------
-// Convention — the investment-incentive dossier
-// ---------------------------------------------------------
-
-model Convention {
+model Antenne {
   id          String   @id @default(cuid())
-  reference   String   @unique // e.g. CV-2026-000123
+  name        String   @unique // e.g. "Antenne Littoral"
+  region      String              // e.g. "Littoral"
+  ville       String?
+  address     String?
 
-  investorId  String
-  investor    Investor @relation(fields: [investorId], references: [id], onDelete: Cascade)
+  chefUserId  String?
+  chef        User?    @relation("AntenneChef", fields: [chefUserId], references: [id])
 
-  // Project descriptors
-  projectName String
-  sector      Sector
-  region      String?
-  projectType ProjectType @default(NEW)
+  active      Boolean  @default(true)
 
-  // Financials
-  investmentFcfa BigInt
-  jobsPlanned    Int      @default(0)
-  category       Category // A/B/C derived from investmentFcfa
-
-  // Lifecycle
-  status       ConventionStatus @default(DRAFT)
-  currentStage ConventionStage  @default(SECRETARY)
-
-  // Key timestamps
-  submittedAt DateTime?  // when investor submitted the dossier
-  recepisseAt DateTime?  // when Secrétariat issued the récépissé — starts the 10-day clock (Art. 30.3)
-  signedAt    DateTime?  // when DG signed the convention
-  closedAt    DateTime?
-
-  // Reference numbers issued along the way
-  recepisseNo String?    // récépissé number, set when recepisseAt is set
-  agreementNo String?    // convention number, set when signedAt is set
-
-  // Who issued the récépissé (Secrétariat user)
-  recepisseUserId String?
-
-  // DG who signed the final convention
-  signerUserId String?
-  signer       User?    @relation("ConventionSigner", fields: [signerUserId], references: [id])
-
-  // Import bookkeeping (for pre-website conventions, A20)
-  isImported       Boolean   @default(false)
-  importedAt       DateTime?
-  importedByUserId String?
-  importedBy       User?     @relation("ConventionImporter", fields: [importedByUserId], references: [id])
-  scannedOriginalUri String?  // PDF of the paper convention, when imported
-
-  // Cached AI outputs (one financial summary, several stage analyses)
-  financialSummary FinancialSummary?
-  aiAnalyses       AiAnalysis[]
-
-  // Children
-  documents      Document[]
-  workflowEvents WorkflowEvent[]
-  comments       Comment[]
-  notifications  Notification[]
-
-  // Post-signature submissions (Art. 32, 33, 34, 36, 48)
-  equipmentList       EquipmentList?
-  annualReports       AnnualReport[]
-  royaltyPayments     RoyaltyPayment[]
-  extensionRequests   ExtensionRequest[]
-  attestationRequest  AttestationRequest?
+  staff       User[]       @relation("AntenneStaff")
+  submissions Submission[]
+  documents   Document[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@index([status])
-  @@index([currentStage])
-  @@index([investorId])
-  @@index([isImported])
-}
-
-enum ConventionStatus {
-  DRAFT          // investor still filling out / uploading
-  SUBMITTED      // in workflow
-  RETURNED       // bounced back to investor for completion
-  REJECTED       // rejected at some stage
-  SIGNED         // DG signed
-  CLOSED         // archived after signing
-}
-
-enum ConventionStage {
-  SECRETARY
-  DIR_INVESTMENTS
-  DIR_COMPLIANCE
-  DIR_EXTERNAL
-  DG
-}
-
-enum ProjectType {
-  NEW       // Projet nouveau (Art. 7)
-  EXTENSION // Projet d'extension (Art. 8)
-}
-
-enum Sector {
-  AGRICULTURE     // Agriculture, élevage, pêche
-  INDUSTRIE       // Industrie lourde, automobile, manufacturière
-  ENERGIE         // Eau et énergie
-  EDUCATION_SANTE // Éducation et santé
-  TRANSPORT       // Transport aérien, ferroviaire, maritime
-  TOURISME        // Tourisme et loisirs
-  DISTRIBUTION    // Infrastructures de grande distribution
-  NUMERIQUE       // Infrastructures stockage/traitement données
-}
-
-enum Category {
-  A // < 1 Md FCFA
-  B // 1–5 Md FCFA
-  C // > 5 Md FCFA
+  @@index([active])
 }
 
 // ---------------------------------------------------------
-// Document (uploaded by investor, verified by Secrétariat)
+// Document — the central entity
 // ---------------------------------------------------------
 
 model Document {
-  id           String     @id @default(cuid())
-  conventionId String
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+  id                  String         @id @default(cuid())
+  reference           String         @unique // COURRIER-YYYY-NNNNNN
+  subject             String
+  nature              DocumentNature @default(GENERAL_CORRESPONDENCE)
+  status              DocumentStatus @default(RECEIVED)
 
-  kind       DocumentKind
+  // Current location in workflow
+  currentHolderRole   StaffRole?
+  currentHolderUserId String?
+
+  // Key timestamps
+  submittedAt    DateTime  @default(now())
+  acknowledgedAt DateTime?
+  dispatchedAt   DateTime?
+  decidedAt      DateTime?
+  responseSentAt DateTime?
+  closedAt       DateTime?
+
+  // Source channel
+  sourceChannel SourceChannel
+  antenneId     String?
+  antenne       Antenne? @relation(fields: [antenneId], references: [id])
+
+  // Children
+  submission            Submission?
+  versions              DocumentVersion[]
+  assignments           Assignment[]
+  handoffs              Handoff[]
+  comments              Comment[]
+  attachments           Attachment[]
+  aiAnalyses            AiAnalysis[]
+  notifications         Notification[]
+  externalTransmissions ExternalTransmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([currentHolderRole])
+  @@index([currentHolderUserId])
+}
+
+enum DocumentNature {
+  AGREMENT_REQUEST       // demande d'agrément (Ordonnance 2025/002)
+  GENERAL_CORRESPONDENCE // correspondance générale
+  OFFICIAL_NOTIFICATION  // notification officielle d'une administration
+  PARTNERSHIP_PROPOSAL   // proposition de partenariat
+  COMPLAINT              // réclamation
+  REPORT                 // rapport (annuel ou autre)
+  OTHER
+}
+
+enum DocumentStatus {
+  RECEIVED               // arrivé au Courrier · accusé envoyé
+  AWAITING_DG_ANALYSIS   // chez DG · attente analyse IA + dispatch
+  ASSIGNED               // affecté à une unité · attente prise en charge
+  IN_TREATMENT           // traitement en cours
+  AWAITING_EXTERNAL_AVIS // transmis externe · attente retour
+  AWAITING_DG_DECISION   // traité · renvoyé au DG pour décision
+  DECIDED                // décision DG prise · attente expédition
+  RESPONSE_SENT          // réponse expédiée à l'émetteur
+  CLOSED                 // dossier clos · archivé
+  AWAITING_FOLLOW_UP     // ouvert · attente complément émetteur
+}
+
+enum SourceChannel {
+  ONLINE            // soumis via /submit
+  COURRIER_PHYSICAL // déposé au siège · scanné par Bureau Arrivée
+  ANTENNE           // déposé à une antenne · scanné · transmis
+}
+
+// ---------------------------------------------------------
+// Submission — initial entry record
+// ---------------------------------------------------------
+
+model Submission {
+  id         String   @id @default(cuid())
+  documentId String   @unique
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  // Émetteur info (free-form, no account required)
+  senderName         String
+  senderEmail        String
+  senderOrganization String?
+  senderPhone        String?
+  senderAddress      String?
+  senderType         String? // "Investisseur" · "Administration" · "Citoyen" · etc.
+
+  // Channel
+  submittedVia SourceChannel
+  antenneId    String?
+  antenne      Antenne? @relation(fields: [antenneId], references: [id])
+
+  // Registration
+  registeredAt       DateTime @default(now())
+  registeredByUserId String?
+  registeredBy       User?    @relation("RegisteredBy", fields: [registeredByUserId], references: [id])
+
+  // Acknowledgement
+  acknowledgementSentAt DateTime?
+  acknowledgementCode   String? // tracking code (also = document.reference)
+
+  @@index([senderEmail])
+  @@index([acknowledgementCode])
+}
+
+// ---------------------------------------------------------
+// DocumentVersion — physical / digital files
+// ---------------------------------------------------------
+
+model DocumentVersion {
+  id         String              @id @default(cuid())
+  documentId String
+  document   Document            @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  kind       DocumentVersionKind
   fileName   String
-  storageUri String       // Vercel Blob URL (or local path during dev)
+  storageUri String
   sha256     String
   sizeBytes  Int
   mimeType   String
   pageCount  Int?
 
-  // OCR / extracted text (cached output from AI step)
+  // OCR cache
   ocrText        String?   @db.Text
   ocrCompletedAt DateTime?
 
-  // Verification by Secretariat
-  verification     VerificationState @default(PENDING)
-  verifiedByUserId String?
-  verifiedBy       User?              @relation("DocumentVerifier", fields: [verifiedByUserId], references: [id])
-  verifiedAt       DateTime?
-  rejectionReason  String?            @db.Text
+  uploadedAt       DateTime @default(now())
+  uploadedByUserId String?
+  uploadedBy       User?    @relation("VersionUploader", fields: [uploadedByUserId], references: [id])
 
-  uploadedAt DateTime @default(now())
-
-  comments    Comment[]
-  aiAnalyses  AiAnalysis[]
-
-  @@index([conventionId])
-  @@index([verification])
-  @@index([kind])
+  @@index([documentId])
 }
 
-enum DocumentKind {
-  // Mandatory document set (Investment Code, Art. 6)
-  REGISTRATION       // RCCM (Registre du Commerce et du Crédit Mobilier)
-  TAX_ID             // Attestation NIU
-  NON_REDEVANCE      // Attestation de non-redevance fiscale
-  COMPANY_STATUTES   // Statuts de la société
-  FEASIBILITY_STUDY  // Étude de faisabilité
-  FINANCING_PROOF    // Justification du financement
-  // Supporting documents
-  RECRUITMENT_PLAN     // Plan de recrutement camerounais
-  TECH_TRANSFER_PLAN   // Plan de transfert de technologies
-  LOCAL_SUBCONTRACTING // Plan de sous-traitance locale
-  ENVIRONMENTAL_STUDY  // Étude d'impact environnemental
-  ACTIVITY_AUTHORIZATION // Autorisation d'exercer
-  ANNUAL_REPORT          // Rapport annuel (Art. 32, post-signature)
-  OTHER
-}
-
-enum VerificationState {
-  PENDING
-  ACCEPTED
-  REJECTED
+enum DocumentVersionKind {
+  ORIGINAL       // soumis tel quel par l'émetteur (en ligne)
+  SCANNED        // scan d'un courrier physique
+  COMPLEMENT     // pièce complémentaire ajoutée par l'émetteur
+  RESPONSE_DRAFT // brouillon de réponse du DG
+  RESPONSE_FINAL // réponse signée et expédiée
+  EXTERNAL_AVIS  // avis reçu d'un destinataire externe
 }
 
 // ---------------------------------------------------------
-// WorkflowEvent — append-only log of stage transitions
+// Assignment — current ownership snapshot
 // ---------------------------------------------------------
 
-model WorkflowEvent {
-  id           String     @id @default(cuid())
-  conventionId String
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+model Assignment {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  stage  ConventionStage
-  action WorkflowAction
+  assignedToRole   StaffRole
+  assignedToUserId String?
+  assignedTo       User?     @relation("AssignedTo", fields: [assignedToUserId], references: [id])
 
-  actorUserId String?
-  actor       User?   @relation("WorkflowActor", fields: [actorUserId], references: [id])
+  assignedByUserId String?
+  assignedBy       User?    @relation("AssignedBy", fields: [assignedByUserId], references: [id])
+  assignedAt       DateTime @default(now())
 
-  comment String? @db.Text
+  instructions String? @db.Text
 
-  // SLA bookkeeping — true after the 72h reminder has been sent for this
-  // particular RECEIVED event (avoids duplicate reminders).
-  reminderSent Boolean @default(false)
+  status      AssignmentStatus @default(ACTIVE)
+  completedAt DateTime?
+
+  @@index([documentId, status])
+  @@index([assignedToUserId])
+  @@index([assignedToRole])
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  COMPLETED
+  RETURNED
+  SUPERSEDED // when reassigned (e.g. handoff)
+}
+
+// ---------------------------------------------------------
+// Handoff — append-only transfer log
+// ---------------------------------------------------------
+
+model Handoff {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  type HandoffType
+
+  fromRole   StaffRole?
+  fromUserId String?
+  fromUser   User?      @relation("HandoffFrom", fields: [fromUserId], references: [id])
+
+  toRole   StaffRole?
+  toUserId String?
+  toUser   User?      @relation("HandoffTo", fields: [toUserId], references: [id])
+
+  reason String? @db.Text
 
   createdAt DateTime @default(now())
 
-  @@index([conventionId, createdAt])
-  @@index([stage])
-  @@index([action])
+  @@index([documentId, createdAt])
+  @@index([type])
 }
 
-// Each stage emits the same shape of events.
-enum WorkflowAction {
-  RECEIVED        // arrived at this stage
-  RECEIPT_ISSUED  // récépissé de dépôt délivré — only emitted at SECRETARY stage; starts the 10-day clock (Art. 30.3)
-  SIGNED_OFF      // current director signed off (review complete)
-  HANDED_OFF      // transferred to the next stage
-  RETURNED        // sent back to investor for completion
-  REJECTED        // rejected at this stage
+enum HandoffType {
+  COURRIER_TO_DG // Bureau Arrivée → DG
+  DG_DISPATCH    // DG → unit (after analysis)
+  VERTICAL_DOWN  // Director → Sous-dir → Service → Bureau
+  HORIZONTAL     // Director → other Director
+  RETURN_UP      // Subordinate → supervisor
+  RETURN_TO_DG   // Direction → DG after treatment
+  EXTERNAL_OUT   // External advisory request
+  EXTERNAL_IN    // External avis received
+  DG_TO_COURRIER // DG → Bureau Départ (response)
+  RESPONSE_OUT   // Bureau Départ → émetteur
 }
 
 // ---------------------------------------------------------
-// Comment — polymorphic: attached to a Document OR a Convention
+// Comment — discussion thread per document
 // ---------------------------------------------------------
 
 model Comment {
-  id String @id @default(cuid())
-
-  // Exactly one of these is set.
-  conventionId String?
-  convention   Convention? @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-
-  documentId String?
-  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   authorUserId String
-  author       User   @relation(fields: [authorUserId], references: [id])
+  author       User      @relation(fields: [authorUserId], references: [id])
+  authorRole   StaffRole?
 
   body String @db.Text
 
-  // Threading (optional)
   parentCommentId String?
   parent          Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
   replies         Comment[] @relation("CommentReplies")
@@ -391,81 +444,77 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([documentId])
-  @@index([conventionId])
+  @@index([documentId, createdAt])
 }
 
 // ---------------------------------------------------------
-// AI analyses (cached Claude outputs per stage)
+// Attachment — pieces added during treatment
+// ---------------------------------------------------------
+
+model Attachment {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  fileName   String
+  storageUri String
+  sha256     String
+  sizeBytes  Int
+  mimeType   String
+
+  kind AttachmentKind @default(NOTE_INTERNAL)
+
+  addedByUserId String?
+  addedBy       User?      @relation(fields: [addedByUserId], references: [id])
+  addedByRole   StaffRole?
+
+  createdAt DateTime @default(now())
+
+  @@index([documentId, createdAt])
+}
+
+enum AttachmentKind {
+  NOTE_INTERNAL  // note interne ajoutée par un agent
+  AVIS           // avis formel d'une unité
+  DECISION_DRAFT // brouillon de décision DG
+  EXTERNAL_AVIS  // avis externe reçu
+  RESPONSE_DRAFT // brouillon de réponse à l'émetteur
+  OTHER
+}
+
+// ---------------------------------------------------------
+// AiAnalysis — Claude outputs (cached)
 // ---------------------------------------------------------
 
 model AiAnalysis {
-  id String @id @default(cuid())
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  conventionId String
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+  kind AiAnalysisKind
 
-  // Optional document focus (null => convention-level analysis)
-  documentId String?
-  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  stage ConventionStage  // which director was looking at the time
-  kind  AiAnalysisKind
-
-  // Free-form structured output from Claude
-  summary    String  @db.Text
+  summary     String @db.Text
   contentJson Json?
 
-  // Token / cost bookkeeping
-  modelName       String?
-  tokensIn        Int?
-  tokensOut       Int?
+  modelName String?
+  tokensIn  Int?
+  tokensOut Int?
 
   generatedAt DateTime @default(now())
 
-  @@index([conventionId, stage])
-  @@index([documentId])
-  @@index([kind])
+  @@index([documentId, kind])
 }
 
 enum AiAnalysisKind {
-  OCR_EXTRACTION       // Plain OCR of a scanned document
-  COMPLIANCE_FORM      // Conformité en la forme (Secrétariat / DIR_INVESTMENTS)
-  COMPLIANCE_SUBSTANCE // Conformité au fond (DIR_COMPLIANCE)
-  EXTERNAL_REGS_CHECK  // Réglementations externes (DIR_EXTERNAL)
-  EXECUTIVE_SUMMARY    // Résumé exécutif pour DG
-  FINANCIAL_EXTRACT    // Used by FinancialSummary
+  OCR_EXTRACTION        // texte brut OCR
+  EXECUTIVE_SUMMARY     // résumé exécutif pour le DG (3-5 phrases)
+  ASSIGNMENT_SUGGESTION // suggestion d'affectation à une unité
+  EXTERNAL_AVIS_SUMMARY // résumé d'un avis externe reçu
+  CLASSIFICATION        // classification générale du document
 }
 
 // ---------------------------------------------------------
-// FinancialSummary (1 per convention, AI-extracted)
-// ---------------------------------------------------------
-
-model FinancialSummary {
-  id           String     @id @default(cuid())
-  conventionId String     @unique
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-
-  // Aggregates extracted by the AI from feasibility + financing docs
-  totalInvestmentFcfa BigInt?
-  equityFcfa          BigInt?
-  debtFcfa            BigInt?
-  capexFcfa           BigInt?
-  opexYearOneFcfa     BigInt?
-  expectedRevenueFcfa BigInt?
-  paybackMonths       Int?
-
-  jobsDirect   Int?
-  jobsIndirect Int?
-
-  detailJson Json? // raw structured extraction (table rows, currencies, etc.)
-
-  generatedAt DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// ---------------------------------------------------------
-// Notification (in-app + email queue)
+// Notification — in-app + email queue
 // ---------------------------------------------------------
 
 model Notification {
@@ -473,17 +522,17 @@ model Notification {
   forUserId String
   forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
 
-  conventionId String?
-  convention   Convention? @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   kind  NotificationKind
   title String
   body  String?  @db.Text
   link  String?
 
-  read       Boolean   @default(false)
-  emailed    Boolean   @default(false)
-  emailedAt  DateTime?
+  read      Boolean   @default(false)
+  emailed   Boolean   @default(false)
+  emailedAt DateTime?
 
   createdAt DateTime @default(now())
 
@@ -492,137 +541,68 @@ model Notification {
 }
 
 enum NotificationKind {
-  CONVENTION_SUBMITTED
-  DOCUMENT_INCOMPLETE
-  STAGE_RECEIVED
-  STAGE_HANDOFF
-  STAGE_DELAY_REMINDER // 72h SLA reminder
-  CONVENTION_SIGNED
-  CONVENTION_REJECTED
-  CONVENTION_RETURNED
-  CONVENTION_CLOSED
-  COMMENT_ADDED
+  DOCUMENT_RECEIVED      // pour Bureau Arrivée
+  DOCUMENT_ASSIGNED      // pour destinataire d'un dispatch DG
+  DOCUMENT_RETURNED_UP   // pour supérieur quand subordonné renvoie
+  DOCUMENT_HORIZONTAL    // pour autre Directeur (+ DG)
+  DOCUMENT_TO_DG         // pour DG quand renvoyé après traitement
+  DG_DECISION_MADE       // pour Bureau Départ
+  EXTERNAL_AVIS_RECEIVED // pour destinataire original
+  RESPONSE_SENT          // pour DG quand expédié
+  ACK_SENT               // pour Bureau Arrivée
+  COMMENT_ADDED          // pour hiérarchie + destinataire
 }
 
 // ---------------------------------------------------------
-// Post-signature submissions (Art. 32, 33, 34, 36, 48)
+// ExternalTransmission (Min. Finances etc. · Art. 30)
 // ---------------------------------------------------------
 
-// Art. 32 — annual report on investment execution.
-model AnnualReport {
-  id           String     @id @default(cuid())
-  conventionId String
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-  investorId   String
-  investor     Investor   @relation(fields: [investorId], references: [id], onDelete: Cascade)
+model ExternalTransmission {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  fiscalYear  Int
-  submittedAt DateTime  @default(now())
-  submittedByUserId String?
+  recipient        ExternalRecipient
+  recipientName    String? // free-form when AUTRE
+  recipientEmail   String?
+  recipientAddress String?
 
-  // Performance vs commitments
-  jobsActual          Int?
-  investmentActualFcfa BigInt?
-  exportsActualFcfa    BigInt?
-  localPurchasesFcfa   BigInt?
+  purpose String @db.Text
 
-  // Free-form narrative
-  notes        String?  @db.Text
+  sentAt       DateTime @default(now())
+  sentByUserId String
+  sentBy       User     @relation("ExtSentBy", fields: [sentByUserId], references: [id])
 
-  // Optional supporting PDF
-  attachmentUri String?
+  expectedReturnAt DateTime?
 
-  // SLA bookkeeping — late = 1 M FCFA / month (Art. 32.3)
-  isLate          Boolean @default(false)
-  monthsLate      Int     @default(0)
-  fineAccruedFcfa BigInt  @default(0)
+  // Response
+  receivedAt        DateTime?
+  opinionStorageUri String?
+  opinionSummary    String?   @db.Text
 
-  status SubmissionStatus @default(PENDING)
+  status ExternalTransmissionStatus @default(PENDING)
 
-  @@unique([conventionId, fiscalYear])
-  @@index([investorId])
-  @@index([fiscalYear])
+  @@index([documentId])
+  @@index([status])
 }
 
-// Art. 33 — equipment list, one-off, validated jointly by API + DGD.
-model EquipmentList {
-  id           String     @id @default(cuid())
-  conventionId String     @unique
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-
-  submittedAt DateTime @default(now())
-  submittedByUserId String?
-
-  // [{ description, qty, hsCode, unitValueFcfa, ... }]
-  itemsJson      Json
-  totalValueFcfa BigInt
-
-  attachmentUri String?
-  status SubmissionStatus @default(PENDING)
+enum ExternalRecipient {
+  MINISTRE_FINANCES
+  MINISTRE_INDUSTRIE
+  DGI
+  DGD
+  MINISTRE_AUTRE
+  ADMINISTRATION_AUTRE
 }
 
-// Art. 48 — annual royalty (0.1 %, plancher 100 k, plafond 5 M FCFA).
-model RoyaltyPayment {
-  id           String     @id @default(cuid())
-  conventionId String
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-
-  fiscalYear     Int
-  amountDueFcfa  BigInt
-  amountPaidFcfa BigInt?
-  paidAt         DateTime?
-  proofUri       String?
-
-  status SubmissionStatus @default(PENDING)
-  createdAt DateTime @default(now())
-
-  @@unique([conventionId, fiscalYear])
-}
-
-// Art. 36 — extension of installation / exploitation deadlines.
-model ExtensionRequest {
-  id           String     @id @default(cuid())
-  conventionId String
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-
-  reason          String   @db.Text
-  requestedMonths Int      // capped at 24 (Art. 36.3)
-  attachmentUri   String?
-
-  submittedAt DateTime @default(now())
-  submittedByUserId String?
-
-  status SubmissionStatus @default(PENDING)
-  decidedAt DateTime?
-  decisionNotes String? @db.Text
-}
-
-// Art. 34 — attestation de réalisation (one per convention).
-model AttestationRequest {
-  id           String     @id @default(cuid())
-  conventionId String     @unique
-  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
-
-  expectedCompletionDate DateTime
-  notes                  String? @db.Text
-  attachmentUri          String?
-
-  submittedAt DateTime @default(now())
-  submittedByUserId String?
-
-  inspectionScheduledAt DateTime?
-  status SubmissionStatus @default(PENDING)
-}
-
-enum SubmissionStatus {
+enum ExternalTransmissionStatus {
   PENDING
-  ACCEPTED
-  REJECTED
-  PAID    // for royalties
+  RESPONSE_RECEIVED
+  CANCELLED
 }
 
 // ---------------------------------------------------------
-// AuditTrail (security log — every sensitive action)
+// AuditTrail (chain-of-custody)
 // ---------------------------------------------------------
 
 model AuditTrailEntry {
@@ -630,17 +610,15 @@ model AuditTrailEntry {
   actorUserId String?
   actor       User?   @relation(fields: [actorUserId], references: [id])
 
-  entityType String // 'convention' | 'document' | 'user' | etc.
+  entityType String // 'document' | 'assignment' | 'handoff' | etc.
   entityId   String
-  action     String // 'create' | 'update' | 'sign' | 'verify' | etc.
+  action     String
   beforeJson Json?
   afterJson  Json?
   ip         String?
   userAgent  String?
-
-  // Tamper-evidence chain (set in app layer)
-  prevHash String?
-  hash     String
+  prevHash   String?
+  hash       String
 
   createdAt DateTime @default(now())
 

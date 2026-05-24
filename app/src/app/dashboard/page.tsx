@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
-import { roleLabel } from '@/lib/roles';
-import { isStaffRole } from '@/lib/roles';
+import { isStaffRole, roleLabel } from '@/lib/roles';
 
 export const metadata = { title: 'Tableau de bord · API Cameroun' };
 export const dynamic = 'force-dynamic';
@@ -12,21 +11,18 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect('/login');
 
-  const roleEnum = session.user.role;
-  // Staff dashboard is for staff only; investors get bounced to their space.
-  if (roleEnum === 'INVESTOR') redirect('/investor');
+  const role = session.user.role;
+  if (!isStaffRole(role)) redirect('/login');
 
-  const role = isStaffRole(roleEnum) ? roleLabel(roleEnum) : '—';
-  const isAdmin = roleEnum === 'ADMIN';
+  const isAdmin = role === 'ADMIN';
+  const roleFr = roleLabel(role);
 
   return (
     <main className="min-h-screen bg-bgsoft">
-      {/* gov bar */}
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
         Portail interne <span className="mx-3 text-gold-500">⚜</span> API Cameroun
       </div>
 
-      {/* header */}
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-7 py-4">
           <div className="relative flex h-11 w-11 items-center justify-center border border-obsidian bg-obsidian font-display text-lg font-bold tracking-wide text-gold-500">
@@ -39,21 +35,15 @@ export default async function DashboardPage() {
           </div>
           {isAdmin && (
             <nav className="ml-8 hidden gap-6 md:flex">
-              <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink">
-                Tableau de bord
-              </span>
-              <Link
-                href="/admin/users"
-                className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
-              >
-                Personnel
-              </Link>
+              <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink">Tableau de bord</span>
+              <Link href="/admin/users" className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink">Personnel</Link>
+              <Link href="/admin/data" className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink">Données</Link>
             </nav>
           )}
           <div className="ml-auto flex items-center gap-4">
             <div className="text-right leading-tight">
               <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
-              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{role}</div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
             </div>
             <LogoutButton />
           </div>
@@ -62,104 +52,58 @@ export default async function DashboardPage() {
 
       <section className="mx-auto max-w-7xl px-7 py-14">
         <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-          ⚜ Connecté
+          ⚜ v2 · Re-baseline en cours
         </div>
         <h1 className="serif text-4xl font-semibold tracking-[-0.5px] text-ink">
-          Bienvenue, {session.user.name ?? 'Administrateur'}
+          Bienvenue, {session.user.name ?? 'utilisateur'}
         </h1>
         <p className="serif mt-2 text-[15px] italic text-ink-3">
-          Authentification réussie. Le tableau de bord complet sera disponible aux étapes A19 (DG Dashboard) et A8 (corbeilles).
+          Le projet a été re-baselinné autour de l'organigramme officiel (02 juillet 2020) et d'un workflow document-centrique
+          (Service du Courrier → DG → Organigramme → Réponse via Courrier).
         </p>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {isAdmin ? (
-            <Link
-              href="/admin/users"
-              className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift"
-            >
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">
-                ✓ A2 · Disponible
-              </div>
-              <h3 className="serif text-[19px] font-bold text-ink">Gestion du personnel</h3>
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {isAdmin && (
+            <Link href="/admin/data" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B1 · Disponible</div>
+              <h3 className="serif text-[19px] font-bold text-ink">Aperçu base de données v2</h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Créer et administrer les comptes du personnel API (Secrétariat, 3 Directeurs, DG).
+                Compteurs des entités du nouveau schéma document-centrique : Documents, Submissions,
+                Assignments, Handoffs, Antennes, ExternalTransmissions, etc.
               </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800 transition group-hover:tracking-[0.18em]">
-                Ouvrir →
-              </div>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
             </Link>
-          ) : (
-            <PlaceholderCard
-              eyebrow="A2 · Admin uniquement"
-              title="Gestion du personnel"
-              body="Création et gestion des comptes du personnel API. Accessible aux administrateurs."
-            />
           )}
-          {isAdmin ? (
-            <Link
-              href="/admin/data"
-              className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift"
-            >
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">
-                ✓ A3 · Disponible
-              </div>
-              <h3 className="serif text-[19px] font-bold text-ink">Aperçu base de données</h3>
+          {isAdmin && (
+            <Link href="/admin/users" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">B2 · À venir</div>
+              <h3 className="serif text-[19px] font-bold text-ink">Gestion du personnel — 37 rôles</h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Modèle de données complet : investisseurs, conventions, documents, workflow, IA. 3 conventions d'exemple.
+                Page existante (héritée de A2). Sera modernisée en B2 avec le picker hiérarchique groupé
+                par sous-direction.
               </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800 transition group-hover:tracking-[0.18em]">
-                Ouvrir →
-              </div>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
             </Link>
-          ) : (
-            <PlaceholderCard
-              eyebrow="A3 · Admin uniquement"
-              title="Modèle de données"
-              body="Schéma complet de la base. Réservé à l'administrateur pendant la phase de construction."
-            />
           )}
-          <PlaceholderCard
-            eyebrow="À venir · A8 – A14"
-            title="Workflow d'instruction"
-            body="Corbeilles par rôle, vue 3 colonnes avec assistant IA, signatures et transmissions."
-            accent
-          />
         </div>
 
         <div className="mt-12 border border-line bg-white p-6">
           <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-            ✓ Progression
+            État du projet
           </div>
-          <h3 className="serif text-[19px] font-bold text-ink">Activités livrées</h3>
+          <h3 className="serif text-[19px] font-bold text-ink">v2 · Document Workflow</h3>
           <ul className="serif mt-3 space-y-1.5 text-[13.5px] italic text-ink-2">
-            <li>• <strong className="not-italic">A0</strong> · Fondations & premier déploiement</li>
-            <li>• <strong className="not-italic">A1</strong> · Auth shell (admin / admin · JWT · middleware Edge-safe)</li>
-            <li>• <strong className="not-italic">A2</strong> · Gestion du personnel — 5 rôles, création/désactivation, email de bienvenue</li>
-            <li>• <strong className="not-italic">A3</strong> · Modèle de données — investisseurs, conventions, documents, workflow, IA</li>
-            <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{role}</code></li>
+            <li>✓ <strong className="not-italic">B0</strong> · Plan v2 adopté · 8 décisions cadrantes validées</li>
+            <li>✓ <strong className="not-italic">B1</strong> · Schéma document-centrique poussé sur Neon (en cours)</li>
+            <li>⬜ <strong className="not-italic">B2</strong> · Enum 37 rôles · UI gestion personnel</li>
+            <li>⬜ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
+            <li>⬜ <strong className="not-italic">B4-B6</strong> · Service du Courrier — Arrivée · Départ · Archives</li>
+            <li>⬜ <strong className="not-italic">B7-B9</strong> · DG dashboard + dispatcher IA</li>
+            <li>⬜ <strong className="not-italic">B10-B15</strong> · Workspace traitement universel</li>
+            <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
           </ul>
         </div>
       </section>
     </main>
-  );
-}
-
-function PlaceholderCard({
-  eyebrow, title, body, accent,
-}: {
-  eyebrow: string; title: string; body: string; accent?: boolean;
-}) {
-  return (
-    <div
-      className={`border p-6 ${
-        accent ? 'border-obsidian bg-obsidian text-white' : 'border-line bg-white'
-      }`}
-    >
-      <div className={`mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] ${accent ? 'text-gold-500' : 'text-gold-700'}`}>
-        {eyebrow}
-      </div>
-      <h3 className={`serif text-[19px] font-bold ${accent ? 'text-white' : 'text-ink'}`}>{title}</h3>
-      <p className={`serif mt-2 text-[13px] italic ${accent ? 'text-white/75' : 'text-ink-3'}`}>{body}</p>
-    </div>
   );
 }

@@ -18,7 +18,8 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
 
       // Public routes — always allowed
-      const publicPaths = ['/', '/login', '/signup', '/api/auth'];
+      // (/submit + /track land in B4 + B22; whitelisted now to avoid churn)
+      const publicPaths = ['/', '/login', '/submit', '/track', '/api/auth'];
       const isPublic =
         publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
       if (isPublic) return true;
