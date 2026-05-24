@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>API Cameroun — Design Preview v2</title>
+<title>API Cameroun — Design Preview v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* =================================================================
    API Cameroun — Design Preview v2
@@ -15,46 +15,62 @@
    ================================================================= */
 
 :root {
-  /* Deep brand palette — sovereign emerald + champagne gold + ivory */
-  --obsidian: #0a0e0c;
-  --ink-black: #15110e;
-  --emerald-900: #00231a;
-  --emerald-800: #003e25;
-  --emerald-700: #014c2d;
-  --emerald-600: #066039;
-  --emerald-glass: rgba(1, 76, 45, 0.85);
-  --emerald-veil: rgba(1, 76, 45, 0.04);
+  /* === v3 — BRIGHT, LEGIBLE, EDITORIAL === */
+  /* Surfaces — predominantly light */
+  --bg:        #ffffff;
+  --bg-soft:   #fafafa;
+  --surface:   #ffffff;
+  --surface-2: #f5f6f8;
+  --surface-3: #eef1f4;
 
-  --gold-bullion: #c4a468;
-  --gold-pale: #d9c192;
-  --gold-glow: #ead6a5;
-  --gold-line: rgba(196, 164, 104, 0.32);
+  /* Ink scale — high contrast for legibility */
+  --ink:       #0c1220;
+  --ink-2:     #1f2937;
+  --ink-3:     #475569;
+  --ink-4:     #64748b;
+  --ink-5:     #94a3b8;
+  --line:      #e5e9ee;
+  --line-2:    #d4dae2;
 
-  --burgundy: #6e1620;
-  --burgundy-glow: rgba(110, 22, 32, 0.08);
+  /* Brand — keep sovereign but brighter */
+  --obsidian:    #0c1220;       /* used only for primary CTAs + accent moments */
+  --ink-black:   #15110e;
+  --emerald-900: #003e25;
+  --emerald-800: #006b3a;       /* Cameroon green, slightly brighter */
+  --emerald-700: #00873f;
+  --emerald-600: #0aa052;
+  --emerald-50:  #e6f5ed;
 
-  /* Neutral warm scale */
-  --ivory: #faf7f2;
-  --cream: #f3eee4;
-  --bone: #e5dfd3;
-  --smoke: #b5b0a6;
-  --graphite: #4a463f;
-  --charcoal: #1c1b18;
+  --gold-700:    #a47e2c;
+  --gold-600:    #c1973f;
+  --gold-500:    #d6b15e;
+  --gold-200:    #f0e1b8;
+  --gold-50:     #fbf5e6;
 
-  /* Status (refined, muted) */
-  --st-pending-bg: #f7ecd0;
-  --st-pending-fg: #6b4f1a;
-  --st-review-bg:  #dde7e2;
-  --st-review-fg:  #1e3a2e;
-  --st-signed-bg:  #d6e3d2;
-  --st-signed-fg:  #1a3a2a;
-  --st-rejected-bg:#efd9da;
-  --st-rejected-fg:#6e1620;
-  --st-closed-bg:  #e3dfd6;
-  --st-closed-fg:  #45433e;
+  --burgundy:    #b03b3b;       /* less harsh than wine */
+  --burgundy-50: #fdeaea;
 
-  --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
-  --font-sans:    'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Status — clearer, brighter */
+  --st-pending-bg: #fef3c7; --st-pending-fg: #92510e;
+  --st-review-bg:  #e0ecff; --st-review-fg:  #1d4ed8;
+  --st-signed-bg:  #d4f4dd; --st-signed-fg:  #086a3c;
+  --st-rejected-bg:#fde4e4; --st-rejected-fg:#a82626;
+  --st-closed-bg:  #e5e9ee; --st-closed-fg:  #475569;
+
+  /* Aliases for legacy class names */
+  --ivory:    var(--bg);
+  --cream:    var(--surface-2);
+  --bone:     var(--line);
+  --smoke:    var(--ink-5);
+  --graphite: var(--ink-3);
+  --charcoal: var(--ink);
+  --gold-bullion: var(--gold-600);
+  --gold-pale:    var(--gold-500);
+  --gold-glow:    var(--gold-200);
+  --gold-line:    rgba(193, 151, 63, 0.28);
+
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 }
 
@@ -62,13 +78,13 @@
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 body {
   font-family: var(--font-sans);
-  font-size: 14.5px;
+  font-size: 15px;
   line-height: 1.6;
-  color: var(--charcoal);
-  background: var(--ivory);
-  letter-spacing: -0.005em;
+  color: var(--ink);
+  background: var(--bg-soft);
+  letter-spacing: -0.003em;
 }
-.serif    { font-family: var(--font-display); letter-spacing: -0.01em; }
+.serif    { font-family: var(--font-display); letter-spacing: -0.005em; }
 .mono     { font-family: var(--font-mono); }
 .tabular  { font-variant-numeric: tabular-nums; }
 .smallcaps {
@@ -89,13 +105,12 @@ button { font: inherit; cursor: pointer; }
 .pv-banner {
   position: sticky; top: 0; z-index: 100;
   background: var(--obsidian);
-  color: var(--ivory);
+  color: white;
   padding: 11px 28px;
   display: flex; align-items: center; justify-content: space-between;
   font-size: 11.5px; letter-spacing: 0.3px;
-  border-bottom: 1px solid var(--gold-line);
 }
-.pv-banner strong { color: var(--gold-bullion); font-weight: 700; letter-spacing: 1.2px; }
+.pv-banner strong { color: var(--gold-500); font-weight: 700; letter-spacing: 1.2px; }
 .pv-nav {
   position: sticky; top: 38px; z-index: 99;
   background: var(--ivory);
@@ -244,13 +259,12 @@ button { font: inherit; cursor: pointer; }
    ================================================================= */
 .gov-bar {
   background: var(--obsidian);
-  color: var(--ivory);
+  color: white;
   padding: 7px 28px;
   font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  text-align: center; font-weight: 500;
-  border-bottom: 1px solid var(--gold-line);
+  text-align: center; font-weight: 600;
 }
-.gov-bar .dot { color: var(--gold-bullion); margin: 0 12px; }
+.gov-bar .dot { color: var(--gold-500); margin: 0 12px; }
 
 .gov-head {
   background: var(--ivory);
@@ -263,18 +277,18 @@ button { font: inherit; cursor: pointer; }
 }
 .gov-crest {
   width: 48px; height: 48px;
-  background: var(--ink-black);
-  color: var(--gold-bullion);
+  background: var(--obsidian);
+  color: var(--gold-500);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-weight: 600; font-size: 18px;
+  font-family: var(--font-display); font-weight: 700; font-size: 18px;
   letter-spacing: 0.5px;
-  border: 1px solid var(--gold-bullion);
+  border: 1px solid var(--obsidian);
   flex-shrink: 0;
   position: relative;
 }
 .gov-crest::before {
   content: ''; position: absolute; inset: 3px;
-  border: 1px solid rgba(196, 164, 104, 0.4);
+  border: 1px solid rgba(193, 151, 63, 0.5);
   pointer-events: none;
 }
 .gov-title { line-height: 1.2; }
@@ -302,9 +316,10 @@ button { font: inherit; cursor: pointer; }
 .gov-user { display: flex; align-items: center; gap: 10px; }
 .gov-ava {
   width: 36px; height: 36px;
-  background: var(--emerald-800); color: var(--gold-glow);
+  background: var(--emerald-800); color: white;
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+  border-radius: 50%;
 }
 .gov-user-meta { line-height: 1.25; }
 .gov-user-meta .name { font-weight: 600; font-size: 13px; color: var(--ink-black); }
@@ -315,82 +330,76 @@ button { font: inherit; cursor: pointer; }
    ================================================================= */
 .s1-stage {
   position: relative;
-  background: var(--obsidian);
-  color: var(--ivory);
+  background:
+    linear-gradient(180deg, #ffffff 0%, #f3f8f5 60%, #e8f1ec 100%);
+  color: var(--ink);
   overflow: hidden;
-  min-height: 760px;
+  min-height: 720px;
   display: flex; flex-direction: column;
 }
 .s1-stage::before {
   content: '';
   position: absolute; inset: 0;
   background-image:
-    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(1, 76, 45, 0.5) 0%, transparent 60%),
-    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(196, 164, 104, 0.08) 0%, transparent 60%),
-    radial-gradient(circle at 20% 80%, rgba(196, 164, 104, 0.05) 0%, transparent 40%);
+    radial-gradient(ellipse 60% 40% at 85% 0%, rgba(193, 151, 63, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, rgba(0, 107, 58, 0.08) 0%, transparent 55%);
 }
 .s1-stage::after {
   content: '';
   position: absolute; inset: 0;
   background-image:
-    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 32px 32px;
+    radial-gradient(rgba(12, 18, 32, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
   pointer-events: none;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%);
 }
 
 .s1-marquee {
   position: relative; z-index: 2;
   display: flex; align-items: center; justify-content: space-between;
   padding: 22px 56px;
-  border-bottom: 1px solid rgba(196, 164, 104, 0.15);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
 }
-.s1-marquee .crest {
-  display: flex; align-items: center; gap: 14px;
-}
+.s1-marquee .crest { display: flex; align-items: center; gap: 14px; }
 .s1-marquee .crest .mark {
   width: 44px; height: 44px;
-  border: 1px solid var(--gold-bullion);
+  background: var(--obsidian); color: var(--gold-500);
+  border: 1px solid var(--obsidian);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display);
-  font-size: 17px; font-weight: 600;
-  color: var(--gold-bullion);
+  font-size: 17px; font-weight: 700;
   letter-spacing: 0.5px;
   position: relative;
 }
 .s1-marquee .crest .mark::before {
   content: ''; position: absolute; inset: 3px;
-  border: 1px solid rgba(196, 164, 104, 0.35);
+  border: 1px solid rgba(193, 151, 63, 0.45);
 }
-.s1-marquee .crest .text {
-  line-height: 1.2;
-}
+.s1-marquee .crest .text { line-height: 1.2; }
 .s1-marquee .crest .text .top {
-  font-size: 9.5px; letter-spacing: 2.4px; text-transform: uppercase;
-  color: rgba(196, 164, 104, 0.85); font-weight: 500;
+  font-size: 10px; letter-spacing: 2.2px; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600;
 }
 .s1-marquee .crest .text .org {
-  font-family: var(--font-display); font-size: 17px; font-weight: 600;
-  color: var(--ivory); margin-top: 2px;
+  font-family: var(--font-display); font-size: 18px; font-weight: 700;
+  color: var(--ink); margin-top: 2px;
   letter-spacing: -0.2px;
 }
 .s1-marquee .nav {
-  display: flex; align-items: center; gap: 32px;
-  font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase;
-  font-weight: 500;
+  display: flex; align-items: center; gap: 26px;
+  font-size: 11.5px; letter-spacing: 1.4px; text-transform: uppercase;
+  font-weight: 600;
 }
-.s1-marquee .nav a { color: rgba(250, 247, 242, 0.75); }
-.s1-marquee .nav a:hover { color: var(--gold-glow); }
-.s1-marquee .nav .lang {
-  display: inline-flex; border: 1px solid rgba(196, 164, 104, 0.3);
-}
+.s1-marquee .nav a { color: var(--ink-3); }
+.s1-marquee .nav a:hover { color: var(--emerald-800); }
+.s1-marquee .nav .lang { display: inline-flex; border: 1px solid var(--line-2); }
 .s1-marquee .nav .lang button {
-  background: transparent; color: rgba(250, 247, 242, 0.7);
-  padding: 5px 10px; font-size: 10px; letter-spacing: 1px;
-  border: none; border-right: 1px solid rgba(196, 164, 104, 0.3);
+  background: var(--bg); color: var(--ink-3);
+  padding: 5px 11px; font-size: 10.5px; letter-spacing: 1px;
+  border: none; border-right: 1px solid var(--line-2);
 }
 .s1-marquee .nav .lang button:last-child { border-right: none; }
-.s1-marquee .nav .lang button.active { background: var(--gold-bullion); color: var(--ink-black); font-weight: 700; }
+.s1-marquee .nav .lang button.active { background: var(--obsidian); color: var(--gold-500); font-weight: 700; }
 
 .s1-hero {
   position: relative; z-index: 2;
@@ -401,93 +410,93 @@ button { font: inherit; cursor: pointer; }
   padding: 0;
 }
 .s1-hero .col-text {
-  padding: 92px 56px 80px;
+  padding: 88px 56px 72px;
   display: flex; flex-direction: column; justify-content: center;
-  border-right: 1px solid rgba(196, 164, 104, 0.18);
+  border-right: 1px solid var(--line);
 }
 .s1-hero .eyebrow {
   display: inline-flex; align-items: center; gap: 12px;
-  font-size: 10.5px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--gold-bullion);
-  font-weight: 600;
-  margin-bottom: 26px;
+  font-size: 11px; letter-spacing: 2.6px; text-transform: uppercase;
+  color: var(--gold-700);
+  font-weight: 700;
+  margin-bottom: 24px;
 }
-.s1-hero .eyebrow::after {
-  content: ''; width: 44px; height: 1px; background: var(--gold-bullion);
-}
+.s1-hero .eyebrow::after { content: ''; width: 44px; height: 1px; background: var(--gold-600); }
 .s1-hero h1 {
   font-family: var(--font-display);
-  font-size: clamp(48px, 5.5vw, 76px);
-  font-weight: 500;
-  line-height: 1.02;
+  font-size: clamp(44px, 5vw, 64px);
+  font-weight: 600;
+  line-height: 1.06;
   letter-spacing: -0.022em;
-  margin-bottom: 28px;
-  color: var(--ivory);
+  margin-bottom: 26px;
+  color: var(--ink);
 }
 .s1-hero h1 .accent {
   font-style: italic; font-weight: 500;
-  color: var(--gold-pale);
+  color: var(--emerald-800);
 }
 .s1-hero .lede {
   max-width: 560px;
-  font-size: 16.5px; line-height: 1.65;
-  color: rgba(250, 247, 242, 0.78);
+  font-size: 16px; line-height: 1.65;
+  color: var(--ink-2);
   font-weight: 400;
-  margin-bottom: 38px;
+  margin-bottom: 32px;
 }
 .s1-hero .legal {
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: var(--font-display); font-size: 14px; font-style: italic;
-  color: rgba(196, 164, 104, 0.85);
-  padding-left: 16px; border-left: 2px solid var(--gold-bullion);
+  font-family: var(--font-display); font-size: 14.5px; font-style: italic;
+  color: var(--gold-700);
+  padding-left: 16px; border-left: 2px solid var(--gold-600);
 }
 
 .s1-hero .col-stats {
-  padding: 92px 48px 80px;
+  padding: 88px 48px 72px;
+  background: var(--bg);
   display: flex; flex-direction: column; gap: 0;
 }
 .s1-hero .stat {
-  padding: 28px 0;
-  border-bottom: 1px solid rgba(196, 164, 104, 0.18);
+  padding: 26px 0;
+  border-bottom: 1px solid var(--line);
 }
 .s1-hero .stat:first-child { padding-top: 0; }
 .s1-hero .stat:last-child { border-bottom: none; }
 .s1-hero .stat .num {
   font-family: var(--font-display);
-  font-size: 56px; font-weight: 500;
+  font-size: 52px; font-weight: 600;
   line-height: 1;
-  color: var(--gold-bullion);
+  color: var(--emerald-800);
   letter-spacing: -0.02em;
   display: flex; align-items: baseline; gap: 6px;
 }
 .s1-hero .stat .num .unit {
-  font-size: 16px; font-weight: 400;
-  color: rgba(250, 247, 242, 0.6);
+  font-size: 15px; font-weight: 500;
+  color: var(--ink-4);
   letter-spacing: 0.2px;
   font-style: italic;
 }
 .s1-hero .stat .lbl {
-  font-size: 10.5px; letter-spacing: 2.4px; text-transform: uppercase;
-  color: rgba(250, 247, 242, 0.65); font-weight: 500;
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600;
   margin-top: 8px;
 }
 
 .s1-footer {
   position: relative; z-index: 2;
   padding: 18px 56px;
-  border-top: 1px solid rgba(196, 164, 104, 0.15);
+  border-top: 1px solid var(--line);
+  background: var(--bg);
   display: flex; align-items: center; justify-content: space-between;
   font-size: 10.5px;
-  color: rgba(250, 247, 242, 0.55);
+  color: var(--ink-3);
   letter-spacing: 1.4px; text-transform: uppercase;
 }
 .s1-footer .seal { display: flex; align-items: center; gap: 22px; }
 .s1-footer .seal .item { display: flex; align-items: center; gap: 8px; }
 .s1-footer .seal .badge {
   width: 18px; height: 18px;
-  border: 1px solid var(--gold-bullion);
+  border: 1px solid var(--gold-600);
   display: inline-flex; align-items: center; justify-content: center;
-  color: var(--gold-bullion); font-size: 10px;
+  color: var(--gold-700); font-size: 10px;
 }
 
 /* Sign-in card — floats below the hero */
@@ -737,7 +746,7 @@ button { font: inherit; cursor: pointer; }
 .cert-card::after {
   content: 'CONVENTION ACTIVE';
   position: absolute; top: 20px; right: -22px;
-  background: var(--emerald-800); color: var(--gold-glow);
+  background: var(--emerald-800); color: white;
   padding: 4px 26px; font-size: 9.5px; letter-spacing: 2.5px;
   font-weight: 600;
 }
@@ -937,45 +946,46 @@ button { font: inherit; cursor: pointer; }
   background: var(--ivory);
 }
 .staff-side {
-  background: var(--ink-black);
-  color: var(--ivory);
-  padding: 28px 22px;
+  background: var(--surface-2);
+  border-right: 1px solid var(--line);
+  color: var(--ink);
+  padding: 26px 18px;
   overflow-y: auto;
 }
-.staff-side .section { margin-bottom: 30px; }
+.staff-side .section { margin-bottom: 26px; }
 .staff-side .section h5 {
-  font-size: 9.5px; letter-spacing: 2.4px; text-transform: uppercase;
-  color: var(--gold-bullion); font-weight: 600;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(196, 164, 104, 0.2);
-  margin-bottom: 12px;
+  font-size: 10px; letter-spacing: 2.2px; text-transform: uppercase;
+  color: var(--gold-700); font-weight: 700;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 10px;
 }
 .staff-side ul { list-style: none; }
 .staff-side li {
-  padding: 11px 12px;
+  padding: 10px 11px;
   font-size: 12.5px;
-  display: flex; flex-direction: column; gap: 5px;
+  display: flex; flex-direction: column; gap: 4px;
   cursor: pointer;
   border-left: 2px solid transparent;
-  color: rgba(250, 247, 242, 0.78);
+  color: var(--ink-2);
   transition: all 0.15s;
+  margin-bottom: 2px;
 }
-.staff-side li:hover { background: rgba(196, 164, 104, 0.06); color: var(--ivory); }
+.staff-side li:hover { background: var(--bg); color: var(--ink); }
 .staff-side li.active {
-  background: var(--emerald-800);
-  border-left-color: var(--gold-bullion);
-  color: var(--gold-glow);
+  background: var(--bg);
+  border-left-color: var(--emerald-800);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(12, 18, 32, 0.06);
 }
 .staff-side li .ref {
   font-family: var(--font-mono);
   font-size: 10px; letter-spacing: 0.4px;
-  color: rgba(196, 164, 104, 0.7);
+  color: var(--ink-4);
 }
-.staff-side li.active .ref { color: var(--gold-pale); }
-.staff-side li .row {
-  display: flex; align-items: center; justify-content: space-between;
-}
-.staff-side li .name { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
+.staff-side li.active .ref { color: var(--gold-700); font-weight: 600; }
+.staff-side li .row { display: flex; align-items: center; justify-content: space-between; }
+.staff-side li .name { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--ink); }
 
 .staff-main {
   background: var(--ivory);
@@ -1018,35 +1028,36 @@ button { font: inherit; cursor: pointer; }
 .action-rail {
   display: flex; gap: 8px;
   padding: 14px 32px;
-  background: var(--ink-black); color: var(--ivory);
+  background: var(--bg); color: var(--ink);
   align-items: center;
-  border-bottom: 1px solid var(--gold-line);
+  border-bottom: 1px solid var(--line);
 }
 .action-rail .step-info {
   font-family: var(--font-display);
-  font-size: 14px; font-style: italic;
-  color: rgba(250, 247, 242, 0.85);
+  font-size: 14.5px; font-style: italic;
+  color: var(--ink-2);
   margin-right: auto;
 }
 .action-rail .step-info strong {
-  color: var(--gold-glow); font-style: normal;
-  font-weight: 600; letter-spacing: -0.1px;
+  color: var(--emerald-800); font-style: normal;
+  font-weight: 700; letter-spacing: -0.1px;
 }
 .action-rail .btn {
-  border: 1px solid rgba(196, 164, 104, 0.35);
-  color: var(--ivory);
-  background: transparent;
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
+  background: var(--bg);
   font-size: 10.5px;
 }
 .action-rail .btn:hover {
-  background: rgba(196, 164, 104, 0.1);
-  border-color: var(--gold-bullion);
+  background: var(--surface-2);
+  border-color: var(--ink-4);
+  color: var(--ink);
 }
 .action-rail .btn-gold {
-  background: var(--gold-bullion); color: var(--ink-black);
-  border-color: var(--gold-bullion); font-weight: 700;
+  background: var(--emerald-800); color: white;
+  border-color: var(--emerald-800); font-weight: 700;
 }
-.action-rail .btn-gold:hover { background: var(--gold-pale); }
+.action-rail .btn-gold:hover { background: var(--emerald-700); }
 
 .dossier-b {
   padding: 28px 32px; flex: 1;
@@ -1155,7 +1166,7 @@ button { font: inherit; cursor: pointer; }
 .cmt:last-of-type { border-bottom: none; margin-bottom: 12px; padding-bottom: 0; }
 .cmt .ava {
   width: 30px; height: 30px;
-  background: var(--emerald-800); color: var(--gold-glow);
+  background: var(--emerald-800); color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
 }
@@ -1189,112 +1200,112 @@ button { font: inherit; cursor: pointer; }
   background: var(--ivory);
 }
 
-/* AI pane — premium expert assistant */
+/* AI pane — bright, premium expert assistant */
 .ai-pane {
-  background: var(--ink-black);
-  color: var(--ivory);
+  background: var(--surface-2);
+  color: var(--ink);
   padding: 26px 22px;
   overflow-y: auto;
   display: flex; flex-direction: column;
-  border-left: 1px solid var(--gold-line);
+  border-left: 1px solid var(--line);
   position: relative;
 }
 .ai-pane::before {
   content: ''; position: absolute; top: 0; left: 0; right: 0;
-  height: 1px; background: linear-gradient(90deg, transparent, var(--gold-bullion), transparent);
+  height: 2px; background: var(--emerald-800);
 }
 .ai-h {
   display: flex; align-items: center; gap: 12px;
   padding-bottom: 18px; margin-bottom: 22px;
-  border-bottom: 1px solid rgba(196, 164, 104, 0.18);
+  border-bottom: 1px solid var(--line);
 }
 .ai-badge {
   width: 38px; height: 38px;
-  background: var(--obsidian);
-  border: 1px solid var(--gold-bullion);
-  color: var(--gold-bullion);
+  background: var(--obsidian); color: var(--gold-500);
+  border: 1px solid var(--obsidian);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-size: 16px; font-weight: 600;
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
   letter-spacing: 0.5px;
   position: relative;
 }
 .ai-badge::before {
   content: ''; position: absolute; inset: 2px;
-  border: 1px solid rgba(196, 164, 104, 0.35);
+  border: 1px solid rgba(193, 151, 63, 0.45);
 }
 .ai-h .ti { line-height: 1.2; }
 .ai-h .ti .name {
   font-family: var(--font-display);
-  font-size: 18px; font-weight: 600;
-  color: var(--gold-glow); letter-spacing: -0.2px;
+  font-size: 18px; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.2px;
 }
 .ai-h .ti .sub {
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: rgba(250, 247, 242, 0.5); font-weight: 500;
+  font-size: 10.5px; letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 600;
   margin-top: 2px;
 }
 
 .ai-sec {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   padding: 16px 18px;
-  background: rgba(196, 164, 104, 0.04);
-  border: 1px solid rgba(196, 164, 104, 0.15);
+  background: var(--bg);
+  border: 1px solid var(--line);
   position: relative;
+  border-radius: 2px;
 }
 .ai-sec h5 {
   display: flex; align-items: baseline; gap: 10px;
   font-family: var(--font-display);
-  font-size: 15px; font-weight: 600;
-  color: var(--gold-pale);
+  font-size: 15.5px; font-weight: 700;
+  color: var(--ink);
   margin-bottom: 10px;
   letter-spacing: -0.2px;
 }
 .ai-sec h5 .roman {
   font-family: var(--font-display);
-  font-size: 14px; font-style: italic; font-weight: 500;
-  color: var(--gold-bullion);
+  font-size: 14px; font-style: italic; font-weight: 600;
+  color: var(--gold-700);
 }
 .ai-sec p {
-  font-size: 12.5px; line-height: 1.65;
-  color: rgba(250, 247, 242, 0.82);
+  font-size: 13px; line-height: 1.65;
+  color: var(--ink-2);
 }
 .ai-sec p + p { margin-top: 8px; }
 .ai-sec .quote {
   margin: 10px 0 4px;
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border-left: 2px solid var(--gold-bullion);
-  font-family: var(--font-display); font-style: italic; font-size: 12.5px;
-  color: rgba(250, 247, 242, 0.75);
+  background: var(--surface-2);
+  border-left: 2px solid var(--gold-600);
+  font-family: var(--font-display); font-style: italic; font-size: 13px;
+  color: var(--ink-2);
 }
 .ai-sec .verdict {
   margin-top: 12px;
   padding: 6px 10px;
-  font-size: 10px; font-weight: 600;
-  letter-spacing: 1.8px; text-transform: uppercase;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid;
 }
-.ai-sec .verdict.ok   { color: #b9deaa; border-color: rgba(185, 222, 170, 0.4); background: rgba(20, 65, 35, 0.4); }
-.ai-sec .verdict.warn { color: var(--gold-glow); border-color: var(--gold-bullion); background: rgba(196, 164, 104, 0.1); }
-.ai-sec .verdict.bad  { color: #efaaae; border-color: rgba(239, 170, 174, 0.4); background: rgba(110, 22, 32, 0.3); }
+.ai-sec .verdict.ok   { color: var(--st-signed-fg);   border-color: var(--st-signed-fg);   background: var(--st-signed-bg); }
+.ai-sec .verdict.warn { color: var(--st-pending-fg);  border-color: var(--st-pending-fg);  background: var(--st-pending-bg); }
+.ai-sec .verdict.bad  { color: var(--st-rejected-fg); border-color: var(--st-rejected-fg); background: var(--st-rejected-bg); }
 
 .ai-sec.consolidated {
-  background: linear-gradient(135deg, rgba(1, 76, 45, 0.4) 0%, rgba(196, 164, 104, 0.1) 100%);
-  border-color: var(--gold-bullion);
-  border-width: 1px;
+  background: linear-gradient(135deg, var(--emerald-50) 0%, var(--gold-50) 100%);
+  border-color: var(--emerald-800);
+  border-width: 1.5px;
 }
-.ai-sec.consolidated h5 { color: var(--ivory); }
+.ai-sec.consolidated h5 { color: var(--emerald-900); }
 .ai-sec.consolidated .score {
   font-family: var(--font-display);
-  font-size: 56px; font-weight: 500;
-  color: var(--gold-glow);
+  font-size: 56px; font-weight: 600;
+  color: var(--emerald-800);
   line-height: 1;
   letter-spacing: -0.02em;
   margin-top: 10px;
 }
 .ai-sec.consolidated .score .unit {
-  font-size: 18px; color: rgba(250, 247, 242, 0.55);
+  font-size: 18px; color: var(--ink-3);
   font-style: italic;
 }
 
@@ -1367,13 +1378,13 @@ button { font: inherit; cursor: pointer; }
 }
 .table-card { background: white; border: 1px solid var(--bone); overflow: hidden; }
 table.staff-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-table.staff-tbl thead { background: var(--ink-black); color: var(--gold-pale); }
+table.staff-tbl thead { background: var(--surface-2); color: var(--ink-2); border-bottom: 2px solid var(--ink); }
 table.staff-tbl th {
   text-align: left;
-  font-size: 10px; letter-spacing: 2.2px; text-transform: uppercase;
-  font-weight: 600;
+  font-size: 10.5px; letter-spacing: 1.8px; text-transform: uppercase;
+  font-weight: 700;
   padding: 14px 18px;
-  color: var(--gold-glow);
+  color: var(--ink-2);
 }
 table.staff-tbl td {
   padding: 16px 18px;
@@ -1385,7 +1396,7 @@ table.staff-tbl tr:hover td { background: var(--cream); }
 table.staff-tbl .name-cell { display: flex; align-items: center; gap: 12px; }
 table.staff-tbl .ava-sm {
   width: 34px; height: 34px;
-  background: var(--emerald-800); color: var(--gold-glow);
+  background: var(--emerald-800); color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
 }
@@ -1430,17 +1441,18 @@ table.staff-tbl td.role {
 /* Toast */
 .toast {
   position: absolute; top: 20px; right: 20px;
-  background: var(--ink-black); color: var(--ivory);
-  border: 1px solid var(--gold-bullion);
+  background: var(--bg); color: var(--ink);
+  border: 1px solid var(--emerald-800);
+  border-left: 4px solid var(--emerald-800);
   padding: 14px 20px;
   display: flex; align-items: center; gap: 12px;
   font-size: 13px;
-  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 16px 40px -12px rgba(12, 18, 32, 0.2);
   z-index: 10;
 }
 .toast .check {
-  width: 24px; height: 24px;
-  background: var(--gold-bullion); color: var(--ink-black);
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--emerald-800); color: white;
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; font-weight: 800;
 }
@@ -1448,17 +1460,370 @@ table.staff-tbl td.role {
 footer.foot {
   text-align: center;
   padding: 44px 28px;
-  background: var(--obsidian); color: rgba(250, 247, 242, 0.6);
+  background: var(--bg); color: var(--ink-3);
+  border-top: 1px solid var(--line);
   font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
 }
-footer.foot .gold { color: var(--gold-bullion); }
+footer.foot .gold { color: var(--gold-700); font-weight: 700; }
+
+/* =================================================================
+   SCREEN IX — GM Dashboard
+   ================================================================= */
+.gm-page { background: var(--bg-soft); padding: 32px 28px; }
+.gm-inner { max-width: 1340px; margin: 0 auto; }
+
+.gm-h {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding-bottom: 22px; margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap; gap: 16px;
+}
+.gm-h .title-block .eyebrow {
+  font-size: 11px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-700); font-weight: 700; margin-bottom: 6px;
+}
+.gm-h h1 {
+  font-family: var(--font-display);
+  font-size: 36px; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.4px;
+}
+.gm-h .sub {
+  margin-top: 4px;
+  font-size: 13.5px; color: var(--ink-3);
+  font-style: italic; font-family: var(--font-display);
+}
+.gm-h .filters { display: flex; gap: 10px; align-items: center; }
+.gm-h .filters select {
+  padding: 8px 14px;
+  border: 1px solid var(--line-2);
+  background: var(--bg);
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--ink);
+}
+
+/* Hero KPIs */
+.gm-kpis {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 28px;
+}
+.gm-kpi {
+  background: var(--bg); border: 1px solid var(--line);
+  padding: 22px 22px 18px;
+  position: relative;
+}
+.gm-kpi::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px; background: var(--emerald-800);
+}
+.gm-kpi.warn::before { background: var(--gold-600); }
+.gm-kpi.alert::before { background: var(--burgundy); }
+.gm-kpi.info::before { background: #1d4ed8; }
+.gm-kpi .lbl {
+  font-size: 10.5px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 700; margin-bottom: 8px;
+}
+.gm-kpi .num {
+  font-family: var(--font-display);
+  font-size: 40px; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.8px;
+  line-height: 1;
+}
+.gm-kpi .num .unit {
+  font-size: 14px; color: var(--ink-3);
+  font-style: italic; font-weight: 500;
+  margin-left: 3px;
+}
+.gm-kpi .delta {
+  margin-top: 10px;
+  font-size: 11.5px; color: var(--ink-3);
+  display: flex; align-items: center; gap: 6px;
+}
+.gm-kpi .delta .arrow { font-weight: 700; }
+.gm-kpi .delta .arrow.up { color: var(--st-signed-fg); }
+.gm-kpi .delta .arrow.down { color: var(--st-rejected-fg); }
+
+/* Section card */
+.gm-section {
+  background: var(--bg); border: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+.gm-section-h {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: baseline; justify-content: space-between;
+}
+.gm-section-h h3 {
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 700;
+  color: var(--ink); letter-spacing: -0.2px;
+}
+.gm-section-h .meta { font-size: 11px; color: var(--ink-3); letter-spacing: 0.4px; text-transform: uppercase; font-weight: 600; }
+.gm-section-b { padding: 22px 24px; }
+
+/* Workflow funnel */
+.gm-funnel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+.gm-funnel-step {
+  text-align: center;
+  padding: 18px 16px;
+  border-right: 1px solid var(--line);
+  position: relative;
+}
+.gm-funnel-step:last-child { border-right: none; }
+.gm-funnel-step .num-stage {
+  font-family: var(--font-display);
+  font-size: 13px; font-style: italic; font-weight: 600;
+  color: var(--gold-700); margin-bottom: 6px;
+}
+.gm-funnel-step .nm {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  color: var(--ink);
+}
+.gm-funnel-step .ct {
+  font-family: var(--font-display);
+  font-size: 36px; font-weight: 700;
+  color: var(--emerald-800);
+  letter-spacing: -0.5px;
+  margin: 8px 0 6px;
+}
+.gm-funnel-step .sub-l { font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.gm-funnel-step.warn .ct { color: var(--gold-700); }
+.gm-funnel-step.alert .ct { color: var(--burgundy); }
+
+/* Two-col layout */
+.gm-2col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; margin-bottom: 18px; }
+.gm-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+
+/* Bar chart (sector) */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: grid; grid-template-columns: 170px 1fr 75px; gap: 14px; align-items: center; font-size: 12.5px; }
+.bar-row .label { color: var(--ink-2); font-weight: 500; }
+.bar-row .track { height: 9px; background: var(--surface-3); border-radius: 5px; overflow: hidden; }
+.bar-row .fill { height: 100%; background: linear-gradient(90deg, var(--emerald-800), var(--emerald-600)); border-radius: 5px; }
+.bar-row .val { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); font-weight: 600; text-align: right; }
+
+/* Donut */
+.donut-wrap { display: flex; align-items: center; gap: 26px; }
+.donut {
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  background:
+    conic-gradient(
+      var(--emerald-800) 0% 60%,
+      var(--gold-600) 60% 83%,
+      var(--ink-5) 83% 100%);
+  position: relative;
+  flex-shrink: 0;
+}
+.donut::before {
+  content: ''; position: absolute; inset: 28px;
+  background: var(--bg); border-radius: 50%;
+}
+.donut .center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 1;
+}
+.donut .center .v {
+  font-family: var(--font-display); font-size: 28px; font-weight: 700;
+  color: var(--ink); line-height: 1;
+}
+.donut .center .l { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); font-weight: 600; margin-top: 4px; }
+.donut-legend { flex: 1; display: flex; flex-direction: column; gap: 10px; font-size: 12.5px; }
+.legend-row { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 10px; align-items: center; }
+.legend-row .swatch { width: 12px; height: 12px; }
+.legend-row .lbl { color: var(--ink-2); }
+.legend-row .pct { font-family: var(--font-mono); color: var(--ink-3); font-size: 11.5px; }
+.legend-row .ct { font-family: var(--font-mono); color: var(--ink); font-weight: 600; }
+
+/* Conventions register table */
+.reg-tbl-wrap { overflow-x: auto; }
+.reg-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.reg-tbl thead { background: var(--surface-2); border-bottom: 2px solid var(--ink); }
+.reg-tbl th {
+  text-align: left;
+  font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase;
+  font-weight: 700; color: var(--ink-2);
+  padding: 12px 14px;
+}
+.reg-tbl td {
+  padding: 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-2); vertical-align: top;
+}
+.reg-tbl tr:hover td { background: var(--surface-2); }
+.reg-tbl td.ref { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink); font-weight: 600; }
+.reg-tbl td.amount { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
+.reg-tbl td .co-name { font-family: var(--font-display); font-size: 14px; font-weight: 700; color: var(--ink); display: block; }
+.reg-tbl td .co-sub { font-size: 11px; color: var(--ink-4); font-style: italic; font-family: var(--font-display); margin-top: 2px; }
+
+/* Phase pill */
+.phase-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  border: 1px solid;
+}
+.phase-pill.install   { background: #fffbe6; color: #92510e; border-color: #92510e; }
+.phase-pill.exploit   { background: var(--emerald-50); color: var(--emerald-900); border-color: var(--emerald-800); }
+.phase-pill.closed    { background: var(--surface-3); color: var(--ink-3); border-color: var(--ink-4); }
+.phase-pill.suspended { background: var(--burgundy-50); color: var(--burgundy); border-color: var(--burgundy); }
+
+/* Action items list */
+.action-list { display: flex; flex-direction: column; gap: 10px; }
+.action-item {
+  display: grid; grid-template-columns: 36px 1fr auto; gap: 14px; align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  border-left: 3px solid var(--gold-600);
+}
+.action-item.urgent { border-left-color: var(--burgundy); background: var(--burgundy-50); }
+.action-item .ico {
+  width: 32px; height: 32px;
+  background: var(--bg); color: var(--gold-700);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px;
+  border: 1px solid var(--gold-600);
+}
+.action-item.urgent .ico { color: var(--burgundy); border-color: var(--burgundy); }
+.action-item .what {
+  font-size: 13px; font-weight: 600; color: var(--ink);
+}
+.action-item .sub { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; font-style: italic; font-family: var(--font-display); }
+
+/* Mini metric in compliance section */
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.metric-mini {
+  padding: 14px;
+  background: var(--surface-2);
+  border-left: 2px solid var(--emerald-800);
+}
+.metric-mini .lbl { font-size: 9.5px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3); font-weight: 700; }
+.metric-mini .v { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--ink); margin-top: 6px; line-height: 1.1; }
+.metric-mini .v .unit { font-size: 12px; color: var(--ink-3); font-style: italic; font-weight: 500; }
+.metric-mini.warn { border-left-color: var(--gold-600); }
+.metric-mini.alert { border-left-color: var(--burgundy); }
+
+/* SLA progress bar */
+.sla-meter {
+  height: 10px; background: var(--surface-3); border-radius: 6px;
+  overflow: hidden; display: flex;
+  margin: 8px 0 6px;
+}
+.sla-meter .ok   { background: var(--st-signed-fg); height: 100%; }
+.sla-meter .warn { background: var(--gold-600); height: 100%; }
+.sla-meter .late { background: var(--burgundy); height: 100%; }
+
+/* =================================================================
+   SCREEN X — Create / Import Convention
+   ================================================================= */
+.import-page { background: var(--bg-soft); padding: 32px 28px; }
+.import-inner { max-width: 1080px; margin: 0 auto; }
+
+.import-tabs {
+  display: flex; gap: 0;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 28px;
+}
+.import-tabs button {
+  background: none; border: none;
+  padding: 14px 24px;
+  font-size: 12.5px; font-weight: 700;
+  letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+.import-tabs button.active {
+  color: var(--emerald-800);
+  border-bottom-color: var(--emerald-800);
+}
+
+.import-card {
+  background: var(--bg); border: 1px solid var(--line);
+  padding: 32px;
+  margin-bottom: 18px;
+}
+.import-card h3 {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 700;
+  color: var(--ink); margin-bottom: 6px;
+  letter-spacing: -0.2px;
+}
+.import-card .sub {
+  font-size: 13px; color: var(--ink-3);
+  font-style: italic; font-family: var(--font-display);
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+.import-fields-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px 22px;
+}
+.import-fields-grid .full { grid-column: 1 / -1; }
+
+.import-callout {
+  background: var(--gold-50); border: 1px solid var(--gold-600);
+  border-left: 4px solid var(--gold-600);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.import-callout .ico {
+  width: 32px; height: 32px;
+  background: var(--gold-600); color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; flex-shrink: 0;
+}
+.import-callout .body {
+  font-size: 13px; color: var(--ink-2);
+}
+.import-callout .body strong {
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  color: var(--ink); display: block; margin-bottom: 3px;
+}
+
+.dropzone {
+  border: 2px dashed var(--line-2);
+  background: var(--surface-2);
+  padding: 32px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.dropzone .ico {
+  width: 48px; height: 48px;
+  background: var(--bg); color: var(--emerald-800);
+  border: 1px solid var(--line-2);
+  margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.dropzone h5 {
+  font-family: var(--font-display); font-size: 17px; font-weight: 700;
+  color: var(--ink); margin-bottom: 4px;
+}
+.dropzone .hint { font-size: 12px; color: var(--ink-3); font-style: italic; font-family: var(--font-display); }
+
+.import-submit-bar {
+  margin-top: 18px;
+  padding: 20px 24px;
+  background: var(--obsidian); color: white;
+  display: flex; align-items: center; justify-content: space-between;
+  border-left: 3px solid var(--gold-600);
+}
+.import-submit-bar .status {
+  font-family: var(--font-display); font-size: 15px;
+  font-style: italic;
+}
+.import-submit-bar .status strong { color: var(--gold-500); font-style: normal; font-weight: 700; }
 </style>
 </head>
 <body>
 
 <!-- PREVIEW CHROME -->
 <div class="pv-banner">
-  <div><strong>★ DESIGN PREVIEW v2</strong> &nbsp;·&nbsp; Editorial · Sovereign · Premium &nbsp;·&nbsp; 8 écrans</div>
+  <div><strong>★ DESIGN PREVIEW v3</strong> &nbsp;·&nbsp; Bright editorial · Source Serif 4 + Inter &nbsp;·&nbsp; 10 écrans</div>
   <div style="color:rgba(250,247,242,0.5)">⚠ Maquette visuelle uniquement</div>
 </div>
 <nav class="pv-nav">
@@ -1471,6 +1836,8 @@ footer.foot .gold { color: var(--gold-bullion); }
     <a href="#s6">VI · Direction + IA</a>
     <a href="#s7">VII · DG — Signature</a>
     <a href="#s8">VIII · Admin — Personnel</a>
+    <a href="#s9" style="color:var(--emerald-800)">IX · Tableau DG ★</a>
+    <a href="#s10" style="color:var(--emerald-800)">X · Importer une convention ★</a>
   </div>
 </nav>
 
@@ -2757,9 +3124,692 @@ footer.foot .gold { color: var(--gold-bullion); }
   </div>
 </div>
 
+<!-- =========================================================
+     IX — GM Dashboard
+     ========================================================= -->
+<div id="s9" class="scr-label">
+  <span class="num">ix</span>
+  <span class="ttl">Tableau de bord du Directeur Général</span>
+  <span class="meta">Performance globale de l'API · indicateurs économiques · suivi par convention</span>
+</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">Portail interne <span class="dot">⚜</span> Direction Générale <span class="dot">⚜</span> Tableau de pilotage</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
+        <div class="gov-title">
+          <div class="top">Portail interne · Direction Générale</div>
+          <div class="org">Tableau de pilotage des conventions</div>
+        </div>
+        <div class="gov-actions">
+          <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
+          <div class="gov-user">
+            <div class="gov-ava">PE</div>
+            <div class="gov-user-meta">
+              <div class="name">Dr. Pierre Eyenga</div>
+              <div class="role">Directeur Général · API</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="gm-page">
+      <div class="gm-inner">
+        <div class="gm-h">
+          <div class="title-block">
+            <div class="eyebrow">⚜ Direction Générale</div>
+            <h1>Performance de l'Agence</h1>
+            <div class="sub">Vue consolidée des conventions d'investissement · exercice 2026 (au 24 mai)</div>
+          </div>
+          <div class="filters">
+            <select><option>Exercice 2026</option><option>2025</option><option>Tous</option></select>
+            <select><option>Tous les secteurs</option></select>
+            <select><option>Toutes les régions</option></select>
+            <a href="#s10" class="btn btn-gold">+ Importer une convention</a>
+          </div>
+        </div>
+
+        <!-- HERO KPIs -->
+        <div class="gm-kpis">
+          <div class="gm-kpi">
+            <div class="lbl">Conventions accordées</div>
+            <div class="num">47</div>
+            <div class="delta"><span class="arrow up">▲</span><strong>12</strong> &nbsp;cette année · +34% vs 2025</div>
+          </div>
+          <div class="gm-kpi info">
+            <div class="lbl">Investissement total agréé</div>
+            <div class="num">124,5<span class="unit">Md FCFA</span></div>
+            <div class="delta"><span class="arrow up">▲</span><strong>32,8 Md</strong> &nbsp;ajoutés en 2026</div>
+          </div>
+          <div class="gm-kpi">
+            <div class="lbl">Emplois créés (cumulés)</div>
+            <div class="num">3 247</div>
+            <div class="delta"><span class="arrow up">▲</span><strong>67%</strong> &nbsp;de la cible 4 820 ETP</div>
+          </div>
+          <div class="gm-kpi warn">
+            <div class="lbl">Dossiers en traitement</div>
+            <div class="num">8</div>
+            <div class="delta"><span class="arrow">⚠</span>&nbsp;2 dossiers approchent l'échéance SLA</div>
+          </div>
+        </div>
+
+        <!-- WORKFLOW STATUS -->
+        <div class="gm-section">
+          <div class="gm-section-h">
+            <h3>État du workflow d'instruction</h3>
+            <span class="meta">Délai légal · 10 jours ouvrés (Art. 30.3)</span>
+          </div>
+          <div class="gm-section-b" style="padding:0">
+            <div class="gm-funnel">
+              <div class="gm-funnel-step">
+                <div class="num-stage">i.</div>
+                <div class="nm">Secrétariat</div>
+                <div class="ct">3</div>
+                <div class="sub-l">Vérification</div>
+              </div>
+              <div class="gm-funnel-step">
+                <div class="num-stage">ii.</div>
+                <div class="nm">Investissements</div>
+                <div class="ct">2</div>
+                <div class="sub-l">Examen</div>
+              </div>
+              <div class="gm-funnel-step warn">
+                <div class="num-stage">iii.</div>
+                <div class="nm">Conformité</div>
+                <div class="ct">1</div>
+                <div class="sub-l">⚠ J+6 SLA</div>
+              </div>
+              <div class="gm-funnel-step">
+                <div class="num-stage">iv.</div>
+                <div class="nm">Rel. Extérieures</div>
+                <div class="ct">1</div>
+                <div class="sub-l">Examen</div>
+              </div>
+              <div class="gm-funnel-step">
+                <div class="num-stage">v.</div>
+                <div class="nm">Direction Générale</div>
+                <div class="ct">1</div>
+                <div class="sub-l">Signature</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TWO COL: Sectors + Phase -->
+        <div class="gm-2col">
+          <div class="gm-section">
+            <div class="gm-section-h">
+              <h3>Répartition sectorielle</h3>
+              <span class="meta">Art. 3 · 8 secteurs éligibles</span>
+            </div>
+            <div class="gm-section-b">
+              <div class="bar-chart">
+                <div class="bar-row"><div class="label">Agriculture · Élevage</div><div class="track"><div class="fill" style="width:88%"></div></div><div class="val">14 (30%)</div></div>
+                <div class="bar-row"><div class="label">Industrie lourde</div><div class="track"><div class="fill" style="width:76%"></div></div><div class="val">12 (26%)</div></div>
+                <div class="bar-row"><div class="label">Eau & Énergie</div><div class="track"><div class="fill" style="width:50%"></div></div><div class="val">8 (17%)</div></div>
+                <div class="bar-row"><div class="label">Numérique · Data</div><div class="track"><div class="fill" style="width:31%"></div></div><div class="val">5 (11%)</div></div>
+                <div class="bar-row"><div class="label">Tourisme · Loisirs</div><div class="track"><div class="fill" style="width:25%"></div></div><div class="val">4 (9%)</div></div>
+                <div class="bar-row"><div class="label">Éducation · Santé</div><div class="track"><div class="fill" style="width:13%"></div></div><div class="val">2 (4%)</div></div>
+                <div class="bar-row"><div class="label">Transport</div><div class="track"><div class="fill" style="width:6%"></div></div><div class="val">1 (2%)</div></div>
+                <div class="bar-row"><div class="label">Distribution</div><div class="track"><div class="fill" style="width:6%"></div></div><div class="val">1 (2%)</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gm-section">
+            <div class="gm-section-h">
+              <h3>Phases d'investissement</h3>
+              <span class="meta">Art. 10 & 11</span>
+            </div>
+            <div class="gm-section-b">
+              <div class="donut-wrap">
+                <div class="donut">
+                  <div class="center"><div class="v">47</div><div class="l">Total</div></div>
+                </div>
+                <div class="donut-legend">
+                  <div class="legend-row"><div class="swatch" style="background:var(--emerald-800)"></div><div class="lbl">Installation (≤ 5 ans)</div><div class="pct">60%</div><div class="ct">28</div></div>
+                  <div class="legend-row"><div class="swatch" style="background:var(--gold-600)"></div><div class="lbl">Exploitation</div><div class="pct">23%</div><div class="ct">11</div></div>
+                  <div class="legend-row"><div class="swatch" style="background:var(--ink-5)"></div><div class="lbl">Clos / échu</div><div class="pct">17%</div><div class="ct">8</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ECONOMIC IMPACT -->
+        <div class="gm-3col">
+          <div class="gm-section" style="margin:0">
+            <div class="gm-section-h"><h3>Création d'emplois</h3><span class="meta">Art. 7 — 1 emploi / 50 M FCFA</span></div>
+            <div class="gm-section-b">
+              <div style="font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--emerald-800);line-height:1">3 247 <span style="font-size:16px;color:var(--ink-3);font-style:italic;font-weight:500">/ 4 820 prévus</span></div>
+              <div style="font-size:12px;color:var(--ink-3);margin-top:8px">Taux de réalisation : <strong style="color:var(--ink);font-family:var(--font-mono)">67,4%</strong></div>
+              <div class="sla-meter"><div class="ok" style="width:67%"></div><div class="warn" style="width:0%"></div></div>
+              <div style="font-size:11.5px;color:var(--ink-3);font-style:italic;font-family:var(--font-display);margin-top:6px">Mesuré sur les 39 conventions en phase d'exploitation ou clôturées.</div>
+            </div>
+          </div>
+
+          <div class="gm-section" style="margin:0">
+            <div class="gm-section-h"><h3>Coût des emplois</h3><span class="meta">Masse salariale annuelle</span></div>
+            <div class="gm-section-b">
+              <div style="font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--ink);line-height:1">5,84 <span style="font-size:16px;color:var(--ink-3);font-style:italic;font-weight:500">Md FCFA / an</span></div>
+              <div style="font-size:12px;color:var(--ink-3);margin-top:8px">Soit en moyenne <strong style="color:var(--ink);font-family:var(--font-mono)">1,8 M FCFA / ETP / an</strong></div>
+              <div style="font-size:11.5px;color:var(--ink-3);font-style:italic;font-family:var(--font-display);margin-top:8px">Contribution sociale (CNPS) : 1,17 Md FCFA / an.<br>Impôt sur salaires (IRPP) : 0,87 Md FCFA / an.</div>
+            </div>
+          </div>
+
+          <div class="gm-section" style="margin:0">
+            <div class="gm-section-h"><h3>Incitations fiscales accordées</h3><span class="meta">Art. 11 · catégories A/B/C</span></div>
+            <div class="gm-section-b">
+              <div style="font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--gold-700);line-height:1">38,2 <span style="font-size:16px;color:var(--ink-3);font-style:italic;font-weight:500">Md FCFA</span></div>
+              <div style="font-size:12px;color:var(--ink-3);margin-top:8px">Crédit d'impôt + exonérations cumulés sur 47 conventions</div>
+              <div style="font-size:11.5px;color:var(--ink-3);font-style:italic;font-family:var(--font-display);margin-top:8px">Recettes fiscales estimées en retour (post-exploitation) : <strong style="color:var(--emerald-800);font-family:var(--font-mono);font-style:normal">62,4 Md FCFA / 5 ans</strong>.<br>ROI pour l'État : <strong style="color:var(--emerald-800);font-family:var(--font-mono);font-style:normal">+ 63%</strong>.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPLIANCE + SLA -->
+        <div class="gm-2col">
+          <div class="gm-section" style="margin:0">
+            <div class="gm-section-h"><h3>Conformité réglementaire</h3><span class="meta">Art. 32 · 36 · 48</span></div>
+            <div class="gm-section-b">
+              <div class="metric-grid">
+                <div class="metric-mini"><div class="lbl">Rapports annuels reçus</div><div class="v">28 <span class="unit">/ 39</span></div></div>
+                <div class="metric-mini warn"><div class="lbl">Rapports en retard</div><div class="v">8</div></div>
+                <div class="metric-mini alert"><div class="lbl">Rapports manquants</div><div class="v">3</div></div>
+                <div class="metric-mini"><div class="lbl">Amendes accumulées</div><div class="v">11 <span class="unit">M FCFA</span></div></div>
+                <div class="metric-mini"><div class="lbl">Redevances dues (Art. 48)</div><div class="v">124 <span class="unit">M FCFA</span></div></div>
+                <div class="metric-mini"><div class="lbl">Redevances perçues</div><div class="v">87,5 <span class="unit">M (71%)</span></div></div>
+                <div class="metric-mini warn"><div class="lbl">Sanctions actives</div><div class="v">2</div></div>
+                <div class="metric-mini"><div class="lbl">Recours en cours</div><div class="v">1</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gm-section" style="margin:0">
+            <div class="gm-section-h"><h3>Performance SLA · Instruction</h3><span class="meta">10 j ouvrés</span></div>
+            <div class="gm-section-b">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px">
+                <div>
+                  <div style="font-family:var(--font-display);font-size:38px;font-weight:700;color:var(--emerald-800);line-height:1">87 <span style="font-size:16px;color:var(--ink-3);font-style:italic;font-weight:500">%</span></div>
+                  <div style="font-size:11.5px;color:var(--ink-3);margin-top:6px;letter-spacing:1px;text-transform:uppercase;font-weight:600">Dossiers traités dans les délais</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--ink);line-height:1">7,2 <span style="font-size:13px;color:var(--ink-3);font-style:italic;font-weight:500">jours</span></div>
+                  <div style="font-size:11px;color:var(--ink-3);margin-top:4px;letter-spacing:0.8px;text-transform:uppercase;font-weight:600">Délai moyen</div>
+                </div>
+              </div>
+              <div class="sla-meter">
+                <div class="ok" style="width:69%"></div>
+                <div class="warn" style="width:18%"></div>
+                <div class="late" style="width:13%"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:6px;letter-spacing:0.4px">
+                <span><strong style="color:var(--st-signed-fg);font-family:var(--font-mono)">32</strong> dans les délais</span>
+                <span><strong style="color:var(--gold-700);font-family:var(--font-mono)">8</strong> en alerte</span>
+                <span><strong style="color:var(--burgundy);font-family:var(--font-mono)">6</strong> hors délai</span>
+              </div>
+              <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--ink-2);font-family:var(--font-display);font-style:italic">Dossier le plus lent : <strong style="color:var(--burgundy);font-family:var(--font-sans);font-style:normal;font-weight:700">2026 / 000 087</strong> — 22 jours · bloqué à la Conformité.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CRITERIA FULFILLMENT -->
+        <div class="gm-section">
+          <div class="gm-section-h"><h3>Atteinte des critères d'éligibilité (Art. 7 / Art. 8)</h3><span class="meta">Mesurée sur 39 conventions en phase post-installation</span></div>
+          <div class="gm-section-b">
+            <div class="bar-chart">
+              <div class="bar-row"><div class="label">Emplois · 1 par 50 M FCFA</div><div class="track"><div class="fill" style="width:74%"></div></div><div class="val">74% atteint</div></div>
+              <div class="bar-row"><div class="label">Intrants nationaux ≥ 50%</div><div class="track"><div class="fill" style="width:62%"></div></div><div class="val">62% atteint</div></div>
+              <div class="bar-row"><div class="label">Valeur ajoutée ≥ 30%</div><div class="track"><div class="fill" style="width:81%"></div></div><div class="val">81% atteint</div></div>
+              <div class="bar-row"><div class="label">Exports ≥ 25% CA HT</div><div class="track"><div class="fill" style="width:48%;background:linear-gradient(90deg,var(--gold-600),var(--gold-500))"></div></div><div class="val">48% atteint</div></div>
+              <div class="bar-row"><div class="label">Produits camerounais ≥ 40% (distribution)</div><div class="track"><div class="fill" style="width:67%"></div></div><div class="val">67% atteint</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONVENTIONS REGISTER -->
+        <div class="gm-section">
+          <div class="gm-section-h">
+            <h3>Registre des conventions · 47 actives</h3>
+            <span class="meta">Cliquer pour ouvrir un dossier</span>
+          </div>
+          <div class="gm-section-b" style="padding:0">
+            <div class="reg-tbl-wrap">
+              <table class="reg-tbl">
+                <thead>
+                  <tr>
+                    <th>N° agrément</th>
+                    <th>Investisseur</th>
+                    <th>Secteur</th>
+                    <th>Signée le</th>
+                    <th style="text-align:right">Investissement</th>
+                    <th style="text-align:right">Emplois</th>
+                    <th style="text-align:right">Coût ETP/an</th>
+                    <th>Phase</th>
+                    <th>Conformité</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="ref">2026/AGR/0042</td>
+                    <td><span class="co-name">SARL AGRO-CAM</span><span class="co-sub">Garoua · ZDP Nord</span></td>
+                    <td>Agriculture</td>
+                    <td>28/04/2026</td>
+                    <td class="amount" style="text-align:right">800 M</td>
+                    <td style="text-align:right"><strong>68</strong> / 52</td>
+                    <td style="text-align:right" class="amount">1,6 M</td>
+                    <td><span class="phase-pill exploit">Exploitation</span></td>
+                    <td><span class="pill signed">✓ Conforme</span></td>
+                  </tr>
+                  <tr>
+                    <td class="ref">2025/AGR/0118</td>
+                    <td><span class="co-name">SA CAMINDUSTRIE</span><span class="co-sub">Douala · Industrie PEHD</span></td>
+                    <td>Industrie</td>
+                    <td>14/11/2025</td>
+                    <td class="amount" style="text-align:right">3,2 Md</td>
+                    <td style="text-align:right"><strong>24</strong> / 24</td>
+                    <td style="text-align:right" class="amount">2,4 M</td>
+                    <td><span class="phase-pill install">Installation</span></td>
+                    <td><span class="pill signed">✓ Conforme</span></td>
+                  </tr>
+                  <tr>
+                    <td class="ref">2024/AGR/0089</td>
+                    <td><span class="co-name">SUARL TropicalFoods</span><span class="co-sub">Yaoundé · Agro-transformation</span></td>
+                    <td>Agriculture</td>
+                    <td>02/09/2024</td>
+                    <td class="amount" style="text-align:right">1,4 Md</td>
+                    <td style="text-align:right"><strong>112</strong> / 95</td>
+                    <td style="text-align:right" class="amount">1,9 M</td>
+                    <td><span class="phase-pill exploit">Exploitation</span></td>
+                    <td><span class="pill signed">✓ Conforme</span></td>
+                  </tr>
+                  <tr>
+                    <td class="ref">2024/AGR/0067</td>
+                    <td><span class="co-name">SA EnergyCam</span><span class="co-sub">Limbé · Centrale solaire</span></td>
+                    <td>Eau & Énergie</td>
+                    <td>22/06/2024</td>
+                    <td class="amount" style="text-align:right">8,5 Md</td>
+                    <td style="text-align:right"><strong>187</strong> / 200</td>
+                    <td style="text-align:right" class="amount">2,1 M</td>
+                    <td><span class="phase-pill install">Installation</span></td>
+                    <td><span class="pill pending">⏱ Rapport en retard</span></td>
+                  </tr>
+                  <tr>
+                    <td class="ref">2023/AGR/0034</td>
+                    <td><span class="co-name">SARL Aroma-Cam</span><span class="co-sub">Bafoussam · Cosmétiques</span></td>
+                    <td>Industrie</td>
+                    <td>11/03/2023</td>
+                    <td class="amount" style="text-align:right">420 M</td>
+                    <td style="text-align:right"><strong>42</strong> / 35</td>
+                    <td style="text-align:right" class="amount">1,4 M</td>
+                    <td><span class="phase-pill closed">Clos</span></td>
+                    <td><span class="pill signed">✓ Conforme</span></td>
+                  </tr>
+                  <tr>
+                    <td class="ref">2022/AGR/0019</td>
+                    <td><span class="co-name">SARL Hydrosol</span><span class="co-sub">Garoua · Eau industrielle</span></td>
+                    <td>Eau & Énergie</td>
+                    <td>15/05/2022</td>
+                    <td class="amount" style="text-align:right">650 M</td>
+                    <td style="text-align:right"><strong>0</strong> / 28</td>
+                    <td style="text-align:right" class="amount">—</td>
+                    <td><span class="phase-pill suspended">Suspendue</span></td>
+                    <td><span class="pill rejected">✕ Sanction Art. 41</span></td>
+                  </tr>
+                  <tr>
+                    <td class="ref">2020/AGR/0007</td>
+                    <td><span class="co-name">SA TransMar</span><span class="co-sub">Kribi · Transport maritime</span></td>
+                    <td>Transport</td>
+                    <td>30/11/2020</td>
+                    <td class="amount" style="text-align:right">14,8 Md</td>
+                    <td style="text-align:right"><strong>340</strong> / 280</td>
+                    <td style="text-align:right" class="amount">3,2 M</td>
+                    <td><span class="phase-pill closed">Clos</span></td>
+                    <td><span class="pill signed">✓ Conforme</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION ITEMS -->
+        <div class="gm-section">
+          <div class="gm-section-h"><h3>Actions requérant votre attention</h3><span class="meta">Triées par urgence</span></div>
+          <div class="gm-section-b">
+            <div class="action-list">
+              <div class="action-item urgent">
+                <div class="ico">!</div>
+                <div>
+                  <div class="what">SARL Hydrosol — Sanction Art. 41 à confirmer</div>
+                  <div class="sub">Procédure d'amende 10 M FCFA · 2 jours restants pour confirmation après mise en demeure</div>
+                </div>
+                <button class="btn btn-primary btn-sm">Examiner</button>
+              </div>
+              <div class="action-item urgent">
+                <div class="ico">⏱</div>
+                <div>
+                  <div class="what">Dossier 2026/000 087 — Délai SLA dépassé (J+22)</div>
+                  <div class="sub">Bloqué à la Direction de la Conformité depuis 6 jours · DG copié en escalade</div>
+                </div>
+                <button class="btn btn-primary btn-sm">Relancer</button>
+              </div>
+              <div class="action-item">
+                <div class="ico">📋</div>
+                <div>
+                  <div class="what">3 rapports annuels (Art. 32) manquants</div>
+                  <div class="sub">Échéance dépassée — amende 1 M FCFA / mois en cours d'accumulation</div>
+                </div>
+                <button class="btn btn-outline btn-sm">Consulter</button>
+              </div>
+              <div class="action-item">
+                <div class="ico">⚜</div>
+                <div>
+                  <div class="what">1 convention en attente de votre signature</div>
+                  <div class="sub">SA CAMINDUSTRIE · dossier 2026/000 124 · arrivé il y a 2 heures</div>
+                </div>
+                <a href="#s7" class="btn btn-primary btn-sm">Signer →</a>
+              </div>
+              <div class="action-item">
+                <div class="ico">💰</div>
+                <div>
+                  <div class="what">36,5 M FCFA de redevances impayées</div>
+                  <div class="sub">14 conventions concernées · échéance Art. 48 dépassée</div>
+                </div>
+                <button class="btn btn-outline btn-sm">Voir détails</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================
+     X — Create / Import Convention
+     ========================================================= -->
+<div id="s10" class="scr-label">
+  <span class="num">x</span>
+  <span class="ttl">Importer une convention existante / Créer un nouveau dossier</span>
+  <span class="meta">Saisie des conventions antérieures au portail · accessible au personnel autorisé</span>
+</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">Portail interne <span class="dot">⚜</span> Direction Générale <span class="dot">⚜</span> Gestion des conventions</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
+        <div class="gov-title">
+          <div class="top">Portail interne · Gestion des conventions</div>
+          <div class="org">Création d'un nouveau dossier</div>
+        </div>
+        <div class="gov-actions">
+          <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
+          <div class="gov-user">
+            <div class="gov-ava">PE</div>
+            <div class="gov-user-meta">
+              <div class="name">Dr. Pierre Eyenga</div>
+              <div class="role">Directeur Général · API</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="import-page">
+      <div class="import-inner">
+        <div class="gm-h">
+          <div class="title-block">
+            <div class="eyebrow">⚜ Gestion des conventions</div>
+            <h1>Nouvelle convention</h1>
+            <div class="sub">Importer une convention existante (antérieure au portail) ou créer un nouveau dossier au nom d'un investisseur</div>
+          </div>
+        </div>
+
+        <div class="import-tabs">
+          <button class="active">📂 Importer une convention existante</button>
+          <button>✚ Créer un nouveau dossier</button>
+        </div>
+
+        <div class="import-callout">
+          <div class="ico">i</div>
+          <div class="body">
+            <strong>Pourquoi importer ?</strong>
+            Saisissez les conventions accordées avant la mise en place du portail. Ces données alimentent automatiquement le tableau de bord du DG, le suivi de conformité (Art. 32), le calcul des redevances (Art. 48), et les rapports économiques de l'Agence.
+          </div>
+        </div>
+
+        <div class="import-card">
+          <h3>1. Investisseur</h3>
+          <div class="sub">Coordonnées de la société bénéficiaire de la convention</div>
+
+          <div class="import-fields-grid">
+            <div class="field">
+              <label>Raison sociale <span style="color:var(--burgundy)">*</span></label>
+              <input type="text" placeholder="Ex. : SARL AGRO-CAM">
+            </div>
+            <div class="field">
+              <label>Forme juridique <span style="color:var(--burgundy)">*</span></label>
+              <select><option>SARL</option><option>SA</option><option>SUARL</option><option>SAS</option><option>Autre</option></select>
+            </div>
+            <div class="field">
+              <label>NIU (Numéro d'Identifiant Unique)</label>
+              <input type="text" placeholder="M0XXXXXXXXXXXC">
+            </div>
+            <div class="field">
+              <label>RCCM</label>
+              <input type="text" placeholder="RC/DLA/2024/B/12345">
+            </div>
+            <div class="field">
+              <label>Pays d'origine du capital <span style="color:var(--burgundy)">*</span></label>
+              <input type="text" placeholder="Cameroun" value="Cameroun">
+            </div>
+            <div class="field">
+              <label>Investissement étranger ?</label>
+              <select><option>Non — capital national</option><option>Oui — capital mixte</option><option>Oui — capital étranger</option></select>
+            </div>
+            <div class="field full">
+              <label>Adresse du siège</label>
+              <input type="text" placeholder="Avenue, ville, région">
+            </div>
+            <div class="field">
+              <label>Contact — nom du dirigeant</label>
+              <input type="text" placeholder="Prénom NOM">
+            </div>
+            <div class="field">
+              <label>Email du dirigeant <span style="color:var(--burgundy)">*</span></label>
+              <input type="email" placeholder="contact@entreprise.cm">
+              <div class="hint">L'investisseur recevra un email d'accès au portail pour suivre la convention.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="import-card">
+          <h3>2. Convention</h3>
+          <div class="sub">Informations sur la convention signée</div>
+
+          <div class="import-fields-grid">
+            <div class="field">
+              <label>N° d'agrément <span style="color:var(--burgundy)">*</span></label>
+              <input type="text" placeholder="2024/AGR/0042">
+            </div>
+            <div class="field">
+              <label>Date de signature <span style="color:var(--burgundy)">*</span></label>
+              <input type="date">
+            </div>
+            <div class="field">
+              <label>Régime <span style="color:var(--burgundy)">*</span></label>
+              <select><option>Commun (Ord. 2025/002)</option><option>Zone économique (Loi 2013/011)</option><option>PPP (Loi 2023/008)</option><option>Régime antérieur (Loi 2013/004)</option></select>
+            </div>
+            <div class="field">
+              <label>Type de projet <span style="color:var(--burgundy)">*</span></label>
+              <select><option>Projet nouveau (Art. 7)</option><option>Extension (Art. 8)</option></select>
+            </div>
+            <div class="field">
+              <label>Secteur d'activité <span style="color:var(--burgundy)">*</span></label>
+              <select><option>— Choisir —</option><option>Agriculture, élevage, pêche</option><option>Industrie lourde, automobile, manufacturière</option><option>Eau et énergie</option><option>Éducation et santé</option><option>Transport aérien, ferroviaire, maritime</option><option>Tourisme et loisirs</option><option>Infrastructures de grande distribution</option><option>Infrastructures données numériques</option></select>
+            </div>
+            <div class="field">
+              <label>Localité d'implantation</label>
+              <input type="text" placeholder="Ville, Région">
+            </div>
+            <div class="field">
+              <label>Zone de Développement Prioritaire (ZDP) ?</label>
+              <select><option>Non</option><option>Oui — Région du Nord</option><option>Oui — Région de l'Extrême-Nord</option><option>Oui — Région de l'Adamaoua</option><option>Oui — Région du Sud-Ouest</option><option>Oui — Région du Nord-Ouest</option><option>Oui — Région de l'Est</option></select>
+            </div>
+            <div class="field">
+              <label>Durée d'installation prévue (mois)</label>
+              <input type="number" placeholder="60" value="60">
+            </div>
+            <div class="field full">
+              <label>Objet du projet <span style="color:var(--burgundy)">*</span></label>
+              <textarea rows="3" placeholder="Description concise de l'activité et du projet d'investissement"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="import-card">
+          <h3>3. Données financières</h3>
+          <div class="sub">Volumes d'investissement et projections — alimentent le tableau de bord du DG</div>
+
+          <div class="import-fields-grid">
+            <div class="field">
+              <label>Montant total de l'investissement (FCFA) <span style="color:var(--burgundy)">*</span></label>
+              <input type="number" placeholder="800 000 000">
+              <div class="hint">Catégorie A : &lt; 1 Md · B : 1–5 Md · C : &gt; 5 Md (Art. 11)</div>
+            </div>
+            <div class="field">
+              <label>Apport propre (FCFA)</label>
+              <input type="number" placeholder="200 000 000">
+            </div>
+            <div class="field">
+              <label>Financement bancaire (FCFA)</label>
+              <input type="number" placeholder="500 000 000">
+            </div>
+            <div class="field">
+              <label>Banques / Partenaires financiers</label>
+              <input type="text" placeholder="BICEC, IFC, SCB…">
+            </div>
+            <div class="field">
+              <label>Emplois directs prévus (ETP) <span style="color:var(--burgundy)">*</span></label>
+              <input type="number" placeholder="52">
+              <div class="hint">Minimum requis Art. 7 : 1 emploi par tranche de 50 M FCFA.</div>
+            </div>
+            <div class="field">
+              <label>Coût moyen annuel par emploi (FCFA / ETP)</label>
+              <input type="number" placeholder="1 800 000">
+            </div>
+            <div class="field">
+              <label>Production prévisionnelle annuelle</label>
+              <input type="text" placeholder="Ex. : 12 000 tonnes/an">
+            </div>
+            <div class="field">
+              <label>Chiffre d'affaires projeté année 5 (FCFA)</label>
+              <input type="number" placeholder="2 400 000 000">
+            </div>
+            <div class="field">
+              <label>Exports prévus (% du CA HT)</label>
+              <input type="number" placeholder="25" min="0" max="100">
+            </div>
+            <div class="field">
+              <label>Intrants nationaux (% des intrants)</label>
+              <input type="number" placeholder="65" min="0" max="100">
+            </div>
+            <div class="field full">
+              <label>Incitations fiscales accordées (FCFA)</label>
+              <input type="number" placeholder="200 000 000">
+              <div class="hint">Crédit d'impôt + exonérations cumulés sur la durée d'agrément.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="import-card">
+          <h3>4. État actuel</h3>
+          <div class="sub">Phase courante de la convention au moment de l'import</div>
+
+          <div class="import-fields-grid">
+            <div class="field">
+              <label>Phase actuelle <span style="color:var(--burgundy)">*</span></label>
+              <select>
+                <option>Phase d'installation (Art. 10) · en cours</option>
+                <option>Phase d'exploitation (Art. 11) · en cours</option>
+                <option>Convention clôturée (durée échue)</option>
+                <option>Convention suspendue (Art. 41)</option>
+                <option>Convention retirée (Art. 37)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Date de fin prévue</label>
+              <input type="date">
+            </div>
+            <div class="field">
+              <label>Emplois effectivement créés (ETP)</label>
+              <input type="number" placeholder="48">
+            </div>
+            <div class="field">
+              <label>Investissement effectivement réalisé (FCFA)</label>
+              <input type="number" placeholder="780 000 000">
+            </div>
+            <div class="field">
+              <label>Dernier rapport annuel reçu (Art. 32)</label>
+              <input type="date">
+            </div>
+            <div class="field">
+              <label>Statut de conformité</label>
+              <select><option>✓ Conforme</option><option>⏱ Rapport en retard</option><option>⚠ Sanction en cours</option><option>✕ Non conforme</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="import-card">
+          <h3>5. Pièces justificatives</h3>
+          <div class="sub">Téléversement des documents associés à la convention</div>
+
+          <div class="dropzone">
+            <div class="ico">↑</div>
+            <h5>Glisser-déposer ou cliquer pour téléverser</h5>
+            <div class="hint">PDF, JPG, PNG · 20 Mo maximum par fichier</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px">
+            <div class="metric-mini" style="border-left-color:var(--ink-4);background:var(--bg);border:1px solid var(--line)">
+              <div class="lbl">Convention d'investissement signée</div>
+              <div class="v" style="font-size:13px;color:var(--ink-3)">— non téléversée</div>
+            </div>
+            <div class="metric-mini" style="border-left-color:var(--ink-4);background:var(--bg);border:1px solid var(--line)">
+              <div class="lbl">Acte d'agrément</div>
+              <div class="v" style="font-size:13px;color:var(--ink-3)">— non téléversé</div>
+            </div>
+            <div class="metric-mini" style="border-left-color:var(--ink-4);background:var(--bg);border:1px solid var(--line)">
+              <div class="lbl">Étude de faisabilité</div>
+              <div class="v" style="font-size:13px;color:var(--ink-3)">— optionnelle</div>
+            </div>
+            <div class="metric-mini" style="border-left-color:var(--ink-4);background:var(--bg);border:1px solid var(--line)">
+              <div class="lbl">Rapports annuels passés (Art. 32)</div>
+              <div class="v" style="font-size:13px;color:var(--ink-3)">— 0 téléversés</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="import-submit-bar">
+          <div class="status">Statut : <strong>champs requis non remplis</strong> — vérification de saisie automatique avant import</div>
+          <div style="display:flex;gap:10px">
+            <button class="btn" style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.4)">Sauvegarder en brouillon</button>
+            <button class="btn btn-gold">Importer la convention →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <footer class="foot">
-  <div class="gold">⚜ Design Preview v2 ⚜</div>
-  <div style="margin-top:8px">Editorial · Sovereign · Premium &nbsp;·&nbsp; 24 mai MMXXVI</div>
+  <div class="gold">⚜ Design Preview v3 ⚜</div>
+  <div style="margin-top:8px">Bright editorial &nbsp;·&nbsp; Source Serif 4 + Inter &nbsp;·&nbsp; 10 écrans</div>
   <div style="margin-top:6px;letter-spacing:0.6px">Maquette visuelle uniquement — implémentation Next.js après approbation</div>
 </footer>
 
