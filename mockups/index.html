@@ -3,1484 +3,1711 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>API Cameroun — Design Preview</title>
+<title>API Cameroun — Design Preview v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* =============================================================
-   API Cameroun — Design Preview
-   Government-grade aesthetic · Cameroon colour identity
-   ============================================================= */
+/* =================================================================
+   API Cameroun — Design Preview v2
+   Editorial / luxury government aesthetic
+   Refs: PIF · Mubadala · Élysée · NBIM · Singapore EDB
+   ================================================================= */
 
 :root {
-  /* Brand */
-  --cmgreen: #006633;
-  --cmgreen-900: #062a16;
-  --cmgreen-800: #0a4d2a;
-  --cmgreen-700: #006633;
-  --cmgreen-600: #0e8a3f;
-  --cmgreen-50:  #e6f3ec;
-  --cmred: #ce1126;
-  --cmyellow: #fcd116;
+  /* Deep brand palette — sovereign emerald + champagne gold + ivory */
+  --obsidian: #0a0e0c;
+  --ink-black: #15110e;
+  --emerald-900: #00231a;
+  --emerald-800: #003e25;
+  --emerald-700: #014c2d;
+  --emerald-600: #066039;
+  --emerald-glass: rgba(1, 76, 45, 0.85);
+  --emerald-veil: rgba(1, 76, 45, 0.04);
 
-  /* Ink scale */
-  --ink-100: #0c111c;
-  --ink-90:  #1f2937;
-  --ink-70:  #475569;
-  --ink-50:  #64748b;
-  --ink-40:  #94a3b8;
-  --ink-25:  #cbd5e1;
-  --ink-15:  #e2e8f0;
-  --ink-10:  #eef2f6;
-  --ink-5:   #f5f7fa;
+  --gold-bullion: #c4a468;
+  --gold-pale: #d9c192;
+  --gold-glow: #ead6a5;
+  --gold-line: rgba(196, 164, 104, 0.32);
 
-  /* Surfaces */
-  --bg-page: #fafaf7;
-  --bg-surface: #ffffff;
-  --bg-sunken: #f5f7fa;
+  --burgundy: #6e1620;
+  --burgundy-glow: rgba(110, 22, 32, 0.08);
 
-  /* Status */
-  --st-pending-bg: #fef3c7;
-  --st-pending-fg: #92400e;
-  --st-review-bg: #dbeafe;
-  --st-review-fg: #1d4ed8;
-  --st-signed-bg: #d1fae5;
-  --st-signed-fg: #065f46;
-  --st-rejected-bg: #fee2e2;
-  --st-rejected-fg: #991b1b;
-  --st-closed-bg: #e2e8f0;
-  --st-closed-fg: #334155;
+  /* Neutral warm scale */
+  --ivory: #faf7f2;
+  --cream: #f3eee4;
+  --bone: #e5dfd3;
+  --smoke: #b5b0a6;
+  --graphite: #4a463f;
+  --charcoal: #1c1b18;
 
-  /* SLA */
-  --sla-ok: #10b981;
-  --sla-warn: #f59e0b;
-  --sla-late: #dc2626;
+  /* Status (refined, muted) */
+  --st-pending-bg: #f7ecd0;
+  --st-pending-fg: #6b4f1a;
+  --st-review-bg:  #dde7e2;
+  --st-review-fg:  #1e3a2e;
+  --st-signed-bg:  #d6e3d2;
+  --st-signed-fg:  #1a3a2a;
+  --st-rejected-bg:#efd9da;
+  --st-rejected-fg:#6e1620;
+  --st-closed-bg:  #e3dfd6;
+  --st-closed-fg:  #45433e;
 
-  /* Type */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-serif: 'Source Serif 4', Georgia, serif;
-
-  /* Layout */
-  --container: 1280px;
+  --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
+  --font-sans:    'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 body {
   font-family: var(--font-sans);
-  font-size: 15px;
-  line-height: 1.55;
-  color: var(--ink-100);
-  background: var(--bg-page);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--charcoal);
+  background: var(--ivory);
+  letter-spacing: -0.005em;
 }
-
-.tabular { font-variant-numeric: tabular-nums; }
-.serif { font-family: var(--font-serif); }
-
+.serif    { font-family: var(--font-display); letter-spacing: -0.01em; }
+.mono     { font-family: var(--font-mono); }
+.tabular  { font-variant-numeric: tabular-nums; }
+.smallcaps {
+  font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: 2.4px; font-weight: 500;
+}
+.eyebrow {
+  font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 2.6px;
+  color: var(--gold-bullion);
+}
 a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; }
 
-/* ============================================
-   Preview chrome (the nav + screen labels are
-   for the design-review surface, not the app)
-   ============================================ */
-.preview-banner {
+/* =================================================================
+   PREVIEW CHROME
+   ================================================================= */
+.pv-banner {
   position: sticky; top: 0; z-index: 100;
-  background: #0c111c;
-  color: #fff;
-  padding: 10px 24px;
+  background: var(--obsidian);
+  color: var(--ivory);
+  padding: 11px 28px;
   display: flex; align-items: center; justify-content: space-between;
-  font-size: 12px;
-  letter-spacing: 0.3px;
+  font-size: 11.5px; letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--gold-line);
 }
-.preview-banner .left { display: flex; align-items: center; gap: 14px; }
-.preview-banner .left strong { color: var(--cmyellow); font-weight: 700; letter-spacing: 0.5px; }
-.preview-banner .right { display: flex; gap: 18px; }
-.preview-banner .right a {
-  color: rgba(255,255,255,0.7);
-  font-weight: 500;
-}
-.preview-banner .right a:hover { color: var(--cmyellow); }
-
-.preview-nav {
-  position: sticky; top: 36px; z-index: 99;
-  background: #fff;
-  border-bottom: 1px solid var(--ink-15);
+.pv-banner strong { color: var(--gold-bullion); font-weight: 700; letter-spacing: 1.2px; }
+.pv-nav {
+  position: sticky; top: 38px; z-index: 99;
+  background: var(--ivory);
+  border-bottom: 1px solid var(--bone);
   overflow-x: auto;
 }
-.preview-nav-inner {
+.pv-nav-inner {
   max-width: 1440px; margin: 0 auto;
-  display: flex; gap: 0;
-  padding: 0 24px;
+  padding: 0 28px; display: flex;
 }
-.preview-nav a {
-  padding: 12px 14px;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-70);
-  border-bottom: 2px solid transparent;
+.pv-nav a {
+  padding: 13px 16px;
+  font-size: 11.5px; font-weight: 500;
+  color: var(--graphite);
+  letter-spacing: 0.4px;
   white-space: nowrap;
-}
-.preview-nav a:hover { color: var(--cmgreen); }
-
-.screen-label {
-  max-width: 1440px; margin: 0 auto;
-  padding: 36px 24px 6px;
-  display: flex; align-items: baseline; gap: 12px;
-}
-.screen-label .num {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--cmgreen);
-  color: #fff;
-  font-size: 12px; font-weight: 700;
-}
-.screen-label .name {
-  font-size: 17px; font-weight: 700;
-  color: var(--ink-90);
-}
-.screen-label .meta {
-  font-size: 12.5px;
-  color: var(--ink-50);
-}
-
-.screen-wrap {
-  max-width: 1440px; margin: 0 auto;
-  padding: 14px 24px 56px;
-}
-.screen-frame {
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(12, 17, 28, 0.06);
-  overflow: hidden;
-}
-
-/* ============================================
-   Common — Government app chrome
-   ============================================ */
-.gov-flag-stripe {
-  height: 4px;
-  background: linear-gradient(to right,
-    var(--cmgreen) 0%, var(--cmgreen) 33.3%,
-    var(--cmred) 33.3%, var(--cmred) 66.6%,
-    var(--cmyellow) 66.6%, var(--cmyellow) 100%);
-}
-
-.gov-header {
-  background: #fff;
-  border-bottom: 1px solid var(--ink-15);
-}
-.gov-header-inner {
-  max-width: var(--container); margin: 0 auto;
-  padding: 14px 24px;
-  display: flex; align-items: center; gap: 16px;
-}
-.gov-crest {
-  width: 44px; height: 44px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--cmgreen-800), var(--cmgreen-700));
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 13px;
-  letter-spacing: 1px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 102, 51, 0.25);
-}
-.gov-title {
-  line-height: 1.25;
-}
-.gov-title .eyebrow {
-  font-size: 10.5px;
+  border-bottom: 1.5px solid transparent;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--ink-50);
-  font-weight: 600;
 }
-.gov-title .org {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ink-100);
-}
-.gov-header-actions {
-  margin-left: auto;
-  display: flex; align-items: center; gap: 12px;
-}
-.gov-lang {
-  display: inline-flex;
-  border: 1px solid var(--ink-15);
-  border-radius: 6px;
-  overflow: hidden;
-}
-.gov-lang button {
-  background: #fff;
-  color: var(--ink-70);
-  padding: 5px 9px;
-  font-size: 11.5px;
-  font-weight: 600;
-  border: none;
-  border-right: 1px solid var(--ink-15);
-}
-.gov-lang button:last-child { border-right: none; }
-.gov-lang button.active {
-  background: var(--cmgreen);
-  color: #fff;
-}
-.gov-user {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 13px;
-  color: var(--ink-90);
-}
-.gov-avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: var(--cmgreen-50);
-  color: var(--cmgreen-700);
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700;
-  font-size: 12px;
-}
-.gov-user-meta {
-  line-height: 1.2;
-}
-.gov-user-meta .name { font-weight: 600; font-size: 13px; }
-.gov-user-meta .role { font-size: 11px; color: var(--ink-50); }
+.pv-nav a:hover { color: var(--emerald-700); border-bottom-color: var(--gold-bullion); }
 
-/* ============================================
-   Buttons
-   ============================================ */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  padding: 9px 16px;
-  border-radius: 6px;
-  font-size: 13.5px; font-weight: 600;
-  border: 1px solid transparent;
-  transition: all 0.15s;
-  text-decoration: none;
+.scr-label {
+  max-width: 1440px; margin: 0 auto;
+  padding: 44px 28px 8px;
+  display: flex; align-items: baseline; gap: 14px;
 }
-.btn-primary {
-  background: var(--cmgreen);
-  color: #fff;
+.scr-label .num {
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 500;
+  color: var(--gold-bullion);
+  font-style: italic;
 }
-.btn-primary:hover { background: var(--cmgreen-800); }
-.btn-secondary {
-  background: #fff;
-  color: var(--ink-90);
-  border-color: var(--ink-25);
+.scr-label .ttl {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+  color: var(--ink-black);
 }
-.btn-secondary:hover { background: var(--ink-5); }
-.btn-danger {
-  background: var(--cmred);
-  color: #fff;
-}
-.btn-ghost {
-  background: transparent;
-  color: var(--ink-70);
-}
-.btn-ghost:hover { background: var(--ink-5); }
-.btn-sm { padding: 6px 11px; font-size: 12.5px; }
-
-/* ============================================
-   Status pills
-   ============================================ */
-.pill {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 9px;
-  border-radius: 100px;
-  font-size: 11.5px;
-  font-weight: 600;
+.scr-label .meta {
+  font-size: 11.5px; color: var(--graphite);
   letter-spacing: 0.2px;
 }
-.pill::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%;
+
+.scr-wrap {
+  max-width: 1440px; margin: 0 auto;
+  padding: 14px 28px 64px;
 }
-.pill.pending { background: var(--st-pending-bg); color: var(--st-pending-fg); }
-.pill.pending::before { background: currentColor; }
-.pill.review  { background: var(--st-review-bg); color: var(--st-review-fg); }
-.pill.review::before { background: currentColor; }
-.pill.signed  { background: var(--st-signed-bg); color: var(--st-signed-fg); }
-.pill.signed::before { background: currentColor; }
-.pill.rejected{ background: var(--st-rejected-bg); color: var(--st-rejected-fg); }
-.pill.rejected::before { background: currentColor; }
-.pill.closed  { background: var(--st-closed-bg); color: var(--st-closed-fg); }
-.pill.closed::before { background: currentColor; }
-.pill.handed  { background: var(--cmgreen-50); color: var(--cmgreen-700); }
-.pill.handed::before { background: currentColor; }
+.scr-frame {
+  background: var(--ivory);
+  border: 1px solid var(--bone);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -20px rgba(15, 23, 42, 0.18),
+              0 8px 20px -8px rgba(15, 23, 42, 0.12);
+}
+
+/* =================================================================
+   SHARED — Buttons, pills, fields
+   ================================================================= */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px;
+  font-size: 12.5px; font-weight: 600;
+  letter-spacing: 0.4px; text-transform: uppercase;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.btn-primary {
+  background: var(--emerald-800); color: var(--ivory);
+  border-color: var(--emerald-800);
+}
+.btn-primary:hover {
+  background: var(--ink-black); border-color: var(--gold-bullion);
+}
+.btn-gold {
+  background: var(--gold-bullion); color: var(--ink-black);
+  border-color: var(--gold-bullion);
+  font-weight: 700;
+}
+.btn-gold:hover { background: var(--gold-pale); }
+.btn-outline {
+  background: transparent; color: var(--charcoal);
+  border-color: var(--graphite);
+}
+.btn-outline:hover { border-color: var(--ink-black); background: var(--ink-black); color: var(--ivory); }
+.btn-ghost { background: transparent; color: var(--graphite); }
+.btn-ghost:hover { color: var(--emerald-800); }
+.btn-danger {
+  background: var(--burgundy); color: var(--ivory);
+  border-color: var(--burgundy);
+}
+.btn-sm { padding: 7px 13px; font-size: 11px; letter-spacing: 0.5px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.8px; text-transform: uppercase;
+  border: 1px solid transparent;
+}
+.pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.pill.pending   { background: var(--st-pending-bg); color: var(--st-pending-fg); border-color: rgba(107, 79, 26, 0.18); }
+.pill.review    { background: var(--st-review-bg);  color: var(--st-review-fg);  border-color: rgba(30, 58, 46, 0.18); }
+.pill.signed    { background: var(--st-signed-bg);  color: var(--st-signed-fg);  border-color: rgba(26, 58, 42, 0.18); }
+.pill.rejected  { background: var(--st-rejected-bg);color: var(--st-rejected-fg);border-color: rgba(110, 22, 32, 0.18); }
+.pill.closed    { background: var(--st-closed-bg);  color: var(--st-closed-fg);  border-color: rgba(69, 67, 62, 0.18); }
+.pill.handed    { background: var(--emerald-800);   color: var(--gold-glow);     border-color: var(--gold-line); }
 
 .sla {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 2px 9px;
-  border-radius: 100px;
-  font-size: 11.5px;
-  font-weight: 600;
-  background: var(--ink-5);
-  color: var(--ink-70);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 11px;
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.4px; text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--bone);
+  color: var(--graphite);
 }
-.sla.ok   { background: #d1fae5; color: #065f46; }
-.sla.warn { background: #fef3c7; color: #92400e; }
-.sla.late { background: #fee2e2; color: #991b1b; }
+.sla.ok   { background: var(--st-signed-bg); color: var(--st-signed-fg); border-color: rgba(26, 58, 42, 0.2); }
+.sla.warn { background: var(--st-pending-bg); color: var(--st-pending-fg); border-color: rgba(107, 79, 26, 0.2); }
+.sla.late { background: var(--st-rejected-bg); color: var(--st-rejected-fg); border-color: rgba(110, 22, 32, 0.2); }
 
-/* ============================================
-   SCREEN 1 — Landing + Login
-   ============================================ */
-.s1-hero {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  min-height: 640px;
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--graphite); margin-bottom: 7px;
 }
-.s1-brand {
-  background: linear-gradient(135deg, var(--cmgreen-900) 0%, var(--cmgreen-800) 50%, var(--cmgreen-900) 100%);
-  color: #fff;
-  padding: 56px;
-  display: flex; flex-direction: column; justify-content: space-between;
+.field input, .field select, .field textarea {
+  width: 100%; padding: 11px 14px;
+  border: 1px solid var(--bone);
+  font: inherit; font-size: 13.5px;
+  background: var(--ivory);
+  color: var(--ink-black);
+  transition: border-color 0.2s, background 0.2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none; border-color: var(--emerald-800);
+  background: white;
+  box-shadow: 0 0 0 1px var(--emerald-800);
+}
+.field .hint { margin-top: 6px; font-size: 11.5px; color: var(--graphite); font-style: italic; }
+
+/* =================================================================
+   GOV HEADER — premium horizontal bar
+   ================================================================= */
+.gov-bar {
+  background: var(--obsidian);
+  color: var(--ivory);
+  padding: 7px 28px;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  text-align: center; font-weight: 500;
+  border-bottom: 1px solid var(--gold-line);
+}
+.gov-bar .dot { color: var(--gold-bullion); margin: 0 12px; }
+
+.gov-head {
+  background: var(--ivory);
+  border-bottom: 1px solid var(--bone);
+  padding: 18px 28px;
+}
+.gov-head-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; gap: 18px;
+}
+.gov-crest {
+  width: 48px; height: 48px;
+  background: var(--ink-black);
+  color: var(--gold-bullion);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 18px;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--gold-bullion);
+  flex-shrink: 0;
   position: relative;
-  overflow: hidden;
 }
-.s1-brand::before {
+.gov-crest::before {
+  content: ''; position: absolute; inset: 3px;
+  border: 1px solid rgba(196, 164, 104, 0.4);
+  pointer-events: none;
+}
+.gov-title { line-height: 1.2; }
+.gov-title .top {
+  font-size: 9.5px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--graphite); font-weight: 500;
+}
+.gov-title .org {
+  font-family: var(--font-display); font-size: 19px; font-weight: 600;
+  color: var(--ink-black); margin-top: 2px;
+  letter-spacing: -0.2px;
+}
+.gov-actions { margin-left: auto; display: flex; align-items: center; gap: 18px; }
+.gov-lang {
+  display: inline-flex; border: 1px solid var(--bone);
+}
+.gov-lang button {
+  background: transparent; color: var(--graphite);
+  padding: 5px 11px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.8px;
+  border: none; border-right: 1px solid var(--bone);
+}
+.gov-lang button:last-child { border-right: none; }
+.gov-lang button.active { background: var(--ink-black); color: var(--gold-bullion); }
+.gov-user { display: flex; align-items: center; gap: 10px; }
+.gov-ava {
+  width: 36px; height: 36px;
+  background: var(--emerald-800); color: var(--gold-glow);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+}
+.gov-user-meta { line-height: 1.25; }
+.gov-user-meta .name { font-weight: 600; font-size: 13px; color: var(--ink-black); }
+.gov-user-meta .role { font-size: 10.5px; color: var(--graphite); letter-spacing: 0.3px; text-transform: uppercase; }
+
+/* =================================================================
+   SCREEN 1 — Editorial hero + sign-in card
+   ================================================================= */
+.s1-stage {
+  position: relative;
+  background: var(--obsidian);
+  color: var(--ivory);
+  overflow: hidden;
+  min-height: 760px;
+  display: flex; flex-direction: column;
+}
+.s1-stage::before {
   content: '';
   position: absolute; inset: 0;
   background-image:
-    radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
-  background-size: 24px 24px;
-  pointer-events: none;
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(1, 76, 45, 0.5) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(196, 164, 104, 0.08) 0%, transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(196, 164, 104, 0.05) 0%, transparent 40%);
 }
-.s1-brand::after {
+.s1-stage::after {
   content: '';
-  position: absolute;
-  top: 0; bottom: 0; right: 0;
-  width: 4px;
-  background: linear-gradient(180deg,
-    var(--cmgreen) 0%, var(--cmgreen) 33.3%,
-    var(--cmred) 33.3%, var(--cmred) 66.6%,
-    var(--cmyellow) 66.6%, var(--cmyellow) 100%);
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 80%);
 }
-.s1-brand .topblock {
-  position: relative; z-index: 1;
+
+.s1-marquee {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 56px;
+  border-bottom: 1px solid rgba(196, 164, 104, 0.15);
+}
+.s1-marquee .crest {
   display: flex; align-items: center; gap: 14px;
 }
-.s1-brand .topblock .crest {
-  width: 52px; height: 52px;
-  border-radius: 10px;
-  background: #fff;
-  color: var(--cmgreen);
+.s1-marquee .crest .mark {
+  width: 44px; height: 44px;
+  border: 1px solid var(--gold-bullion);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-  letter-spacing: 1px;
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 600;
+  color: var(--gold-bullion);
+  letter-spacing: 0.5px;
+  position: relative;
 }
-.s1-brand .topblock .text {
+.s1-marquee .crest .mark::before {
+  content: ''; position: absolute; inset: 3px;
+  border: 1px solid rgba(196, 164, 104, 0.35);
+}
+.s1-marquee .crest .text {
   line-height: 1.2;
 }
-.s1-brand .topblock .text .eyebrow {
-  font-size: 10.5px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.7);
-  font-weight: 600;
+.s1-marquee .crest .text .top {
+  font-size: 9.5px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: rgba(196, 164, 104, 0.85); font-weight: 500;
 }
-.s1-brand .topblock .text .org {
-  font-size: 15px; font-weight: 700;
+.s1-marquee .crest .text .org {
+  font-family: var(--font-display); font-size: 17px; font-weight: 600;
+  color: var(--ivory); margin-top: 2px;
+  letter-spacing: -0.2px;
 }
-.s1-brand .hero {
-  position: relative; z-index: 1;
-  max-width: 480px;
+.s1-marquee .nav {
+  display: flex; align-items: center; gap: 32px;
+  font-size: 11px; letter-spacing: 1.6px; text-transform: uppercase;
+  font-weight: 500;
 }
-.s1-brand .hero .eyebrow {
-  display: inline-flex;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  color: var(--cmyellow);
-  font-weight: 700;
-  margin-bottom: 22px;
-  padding: 5px 12px;
-  border: 1px solid rgba(252, 209, 22, 0.3);
-  border-radius: 100px;
-  background: rgba(252, 209, 22, 0.06);
+.s1-marquee .nav a { color: rgba(250, 247, 242, 0.75); }
+.s1-marquee .nav a:hover { color: var(--gold-glow); }
+.s1-marquee .nav .lang {
+  display: inline-flex; border: 1px solid rgba(196, 164, 104, 0.3);
 }
-.s1-brand .hero h1 {
-  font-family: var(--font-serif);
-  font-size: 38px;
-  font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.5px;
-  margin-bottom: 18px;
+.s1-marquee .nav .lang button {
+  background: transparent; color: rgba(250, 247, 242, 0.7);
+  padding: 5px 10px; font-size: 10px; letter-spacing: 1px;
+  border: none; border-right: 1px solid rgba(196, 164, 104, 0.3);
 }
-.s1-brand .hero h1 .accent {
-  color: var(--cmyellow);
-  font-style: italic;
-}
-.s1-brand .hero p {
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(255,255,255,0.85);
-  margin-bottom: 22px;
-}
-.s1-brand .hero .legalcite {
-  font-size: 12px;
-  color: rgba(255,255,255,0.65);
-  padding-left: 14px;
-  border-left: 2px solid var(--cmyellow);
-  font-style: italic;
-}
-.s1-brand .footer {
-  position: relative; z-index: 1;
-  font-size: 11px;
-  color: rgba(255,255,255,0.5);
-  display: flex; align-items: center; gap: 10px;
-}
-.s1-brand .footer .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+.s1-marquee .nav .lang button:last-child { border-right: none; }
+.s1-marquee .nav .lang button.active { background: var(--gold-bullion); color: var(--ink-black); font-weight: 700; }
 
-.s1-form-pane {
-  background: var(--bg-surface);
-  padding: 56px 48px;
+.s1-hero {
+  position: relative; z-index: 2;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.45fr 0.55fr;
+  gap: 0;
+  padding: 0;
+}
+.s1-hero .col-text {
+  padding: 92px 56px 80px;
+  display: flex; flex-direction: column; justify-content: center;
+  border-right: 1px solid rgba(196, 164, 104, 0.18);
+}
+.s1-hero .eyebrow {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-size: 10.5px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--gold-bullion);
+  font-weight: 600;
+  margin-bottom: 26px;
+}
+.s1-hero .eyebrow::after {
+  content: ''; width: 44px; height: 1px; background: var(--gold-bullion);
+}
+.s1-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(48px, 5.5vw, 76px);
+  font-weight: 500;
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  margin-bottom: 28px;
+  color: var(--ivory);
+}
+.s1-hero h1 .accent {
+  font-style: italic; font-weight: 500;
+  color: var(--gold-pale);
+}
+.s1-hero .lede {
+  max-width: 560px;
+  font-size: 16.5px; line-height: 1.65;
+  color: rgba(250, 247, 242, 0.78);
+  font-weight: 400;
+  margin-bottom: 38px;
+}
+.s1-hero .legal {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-size: 14px; font-style: italic;
+  color: rgba(196, 164, 104, 0.85);
+  padding-left: 16px; border-left: 2px solid var(--gold-bullion);
+}
+
+.s1-hero .col-stats {
+  padding: 92px 48px 80px;
+  display: flex; flex-direction: column; gap: 0;
+}
+.s1-hero .stat {
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(196, 164, 104, 0.18);
+}
+.s1-hero .stat:first-child { padding-top: 0; }
+.s1-hero .stat:last-child { border-bottom: none; }
+.s1-hero .stat .num {
+  font-family: var(--font-display);
+  font-size: 56px; font-weight: 500;
+  line-height: 1;
+  color: var(--gold-bullion);
+  letter-spacing: -0.02em;
+  display: flex; align-items: baseline; gap: 6px;
+}
+.s1-hero .stat .num .unit {
+  font-size: 16px; font-weight: 400;
+  color: rgba(250, 247, 242, 0.6);
+  letter-spacing: 0.2px;
+  font-style: italic;
+}
+.s1-hero .stat .lbl {
+  font-size: 10.5px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.65); font-weight: 500;
+  margin-top: 8px;
+}
+
+.s1-footer {
+  position: relative; z-index: 2;
+  padding: 18px 56px;
+  border-top: 1px solid rgba(196, 164, 104, 0.15);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10.5px;
+  color: rgba(250, 247, 242, 0.55);
+  letter-spacing: 1.4px; text-transform: uppercase;
+}
+.s1-footer .seal { display: flex; align-items: center; gap: 22px; }
+.s1-footer .seal .item { display: flex; align-items: center; gap: 8px; }
+.s1-footer .seal .badge {
+  width: 18px; height: 18px;
+  border: 1px solid var(--gold-bullion);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--gold-bullion); font-size: 10px;
+}
+
+/* Sign-in card — floats below the hero */
+.s1-signin {
+  background: var(--ivory);
+  padding: 70px 28px 90px;
+  display: flex; justify-content: center;
+}
+.s1-card {
+  width: 100%; max-width: 460px;
+  background: white;
+  border: 1px solid var(--bone);
+  position: relative;
+  padding: 56px 48px 44px;
+  box-shadow: 0 32px 80px -32px rgba(0, 35, 26, 0.22);
+}
+.s1-card::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
+  width: 48px; height: 48px;
+  background: var(--ink-black); color: var(--gold-bullion);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 18px; font-weight: 600;
+  border: 1px solid var(--gold-bullion);
+}
+.s1-card::after {
+  content: 'API';
+  position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
+  z-index: 2;
+  color: var(--gold-bullion);
+  font-family: var(--font-display); font-size: 16px; font-weight: 600;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+  width: 48px; height: 48px;
   display: flex; align-items: center; justify-content: center;
 }
-.s1-form {
-  width: 100%; max-width: 380px;
+.s1-card .eyebrow {
+  text-align: center;
+  font-size: 10.5px; letter-spacing: 2.6px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  margin-bottom: 6px;
 }
-.s1-form .welcome {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 1.8px;
-  color: var(--ink-50);
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.s1-form h2 {
-  font-size: 26px;
-  font-weight: 700;
-  color: var(--ink-100);
+.s1-card h2 {
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 500;
+  text-align: center;
+  color: var(--ink-black);
   letter-spacing: -0.4px;
   margin-bottom: 6px;
 }
-.s1-form .sub {
-  font-size: 13.5px;
-  color: var(--ink-70);
-  margin-bottom: 24px;
+.s1-card .sub {
+  text-align: center;
+  font-size: 13px; color: var(--graphite);
+  margin-bottom: 32px;
+  font-style: italic;
+  font-family: var(--font-display);
 }
-.tabs {
+.s1-card .tabs {
   display: grid; grid-template-columns: 1fr 1fr;
-  background: var(--ink-5);
-  border-radius: 8px;
-  padding: 4px;
-  margin-bottom: 22px;
+  border-bottom: 1px solid var(--bone);
+  margin-bottom: 26px;
 }
-.tabs button {
-  padding: 9px;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-70);
-  border-radius: 6px;
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+.s1-card .tabs button {
+  background: none; border: none;
+  padding: 12px 8px;
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--graphite);
+  position: relative;
 }
-.tabs button.active {
-  background: #fff;
-  color: var(--cmgreen-800);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+.s1-card .tabs button.active {
+  color: var(--ink-black);
 }
-.field { margin-bottom: 16px; }
-.field label {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--ink-90);
+.s1-card .tabs button.active::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; background: var(--gold-bullion);
+}
+.s1-card .btn-primary { width: 100%; padding: 13px; margin-top: 8px; }
+.s1-card .alt {
+  text-align: center;
+  margin-top: 28px; padding-top: 22px;
+  border-top: 1px solid var(--bone);
+  font-size: 12px; color: var(--graphite); font-style: italic;
+  font-family: var(--font-display);
+}
+.s1-card .alt a { color: var(--emerald-800); font-weight: 600; font-style: normal; font-family: var(--font-sans); border-bottom: 1px solid var(--gold-bullion); }
+
+/* =================================================================
+   INVESTOR PAGES — generic
+   ================================================================= */
+.inv-stage { background: var(--ivory); padding: 36px 28px; }
+.inv-stage-inner { max-width: 1180px; margin: 0 auto; }
+
+.inv-h {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding-bottom: 22px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--bone);
+}
+.inv-h .title-block .eyebrow {
+  font-size: 10.5px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
   margin-bottom: 6px;
 }
-.field input, .field select, .field textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--ink-25);
-  border-radius: 6px;
-  font: inherit;
-  font-size: 14px;
-  background: #fff;
-  color: var(--ink-100);
-  transition: border-color 0.15s, box-shadow 0.15s;
+.inv-h h1 {
+  font-family: var(--font-display);
+  font-size: 38px; font-weight: 500;
+  color: var(--ink-black);
+  letter-spacing: -0.5px;
 }
-.field input:focus, .field select:focus, .field textarea:focus {
-  outline: none;
-  border-color: var(--cmgreen);
-  box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
-}
-.field .hint {
-  margin-top: 5px;
-  font-size: 12px;
-  color: var(--ink-50);
-}
-.s1-form .btn-primary {
-  width: 100%;
-  padding: 11px;
-  font-size: 14px;
-}
-.s1-form .alt {
-  margin-top: 22px;
-  font-size: 12.5px;
-  color: var(--ink-70);
-  text-align: center;
-}
-.s1-form .alt a {
-  color: var(--cmgreen);
-  font-weight: 600;
-  border-bottom: 1px dotted var(--cmgreen);
+.inv-h .sub {
+  margin-top: 4px;
+  font-size: 13.5px; color: var(--graphite);
+  font-style: italic; font-family: var(--font-display);
 }
 
-/* ============================================
-   SCREEN 2 — Investor new
-   ============================================ */
-.inv-page {
-  background: var(--bg-page);
-  padding: 28px;
+.editorial-card {
+  background: white;
+  border: 1px solid var(--bone);
+  padding: 32px;
+  position: relative;
 }
-.inv-page-inner {
-  max-width: 1120px; margin: 0 auto;
-}
-.inv-page-title {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 24px;
-}
-.inv-page-title h1 {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  color: var(--ink-100);
-}
-.inv-page-title .sub {
-  font-size: 13.5px;
-  color: var(--ink-70);
-  margin-top: 4px;
-}
-.card {
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 10px;
-  padding: 22px;
-}
-.card-section-title {
+.editorial-card .card-head {
   display: flex; align-items: baseline; justify-content: space-between;
-  margin-bottom: 18px;
+  padding-bottom: 18px; margin-bottom: 22px;
+  border-bottom: 1px solid var(--gold-line);
 }
-.card-section-title h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-90);
-  letter-spacing: -0.2px;
+.editorial-card h3 {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+  color: var(--ink-black);
+  letter-spacing: -0.3px;
 }
-.card-section-title .meta {
-  font-size: 12.5px;
-  color: var(--ink-50);
+.editorial-card .meta {
+  font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase;
+  color: var(--graphite); font-weight: 500;
 }
+
+/* Document list (Screen 2) */
+.doc-list { display: flex; flex-direction: column; }
+.doc-line {
+  display: grid;
+  grid-template-columns: 50px 1fr auto;
+  gap: 18px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--bone);
+  align-items: center;
+}
+.doc-line:last-child { border-bottom: none; }
+.doc-num {
+  font-family: var(--font-display);
+  font-size: 26px; font-style: italic; font-weight: 500;
+  color: var(--gold-bullion);
+  text-align: center;
+}
+.doc-line.uploaded .doc-num { color: var(--emerald-700); font-style: normal; }
+.doc-line.rejected .doc-num { color: var(--burgundy); }
+.doc-info .name {
+  font-size: 14.5px; font-weight: 600; color: var(--ink-black);
+  margin-bottom: 4px;
+}
+.doc-info .name .ref {
+  font-family: var(--font-mono); font-size: 10.5px;
+  color: var(--graphite); margin-left: 8px; font-weight: 400;
+}
+.doc-info .desc {
+  font-size: 12.5px; color: var(--graphite);
+  font-family: var(--font-display); font-style: italic;
+}
+.doc-info .desc.rejected { color: var(--burgundy); }
+
 .inv-cols {
   display: grid;
   grid-template-columns: 1fr 320px;
-  gap: 20px;
+  gap: 28px;
 }
-.doc-checklist { display: flex; flex-direction: column; gap: 10px; }
-.doc-row {
-  display: grid;
-  grid-template-columns: 32px 1fr auto;
-  gap: 14px;
-  align-items: center;
-  padding: 12px 14px;
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 8px;
-  transition: border-color 0.15s;
-}
-.doc-row:hover { border-color: var(--cmgreen); }
-.doc-row.uploaded { background: #f0f9f4; border-color: var(--cmgreen-600); }
-.doc-row.rejected { background: #fef2f2; border-color: var(--cmred); }
-.doc-row .ico {
-  width: 32px; height: 36px;
-  border-radius: 4px;
-  background: var(--ink-10);
-  color: var(--ink-50);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9.5px; font-weight: 700;
-}
-.doc-row.uploaded .ico { background: var(--cmgreen-700); color: #fff; }
-.doc-row.rejected .ico { background: var(--cmred); color: #fff; }
-.doc-row .name { font-size: 13.5px; font-weight: 600; color: var(--ink-90); }
-.doc-row .meta { font-size: 11.5px; color: var(--ink-50); margin-top: 2px; }
-.doc-row .meta.rejected { color: var(--cmred); font-style: italic; }
 
-.aside-card {
-  background: var(--cmgreen-50);
-  border: 1px solid #cee8d8;
-  border-radius: 10px;
-  padding: 18px;
-}
-.aside-card h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--cmgreen-800);
-  margin-bottom: 8px;
-}
-.aside-card ul {
-  list-style: none;
-  font-size: 12.5px;
-  color: var(--ink-90);
-  line-height: 1.65;
-}
-.aside-card ul li {
-  padding-left: 18px;
+.editorial-aside {
+  background: var(--cream);
+  border-left: 2px solid var(--gold-bullion);
+  padding: 26px 24px;
   position: relative;
-  margin-bottom: 8px;
 }
-.aside-card ul li::before {
-  content: '§';
-  position: absolute;
-  left: 0; top: 0;
-  color: var(--cmgreen-700);
-  font-weight: 700;
+.editorial-aside .eyebrow {
+  font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  margin-bottom: 16px;
 }
-.aside-card ul li strong { display: block; color: var(--cmgreen-800); font-weight: 600; font-size: 12px; }
+.editorial-aside h4 {
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 600;
+  color: var(--ink-black);
+  margin-bottom: 12px;
+  letter-spacing: -0.2px;
+}
+.editorial-aside .row {
+  padding: 12px 0;
+  border-top: 1px solid var(--bone);
+  font-size: 12.5px;
+}
+.editorial-aside .row strong {
+  display: block;
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--gold-bullion);
+  font-weight: 600; font-size: 11.5px;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
+}
+.editorial-aside .row p { color: var(--graphite); line-height: 1.55; }
 
-.inv-submit-bar {
-  margin-top: 22px;
-  padding: 18px 22px;
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 10px;
+.submit-bar {
+  margin-top: 28px;
+  background: var(--ink-black); color: var(--ivory);
+  padding: 22px 28px;
   display: flex; align-items: center; justify-content: space-between;
+  border-left: 3px solid var(--gold-bullion);
 }
-.inv-submit-bar .status {
-  font-size: 13.5px;
-  color: var(--ink-90);
+.submit-bar .status {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 500;
+  font-style: italic;
 }
-.inv-submit-bar .status strong { color: var(--cmgreen-800); }
+.submit-bar .status strong { color: var(--gold-pale); font-style: normal; font-weight: 600; }
 
-/* ============================================
-   SCREEN 3 — Investor existing
-   ============================================ */
-.exist-conv {
+/* =================================================================
+   Convention card (Screen 3) — luxury certificate aesthetic
+   ================================================================= */
+.exist-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 18px;
+  gap: 28px;
 }
-.conv-card {
-  padding: 22px;
-  border-left: 4px solid var(--cmgreen);
+.cert-card {
+  position: relative;
+  background: linear-gradient(135deg, var(--ivory) 0%, white 100%);
+  border: 1px solid var(--bone);
+  padding: 36px 38px;
 }
-.conv-card h3 {
-  font-family: var(--font-serif);
-  font-size: 18px;
+.cert-card::before {
+  content: '';
+  position: absolute; inset: 8px;
+  border: 1px solid var(--gold-line);
+  pointer-events: none;
+}
+.cert-card::after {
+  content: 'CONVENTION ACTIVE';
+  position: absolute; top: 20px; right: -22px;
+  background: var(--emerald-800); color: var(--gold-glow);
+  padding: 4px 26px; font-size: 9.5px; letter-spacing: 2.5px;
   font-weight: 600;
-  margin-bottom: 10px;
 }
-.conv-meta {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px 28px;
-  margin: 14px 0 16px;
-  font-size: 13px;
+.cert-card h3 {
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 600;
+  color: var(--ink-black);
+  margin-top: 6px; margin-bottom: 4px;
+  letter-spacing: -0.3px;
 }
-.conv-meta .label {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--ink-50);
-  font-weight: 600;
-  margin-bottom: 2px;
+.cert-card .eyebrow {
+  font-size: 10.5px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  margin-bottom: 6px;
 }
-.conv-meta .value { color: var(--ink-90); font-weight: 500; }
+.cert-card .objet {
+  font-family: var(--font-display); font-size: 15px; font-style: italic;
+  color: var(--graphite);
+  margin: 14px 0 22px;
+  padding-left: 14px;
+  border-left: 2px solid var(--gold-bullion);
+}
+.cert-meta {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  padding: 22px 0; margin: 6px 0 22px;
+  border-top: 1px solid var(--gold-line);
+  border-bottom: 1px solid var(--gold-line);
+}
+.cert-meta .item .lbl {
+  font-size: 9.5px; letter-spacing: 2.2px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  margin-bottom: 4px;
+}
+.cert-meta .item .val {
+  font-family: var(--font-display);
+  font-size: 17px; font-weight: 600;
+  color: var(--ink-black);
+  letter-spacing: -0.2px;
+}
+.cert-actions { display: flex; gap: 10px; margin-top: 8px; }
 
-.annual-card {
-  padding: 20px;
-}
-.annual-card h4 {
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--ink-50);
-  font-weight: 600;
+.annual-card { padding: 28px; }
+.annual-card .eyebrow {
+  font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
   margin-bottom: 12px;
 }
+.annual-card h4 {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+  margin-bottom: 6px;
+}
 .annual-card .due {
-  padding: 12px;
+  margin: 18px 0;
+  padding: 14px 16px;
   background: var(--st-pending-bg);
-  border-radius: 6px;
   color: var(--st-pending-fg);
   font-size: 12.5px;
-  margin-bottom: 14px;
+  border-left: 2px solid var(--gold-bullion);
+}
+.annual-card .due strong {
+  font-family: var(--font-display); font-size: 15px;
 }
 
-/* ============================================
-   SCREEN 4 — Progress tracker
-   ============================================ */
-.stepper {
+.kpi-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+  margin-top: 28px;
+}
+.kpi {
+  padding: 22px 20px;
+  background: white; border: 1px solid var(--bone);
+  position: relative;
+}
+.kpi::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--gold-bullion);
+}
+.kpi .lbl {
+  font-size: 9.5px; letter-spacing: 2.2px; text-transform: uppercase;
+  color: var(--graphite); font-weight: 600;
+  margin-bottom: 6px;
+}
+.kpi .num {
+  font-family: var(--font-display);
+  font-size: 32px; font-weight: 500;
+  color: var(--ink-black); letter-spacing: -0.5px;
+}
+.kpi .unit {
+  font-size: 13px; color: var(--graphite); font-style: italic;
+  font-weight: 400;
+}
+
+/* =================================================================
+   Progress tracker (Screen 4) — refined editorial stepper
+   ================================================================= */
+.steplane {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0;
-  position: relative;
-  margin: 24px 0 28px;
+  margin: 32px 0 24px;
+  padding: 28px 0;
 }
-.stepper::before {
+.steplane::before {
   content: '';
-  position: absolute;
-  left: 10%; right: 10%;
-  top: 20px;
-  height: 3px;
-  background: var(--ink-15);
-  z-index: 0;
+  position: absolute; left: 10%; right: 10%; top: 50px;
+  height: 1px; background: var(--bone);
 }
-.stepper .step {
-  text-align: center;
-  position: relative;
-  z-index: 1;
+.steplane::after {
+  content: '';
+  position: absolute; left: 10%; top: 50px;
+  height: 1px; background: var(--gold-bullion);
+  width: 32%;
 }
-.stepper .dot {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid var(--ink-15);
-  margin: 0 auto 10px;
+.step-cell { text-align: center; position: relative; z-index: 1; }
+.step-cell .dot {
+  width: 44px; height: 44px;
+  margin: 0 auto 14px;
+  background: white;
+  border: 1px solid var(--bone);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 700; font-size: 14px;
-  color: var(--ink-50);
-}
-.stepper .step.done .dot {
-  background: var(--cmgreen);
-  border-color: var(--cmgreen);
-  color: #fff;
-}
-.stepper .step.current .dot {
-  background: #fff;
-  border-color: var(--cmgreen);
-  color: var(--cmgreen-800);
-  box-shadow: 0 0 0 4px var(--cmgreen-50);
-}
-.stepper .step .label {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-90);
-  margin-bottom: 2px;
-}
-.stepper .step.current .label { color: var(--cmgreen-800); }
-.stepper .step .sub {
-  font-size: 11px;
-  color: var(--ink-50);
-}
-/* progress fill */
-.stepper-fill {
-  content: '';
-  position: absolute;
-  left: 10%;
-  top: 20px;
-  height: 3px;
-  background: var(--cmgreen);
-  z-index: 0;
-  width: 30%; /* example: 1.5 steps done out of 5 */
-}
-
-.timeline {
-  list-style: none;
-  border-left: 2px solid var(--ink-15);
-  margin-left: 8px;
-  padding-left: 22px;
-}
-.timeline li {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 500;
+  color: var(--graphite);
   position: relative;
-  padding-bottom: 18px;
 }
-.timeline li::before {
-  content: '';
-  position: absolute;
-  left: -29px;
-  top: 4px;
-  width: 12px; height: 12px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid var(--cmgreen);
+.step-cell .dot::before {
+  content: ''; position: absolute; inset: 4px;
+  border: 1px solid transparent;
 }
-.timeline li.done::before {
-  background: var(--cmgreen);
-  border-color: var(--cmgreen);
+.step-cell.done .dot {
+  background: var(--emerald-800); border-color: var(--emerald-800);
+  color: var(--gold-glow);
 }
-.timeline li .when {
-  font-size: 11.5px;
-  color: var(--ink-50);
-  margin-bottom: 2px;
+.step-cell.done .dot::before { border-color: rgba(196, 164, 104, 0.4); }
+.step-cell.current .dot {
+  background: var(--ink-black); border-color: var(--gold-bullion);
+  color: var(--gold-bullion);
 }
-.timeline li .what { font-size: 13.5px; color: var(--ink-90); font-weight: 500; }
-.timeline li .by { font-size: 12px; color: var(--ink-70); }
+.step-cell.current .dot::before { border-color: rgba(196, 164, 104, 0.55); }
+.step-cell .lbl {
+  font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  color: var(--ink-black);
+  margin-bottom: 3px;
+  letter-spacing: -0.1px;
+}
+.step-cell.current .lbl { color: var(--emerald-800); }
+.step-cell .sub {
+  font-size: 10.5px; color: var(--graphite);
+  letter-spacing: 0.5px; text-transform: uppercase; font-weight: 500;
+}
 
-/* ============================================
-   SCREENS 5/6/7 — Staff three-column dossier view
-   ============================================ */
+.timeline-editorial {
+  list-style: none;
+}
+.timeline-editorial li {
+  display: grid; grid-template-columns: 130px 24px 1fr; gap: 18px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--bone);
+  align-items: start;
+}
+.timeline-editorial li:last-child { border-bottom: none; }
+.timeline-editorial .when {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.5px;
+  color: var(--graphite);
+  text-transform: uppercase;
+  padding-top: 2px;
+}
+.timeline-editorial .mark {
+  display: flex; justify-content: center; padding-top: 5px;
+}
+.timeline-editorial .mark::before {
+  content: ''; width: 8px; height: 8px;
+  border-radius: 50%; background: white;
+  border: 2px solid var(--gold-bullion);
+}
+.timeline-editorial li.done .mark::before { background: var(--gold-bullion); }
+.timeline-editorial .what {
+  font-family: var(--font-display); font-size: 16px; font-weight: 600;
+  color: var(--ink-black);
+  letter-spacing: -0.2px;
+}
+.timeline-editorial .by {
+  font-size: 12px; color: var(--graphite);
+  font-style: italic; font-family: var(--font-display);
+  margin-top: 3px;
+}
+
+/* =================================================================
+   STAFF — 3 column shell
+   ================================================================= */
 .staff-shell {
   display: grid;
-  grid-template-columns: 240px 1fr 360px;
-  height: 720px;
+  grid-template-columns: 260px 1fr 380px;
+  height: 760px;
+  background: var(--ivory);
 }
-.staff-sidebar {
-  background: var(--bg-sunken);
-  border-right: 1px solid var(--ink-15);
-  padding: 18px;
+.staff-side {
+  background: var(--ink-black);
+  color: var(--ivory);
+  padding: 28px 22px;
   overflow-y: auto;
 }
-.sidebar-section {
-  margin-bottom: 22px;
+.staff-side .section { margin-bottom: 30px; }
+.staff-side .section h5 {
+  font-size: 9.5px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(196, 164, 104, 0.2);
+  margin-bottom: 12px;
 }
-.sidebar-section h5 {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--ink-50);
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-.sidebar-list { list-style: none; }
-.sidebar-list li {
-  padding: 9px 11px;
-  border-radius: 6px;
+.staff-side ul { list-style: none; }
+.staff-side li {
+  padding: 11px 12px;
   font-size: 12.5px;
-  color: var(--ink-90);
+  display: flex; flex-direction: column; gap: 5px;
   cursor: pointer;
+  border-left: 2px solid transparent;
+  color: rgba(250, 247, 242, 0.78);
+  transition: all 0.15s;
+}
+.staff-side li:hover { background: rgba(196, 164, 104, 0.06); color: var(--ivory); }
+.staff-side li.active {
+  background: var(--emerald-800);
+  border-left-color: var(--gold-bullion);
+  color: var(--gold-glow);
+}
+.staff-side li .ref {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.4px;
+  color: rgba(196, 164, 104, 0.7);
+}
+.staff-side li.active .ref { color: var(--gold-pale); }
+.staff-side li .row {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 2px;
 }
-.sidebar-list li:hover { background: #fff; }
-.sidebar-list li.active {
-  background: #fff;
-  font-weight: 600;
-  color: var(--cmgreen-800);
-  border-left: 3px solid var(--cmgreen);
-  padding-left: 8px;
-}
-.sidebar-list li .ref {
-  display: block;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  color: var(--ink-50);
-  margin-bottom: 2px;
-}
-.sidebar-list li.active .ref { color: var(--cmgreen-600); }
+.staff-side li .name { font-family: var(--font-display); font-size: 14px; font-weight: 600; }
 
 .staff-main {
+  background: var(--ivory);
   overflow-y: auto;
-  background: #fff;
   display: flex; flex-direction: column;
 }
-.dossier-header {
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--ink-15);
-  position: sticky; top: 0;
-  background: #fff;
-  z-index: 5;
+.dossier-h {
+  padding: 24px 32px;
+  background: white;
+  border-bottom: 1px solid var(--bone);
+  position: sticky; top: 0; z-index: 5;
 }
-.dossier-title-row {
-  display: flex; align-items: center; gap: 14px;
-  margin-bottom: 10px;
+.dossier-h .top {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
 }
-.dossier-title-row h2 {
-  font-size: 18px; font-weight: 700; letter-spacing: -0.3px;
+.dossier-h .top h2 {
+  font-family: var(--font-display);
+  font-size: 26px; font-weight: 600;
+  color: var(--ink-black); letter-spacing: -0.3px;
 }
-.dossier-title-row .ref {
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  color: var(--ink-50);
-  background: var(--ink-5);
-  padding: 3px 8px;
-  border-radius: 4px;
+.dossier-h .top .ref {
+  font-family: var(--font-mono);
+  font-size: 12px; color: var(--graphite);
+  padding: 3px 10px; background: var(--cream);
+  border: 1px solid var(--bone);
 }
-.dossier-meta-row {
-  display: flex; flex-wrap: wrap; gap: 18px;
-  font-size: 12px;
-  color: var(--ink-70);
+.dossier-h .meta {
+  display: flex; flex-wrap: wrap; gap: 24px;
+  font-size: 11.5px;
 }
-.dossier-meta-row span strong { color: var(--ink-90); font-weight: 600; }
+.dossier-h .meta span { color: var(--graphite); }
+.dossier-h .meta strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 600;
+  color: var(--ink-black);
+  letter-spacing: -0.1px;
+}
 
-.action-bar {
+.action-rail {
   display: flex; gap: 8px;
-  padding: 12px 22px;
-  background: var(--bg-sunken);
-  border-bottom: 1px solid var(--ink-15);
+  padding: 14px 32px;
+  background: var(--ink-black); color: var(--ivory);
   align-items: center;
+  border-bottom: 1px solid var(--gold-line);
 }
-.action-bar .spacer { flex: 1; }
-.action-bar .step-info {
-  font-size: 12px;
-  color: var(--ink-70);
-  margin-right: 12px;
+.action-rail .step-info {
+  font-family: var(--font-display);
+  font-size: 14px; font-style: italic;
+  color: rgba(250, 247, 242, 0.85);
+  margin-right: auto;
 }
-.action-bar .step-info strong { color: var(--ink-90); }
+.action-rail .step-info strong {
+  color: var(--gold-glow); font-style: normal;
+  font-weight: 600; letter-spacing: -0.1px;
+}
+.action-rail .btn {
+  border: 1px solid rgba(196, 164, 104, 0.35);
+  color: var(--ivory);
+  background: transparent;
+  font-size: 10.5px;
+}
+.action-rail .btn:hover {
+  background: rgba(196, 164, 104, 0.1);
+  border-color: var(--gold-bullion);
+}
+.action-rail .btn-gold {
+  background: var(--gold-bullion); color: var(--ink-black);
+  border-color: var(--gold-bullion); font-weight: 700;
+}
+.action-rail .btn-gold:hover { background: var(--gold-pale); }
 
-.dossier-body {
-  padding: 22px;
-  flex: 1;
-  background: var(--bg-page);
-  display: flex; flex-direction: column; gap: 16px;
+.dossier-b {
+  padding: 28px 32px; flex: 1;
+  display: flex; flex-direction: column; gap: 22px;
 }
-.section-block {
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 8px;
+.panel {
+  background: white;
+  border: 1px solid var(--bone);
 }
-.section-block-head {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--ink-15);
-  display: flex; align-items: center; justify-content: space-between;
+.panel-head {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--bone);
+  display: flex; align-items: baseline; justify-content: space-between;
 }
-.section-block-head h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-90);
+.panel-head h4 {
+  font-family: var(--font-display); font-size: 17px; font-weight: 600;
+  color: var(--ink-black); letter-spacing: -0.2px;
 }
-.section-block-body { padding: 14px 16px; }
+.panel-head .hint { font-size: 11px; color: var(--graphite); letter-spacing: 0.4px; text-transform: uppercase; font-weight: 500; }
+.panel-b { padding: 18px 22px; }
 
-.doc-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.doc-tiles {
+  display: grid; grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
-.doc-mini {
+.doc-tile {
   display: grid;
-  grid-template-columns: 28px 1fr auto;
-  gap: 10px;
+  grid-template-columns: 32px 1fr auto;
+  gap: 12px;
   align-items: center;
-  padding: 9px 11px;
-  border: 1px solid var(--ink-15);
-  border-radius: 6px;
+  padding: 11px 14px;
+  border: 1px solid var(--bone);
+  background: white;
   font-size: 12.5px;
   cursor: pointer;
+  transition: all 0.15s;
 }
-.doc-mini:hover { background: var(--ink-5); }
-.doc-mini.active { background: var(--cmgreen-50); border-color: var(--cmgreen); }
-.doc-mini .ico {
+.doc-tile:hover { border-color: var(--gold-bullion); }
+.doc-tile.active { background: var(--cream); border-color: var(--gold-bullion); border-width: 2px; padding: 10px 13px; }
+.doc-tile .ico {
   width: 26px; height: 30px;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: #fff;
-  border-radius: 3px;
-  font-size: 8px; font-weight: 700;
+  background: var(--ink-black); color: var(--gold-bullion);
+  font-family: var(--font-mono); font-size: 8.5px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
+  letter-spacing: 0.5px;
 }
-.doc-mini .name { font-weight: 500; color: var(--ink-90); }
+.doc-tile .name { font-weight: 600; color: var(--ink-black); }
 
 .viewer {
-  background: #525659;
-  border-radius: 8px;
-  padding: 18px;
+  background: var(--obsidian);
+  padding: 24px;
   display: flex; justify-content: center;
 }
 .viewer .page {
-  background: #fff;
-  width: 100%;
-  max-width: 600px;
-  padding: 32px 44px;
-  font-family: var(--font-serif);
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--ink-100);
+  background: white;
+  width: 100%; max-width: 580px;
+  padding: 40px 50px;
+  font-family: var(--font-display);
+  font-size: 12.5px; line-height: 1.75;
+  color: var(--ink-black);
   min-height: 360px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.6);
+  position: relative;
+}
+.viewer .page::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 4px; background: linear-gradient(90deg, var(--emerald-800) 0%, var(--burgundy) 50%, var(--gold-bullion) 100%);
 }
 .viewer .page h1 {
-  font-size: 16px; text-align: center; margin-bottom: 16px;
-  color: var(--cmgreen-800); font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 16px; font-weight: 700;
+  text-align: center;
+  margin-bottom: 18px;
+  color: var(--emerald-800);
+  letter-spacing: 0.5px;
+}
+.viewer .page h1 span {
+  display: block; font-size: 10px; font-weight: 500;
+  color: var(--graphite); margin-top: 5px;
+  font-style: italic; letter-spacing: 0;
 }
 .viewer .page h2 {
-  font-size: 13px; margin: 12px 0 6px; font-weight: 700;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 1.2px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  text-align: center;
+  margin: 18px 0 10px;
 }
 .viewer .page p { margin-bottom: 8px; }
 
 .comments {
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 8px;
-  padding: 14px 16px;
+  background: white; border: 1px solid var(--bone);
+  padding: 22px;
 }
 .comments h5 {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--ink-50);
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  margin-bottom: 16px;
 }
-.comment {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 10px;
-  padding-bottom: 12px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid var(--ink-10);
+.cmt {
+  display: grid; grid-template-columns: 32px 1fr;
+  gap: 12px;
+  padding-bottom: 14px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--bone);
 }
-.comment:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
-.comment .ava {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--cmgreen-50);
-  color: var(--cmgreen-700);
+.cmt:last-of-type { border-bottom: none; margin-bottom: 12px; padding-bottom: 0; }
+.cmt .ava {
+  width: 30px; height: 30px;
+  background: var(--emerald-800); color: var(--gold-glow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+}
+.cmt .ava.ai { background: var(--ink-black); color: var(--gold-bullion); border: 1px solid var(--gold-bullion); }
+.cmt .body .meta {
+  font-size: 11px; color: var(--graphite);
+  margin-bottom: 4px;
+}
+.cmt .body .meta .who {
+  font-family: var(--font-display); font-weight: 600; font-size: 13px;
+  color: var(--ink-black); letter-spacing: -0.1px;
+}
+.cmt .body p {
+  font-size: 13px; line-height: 1.6;
+  color: var(--charcoal);
+}
+.cmt-input {
+  display: grid; grid-template-columns: 32px 1fr auto;
+  gap: 12px; align-items: center;
+}
+.cmt-input .ava {
+  width: 30px; height: 30px;
+  background: var(--gold-bullion); color: var(--ink-black);
   display: flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 700;
 }
-.comment .ava.r { background: #fef2f2; color: var(--cmred); }
-.comment .body { font-size: 12.5px; line-height: 1.55; }
-.comment .body .meta { color: var(--ink-50); font-size: 11px; margin-bottom: 3px; }
-.comment .body .meta .who { font-weight: 600; color: var(--ink-90); }
-.comment-input {
-  display: grid;
-  grid-template-columns: 32px 1fr auto;
-  gap: 10px; align-items: center;
-}
-.comment-input .ava {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: var(--cmyellow);
-  color: var(--ink-90);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700;
-}
-.comment-input input {
-  padding: 8px 12px;
-  border: 1px solid var(--ink-25);
-  border-radius: 6px;
-  font: inherit;
-  font-size: 13px;
+.cmt-input input {
+  padding: 9px 13px;
+  border: 1px solid var(--bone);
+  font: inherit; font-size: 13px;
+  background: var(--ivory);
 }
 
-/* AI right pane */
+/* AI pane — premium expert assistant */
 .ai-pane {
-  background: linear-gradient(180deg, #fafbff 0%, #f5f7ff 100%);
-  border-left: 1px solid var(--ink-15);
-  padding: 18px;
+  background: var(--ink-black);
+  color: var(--ivory);
+  padding: 26px 22px;
   overflow-y: auto;
   display: flex; flex-direction: column;
+  border-left: 1px solid var(--gold-line);
+  position: relative;
 }
-.ai-pane-head {
-  display: flex; align-items: center; gap: 9px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--ink-15);
+.ai-pane::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 1px; background: linear-gradient(90deg, transparent, var(--gold-bullion), transparent);
+}
+.ai-h {
+  display: flex; align-items: center; gap: 12px;
+  padding-bottom: 18px; margin-bottom: 22px;
+  border-bottom: 1px solid rgba(196, 164, 104, 0.18);
 }
 .ai-badge {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #6366f1, #4338ca);
-  color: #fff;
+  width: 38px; height: 38px;
+  background: var(--obsidian);
+  border: 1px solid var(--gold-bullion);
+  color: var(--gold-bullion);
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 800;
+  font-family: var(--font-display); font-size: 16px; font-weight: 600;
+  letter-spacing: 0.5px;
+  position: relative;
 }
-.ai-pane-head .title { line-height: 1.2; }
-.ai-pane-head .title .name {
-  font-size: 13px; font-weight: 700;
-  color: var(--ink-100);
+.ai-badge::before {
+  content: ''; position: absolute; inset: 2px;
+  border: 1px solid rgba(196, 164, 104, 0.35);
 }
-.ai-pane-head .title .sub {
-  font-size: 11px; color: var(--ink-50);
+.ai-h .ti { line-height: 1.2; }
+.ai-h .ti .name {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 600;
+  color: var(--gold-glow); letter-spacing: -0.2px;
+}
+.ai-h .ti .sub {
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(250, 247, 242, 0.5); font-weight: 500;
+  margin-top: 2px;
 }
 
-.ai-section {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 8px;
+.ai-sec {
+  margin-bottom: 18px;
+  padding: 16px 18px;
+  background: rgba(196, 164, 104, 0.04);
+  border: 1px solid rgba(196, 164, 104, 0.15);
+  position: relative;
 }
-.ai-section h5 {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  font-weight: 700;
-  color: #4338ca;
-  margin-bottom: 8px;
-  display: flex; align-items: center; gap: 6px;
+.ai-sec h5 {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 600;
+  color: var(--gold-pale);
+  margin-bottom: 10px;
+  letter-spacing: -0.2px;
 }
-.ai-section h5 .num {
-  width: 18px; height: 18px;
-  background: #ede9fe;
-  color: #4338ca;
-  border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  font-size: 10px;
+.ai-sec h5 .roman {
+  font-family: var(--font-display);
+  font-size: 14px; font-style: italic; font-weight: 500;
+  color: var(--gold-bullion);
 }
-.ai-section p {
-  font-size: 12.5px;
-  color: var(--ink-90);
-  line-height: 1.55;
+.ai-sec p {
+  font-size: 12.5px; line-height: 1.65;
+  color: rgba(250, 247, 242, 0.82);
 }
-.ai-section p + p { margin-top: 6px; }
-.ai-section .quote {
-  margin-top: 8px;
-  padding: 8px 10px;
-  background: var(--ink-5);
-  border-left: 2px solid var(--cmgreen);
-  font-size: 11.5px;
-  font-style: italic;
-  color: var(--ink-70);
+.ai-sec p + p { margin-top: 8px; }
+.ai-sec .quote {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-left: 2px solid var(--gold-bullion);
+  font-family: var(--font-display); font-style: italic; font-size: 12.5px;
+  color: rgba(250, 247, 242, 0.75);
 }
-.ai-section .verdict {
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-radius: 5px;
-  font-size: 12px; font-weight: 600;
+.ai-sec .verdict {
+  margin-top: 12px;
+  padding: 6px 10px;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 1.8px; text-transform: uppercase;
   display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid;
 }
-.ai-section .verdict.ok { background: #d1fae5; color: #065f46; }
-.ai-section .verdict.warn { background: #fef3c7; color: #92400e; }
-.ai-section .verdict.bad { background: #fee2e2; color: #991b1b; }
+.ai-sec .verdict.ok   { color: #b9deaa; border-color: rgba(185, 222, 170, 0.4); background: rgba(20, 65, 35, 0.4); }
+.ai-sec .verdict.warn { color: var(--gold-glow); border-color: var(--gold-bullion); background: rgba(196, 164, 104, 0.1); }
+.ai-sec .verdict.bad  { color: #efaaae; border-color: rgba(239, 170, 174, 0.4); background: rgba(110, 22, 32, 0.3); }
 
-/* History panel inline */
-.history-mini {
-  list-style: none;
+.ai-sec.consolidated {
+  background: linear-gradient(135deg, rgba(1, 76, 45, 0.4) 0%, rgba(196, 164, 104, 0.1) 100%);
+  border-color: var(--gold-bullion);
+  border-width: 1px;
 }
-.history-mini li {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ink-10);
-  font-size: 12.5px;
-  display: grid; grid-template-columns: 100px 1fr; gap: 12px;
+.ai-sec.consolidated h5 { color: var(--ivory); }
+.ai-sec.consolidated .score {
+  font-family: var(--font-display);
+  font-size: 56px; font-weight: 500;
+  color: var(--gold-glow);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-top: 10px;
 }
-.history-mini li:last-child { border-bottom: none; }
-.history-mini li .ts { color: var(--ink-50); font-family: 'Courier New', monospace; font-size: 11.5px; }
-.history-mini li .what strong { color: var(--ink-90); font-weight: 600; }
-.history-mini li .what .who { color: var(--ink-70); }
+.ai-sec.consolidated .score .unit {
+  font-size: 18px; color: rgba(250, 247, 242, 0.55);
+  font-style: italic;
+}
 
-/* Financial summary */
+/* History inline (in staff main) */
+.history-inline { list-style: none; }
+.history-inline li {
+  display: grid; grid-template-columns: 130px 18px 1fr;
+  gap: 14px; padding: 12px 0;
+  border-bottom: 1px solid var(--bone);
+  align-items: start;
+}
+.history-inline li:last-child { border-bottom: none; }
+.history-inline .ts {
+  font-family: var(--font-mono);
+  font-size: 10.5px; letter-spacing: 0.4px;
+  color: var(--graphite);
+  text-transform: uppercase;
+  padding-top: 3px;
+}
+.history-inline .mk {
+  display: flex; justify-content: center; padding-top: 6px;
+}
+.history-inline .mk::before {
+  content: ''; width: 7px; height: 7px;
+  background: var(--gold-bullion);
+}
+.history-inline .what {
+  font-family: var(--font-display); font-size: 14px; font-weight: 600;
+  color: var(--ink-black); letter-spacing: -0.1px;
+}
+.history-inline .who { font-size: 12px; color: var(--graphite); font-style: italic; font-family: var(--font-display); }
+
+/* Financial summary (Screen 7) */
 .fin-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
 }
 .fin-tile {
-  padding: 14px;
-  background: #fff;
-  border: 1px solid var(--ink-15);
-  border-radius: 8px;
+  background: white; border: 1px solid var(--bone);
+  padding: 18px 20px;
+  position: relative;
+}
+.fin-tile::before {
+  content: '';
+  position: absolute; top: 0; left: 0; bottom: 0;
+  width: 2px; background: var(--gold-bullion);
 }
 .fin-tile .lbl {
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--ink-50);
-  font-weight: 600;
-  margin-bottom: 5px;
+  font-size: 9.5px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--graphite); font-weight: 600;
+  margin-bottom: 7px;
 }
 .fin-tile .num {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--ink-100);
-  letter-spacing: -0.5px;
+  font-family: var(--font-display);
+  font-size: 28px; font-weight: 500;
+  color: var(--ink-black); letter-spacing: -0.5px;
+  display: flex; align-items: baseline; gap: 4px;
 }
-.fin-tile .unit {
-  font-size: 12px;
-  color: var(--ink-50);
-  font-weight: 500;
+.fin-tile .num .unit {
+  font-size: 12px; color: var(--graphite);
+  font-style: italic; font-weight: 400;
 }
 
-/* ============================================
-   SCREEN 8 — Admin user management
-   ============================================ */
-.admin-page { padding: 28px; background: var(--bg-page); }
-.admin-page-inner { max-width: 1120px; margin: 0 auto; }
+/* =================================================================
+   ADMIN (Screen 8) — Table + Form
+   ================================================================= */
+.admin-page { background: var(--ivory); padding: 36px 28px; }
+.admin-inner { max-width: 1180px; margin: 0 auto; }
 .admin-cols {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
+  display: grid; grid-template-columns: 2fr 1fr; gap: 28px;
 }
-table.staff-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-table.staff-table thead {
-  background: var(--bg-sunken);
-}
-table.staff-table th {
+.table-card { background: white; border: 1px solid var(--bone); overflow: hidden; }
+table.staff-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.staff-tbl thead { background: var(--ink-black); color: var(--gold-pale); }
+table.staff-tbl th {
   text-align: left;
-  font-size: 10.5px;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--ink-50);
-  font-weight: 700;
-  padding: 11px 14px;
-  border-bottom: 1px solid var(--ink-15);
+  font-size: 10px; letter-spacing: 2.2px; text-transform: uppercase;
+  font-weight: 600;
+  padding: 14px 18px;
+  color: var(--gold-glow);
 }
-table.staff-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--ink-10);
-  color: var(--ink-90);
+table.staff-tbl td {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--bone);
+  color: var(--charcoal);
 }
-table.staff-table tr:hover td { background: var(--bg-sunken); }
-table.staff-table td.email { color: var(--ink-70); font-family: 'Courier New', monospace; font-size: 12px; }
-table.staff-table .ava-cell {
-  display: flex; align-items: center; gap: 10px;
-}
-table.staff-table .ava-cell .ava {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  background: var(--cmgreen-50);
-  color: var(--cmgreen-700);
+table.staff-tbl tr:last-child td { border-bottom: none; }
+table.staff-tbl tr:hover td { background: var(--cream); }
+table.staff-tbl .name-cell { display: flex; align-items: center; gap: 12px; }
+table.staff-tbl .ava-sm {
+  width: 34px; height: 34px;
+  background: var(--emerald-800); color: var(--gold-glow);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
+}
+table.staff-tbl .name-cell strong {
+  font-family: var(--font-display); font-size: 15px; font-weight: 600;
+  color: var(--ink-black); display: block; letter-spacing: -0.1px;
+}
+table.staff-tbl .name-cell .meta {
+  font-size: 11px; color: var(--graphite); font-style: italic;
+  font-family: var(--font-display);
+}
+table.staff-tbl td.email {
+  font-family: var(--font-mono); font-size: 11.5px;
+  color: var(--graphite);
+}
+table.staff-tbl td.role {
+  font-family: var(--font-display); font-size: 14px;
+  color: var(--ink-black); font-weight: 500;
 }
 
-/* ============================================
-   Misc
-   ============================================ */
-.toast-demo {
-  position: absolute;
-  top: 16px; right: 16px;
-  background: #fff;
-  border: 1px solid var(--cmgreen);
-  border-left: 4px solid var(--cmgreen);
-  padding: 12px 16px;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+.create-card {
+  background: white; border: 1px solid var(--bone);
+  padding: 28px;
+  position: relative;
+}
+.create-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--gold-bullion);
+}
+.create-card .eyebrow {
+  font-size: 10px; letter-spacing: 2.4px; text-transform: uppercase;
+  color: var(--gold-bullion); font-weight: 600;
+  margin-bottom: 8px;
+}
+.create-card h3 {
+  font-family: var(--font-display);
+  font-size: 22px; font-weight: 600;
+  color: var(--ink-black); letter-spacing: -0.3px;
+  margin-bottom: 22px;
+}
+
+/* Toast */
+.toast {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--ink-black); color: var(--ivory);
+  border: 1px solid var(--gold-bullion);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px;
   font-size: 13px;
-  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.3);
   z-index: 10;
 }
-.toast-demo .check {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: var(--cmgreen);
-  color: #fff;
+.toast .check {
+  width: 24px; height: 24px;
+  background: var(--gold-bullion); color: var(--ink-black);
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700;
+  font-size: 12px; font-weight: 800;
 }
 
-/* small helper utilities */
-.flex { display: flex; }
-.flex-between { display: flex; align-items: center; justify-content: space-between; }
-.gap-8 { gap: 8px; }
-.mt-6 { margin-top: 6px; }
-.mt-10 { margin-top: 10px; }
-.mt-14 { margin-top: 14px; }
-.mt-20 { margin-top: 20px; }
-.text-muted { color: var(--ink-50); font-size: 12px; }
+footer.foot {
+  text-align: center;
+  padding: 44px 28px;
+  background: var(--obsidian); color: rgba(250, 247, 242, 0.6);
+  font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase;
+}
+footer.foot .gold { color: var(--gold-bullion); }
 </style>
 </head>
 <body>
 
-<!-- ============================================================
-     PREVIEW NAV (not part of the app — design-review chrome only)
-     ============================================================ -->
-<div class="preview-banner">
-  <div class="left">
-    <strong>★ DESIGN PREVIEW</strong>
-    <span>API Cameroun — 8 screens for review · v1 · 2026-05-17</span>
-  </div>
-  <div class="right">
-    <span style="color: rgba(255,255,255,0.5)">⚠ Not a working application — visual review only</span>
-  </div>
+<!-- PREVIEW CHROME -->
+<div class="pv-banner">
+  <div><strong>★ DESIGN PREVIEW v2</strong> &nbsp;·&nbsp; Editorial · Sovereign · Premium &nbsp;·&nbsp; 8 écrans</div>
+  <div style="color:rgba(250,247,242,0.5)">⚠ Maquette visuelle uniquement</div>
 </div>
-<nav class="preview-nav">
-  <div class="preview-nav-inner">
-    <a href="#s1">1 · Landing + Login</a>
-    <a href="#s2">2 · Investisseur (Nouveau)</a>
-    <a href="#s3">3 · Investisseur (Existant)</a>
-    <a href="#s4">4 · Suivi du dossier</a>
-    <a href="#s5">5 · Secrétariat + IA OCR</a>
-    <a href="#s6">6 · Direction + IA Conformité</a>
-    <a href="#s7">7 · DG — Signature finale</a>
-    <a href="#s8">8 · Admin — Gestion personnel</a>
+<nav class="pv-nav">
+  <div class="pv-nav-inner">
+    <a href="#s1">I · Accueil & Connexion</a>
+    <a href="#s2">II · Investisseur (Nouveau)</a>
+    <a href="#s3">III · Investisseur (Existant)</a>
+    <a href="#s4">IV · Suivi du dossier</a>
+    <a href="#s5">V · Secrétariat + IA</a>
+    <a href="#s6">VI · Direction + IA</a>
+    <a href="#s7">VII · DG — Signature</a>
+    <a href="#s8">VIII · Admin — Personnel</a>
   </div>
 </nav>
 
-<!-- ============================================================
-     SCREEN 1 — Landing + Login
-     ============================================================ -->
-<div id="s1" class="screen-label">
-  <span class="num">1</span>
-  <span class="name">Landing public + Connexion</span>
-  <span class="meta">Tabs: Investisseur / Personnel API · Identifiants <code>admin / admin</code> en mode build</span>
+<!-- =========================================================
+     I — Editorial hero + Sign-in card
+     ========================================================= -->
+<div id="s1" class="scr-label">
+  <span class="num">i</span>
+  <span class="ttl">Accueil public & Connexion</span>
+  <span class="meta">Hero éditorial cinématique · carte de connexion en typographie éditoriale</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <div class="s1-hero">
-      <aside class="s1-brand">
-        <div class="topblock">
-          <div class="crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <section class="s1-stage">
+      <header class="s1-marquee">
+        <div class="crest">
+          <div class="mark">A</div>
           <div class="text">
-            <div class="eyebrow">République du Cameroun</div>
+            <div class="top">République du Cameroun · Présidence de la République</div>
             <div class="org">Agence de Promotion des Investissements</div>
           </div>
         </div>
+        <nav class="nav">
+          <a>Cadre légal</a>
+          <a>Secteurs prioritaires</a>
+          <a>Incitations</a>
+          <a>Contact</a>
+          <div class="lang">
+            <button class="active">FR</button><button>EN</button>
+          </div>
+        </nav>
+      </header>
 
-        <div class="hero">
-          <span class="eyebrow">★ Portail officiel</span>
-          <h1>Investir au Cameroun, <span class="accent">en toute transparence.</span></h1>
-          <p>Plateforme officielle de soumission, d'instruction et de suivi des conventions d'investissement entre l'État du Cameroun et les investisseurs nationaux et étrangers. Filer un dossier en ligne, suivre son avancement à toutes les étapes, obtenir votre acte d'agrément sans déplacement.</p>
-          <div class="legalcite">En application de l'Ordonnance n° 2025/002 du 18 juillet 2025</div>
+      <div class="s1-hero">
+        <div class="col-text">
+          <div class="eyebrow">Portail officiel · Ordonnance n° 2025/002</div>
+          <h1>L'investissement<br>au Cameroun,<br><span class="accent">une affaire de souveraineté.</span></h1>
+          <p class="lede">Plateforme officielle de soumission, d'instruction et de suivi des conventions d'investissement entre l'État du Cameroun et les investisseurs nationaux et internationaux. Filer un dossier en ligne, suivre son parcours à toutes les étapes, recevoir votre acte d'agrément sans déplacement.</p>
+          <div class="legal">« Promouvoir l'investissement productif, accélérer la croissance partagée. »</div>
         </div>
-
-        <div class="footer">
-          <span>🔒 TLS 1.3 · Loi 2010/012 sur la protection des données</span>
-          <span class="dot"></span>
-          <span>© 2026 Présidence de la République</span>
-        </div>
-      </aside>
-
-      <section class="s1-form-pane">
-        <div class="s1-form">
-          <div class="welcome">Bienvenue</div>
-          <h2>Connexion au Portail</h2>
-          <div class="sub">Identifiez-vous pour accéder à votre espace.</div>
-
-          <div class="tabs">
-            <button class="active">🏢 Investisseur</button>
-            <button>👤 Personnel API</button>
+        <div class="col-stats">
+          <div class="stat">
+            <div class="num">10<span class="unit">j ouvrés</span></div>
+            <div class="lbl">Délai légal d'instruction · Art. 30.3</div>
           </div>
-
-          <div class="field">
-            <label>Adresse email</label>
-            <input type="email" placeholder="vous@entreprise.cm" value="admin">
+          <div class="stat">
+            <div class="num">5</div>
+            <div class="lbl">Étapes de validation · Secrétariat → DG</div>
           </div>
-          <div class="field">
-            <label>Mot de passe</label>
-            <input type="password" placeholder="••••••••" value="admin">
+          <div class="stat">
+            <div class="num">8</div>
+            <div class="lbl">Secteurs prioritaires éligibles · Art. 3</div>
           </div>
-
-          <button class="btn btn-primary">Se connecter →</button>
-
-          <div class="alt">
-            Première visite ? <a href="#">Créer un compte investisseur</a>
+          <div class="stat">
+            <div class="num">II<span class="unit">langues</span></div>
+            <div class="lbl">Français · English</div>
           </div>
         </div>
-      </section>
-    </div>
-    <div class="gov-flag-stripe"></div>
+      </div>
+
+      <div class="s1-footer">
+        <div class="seal">
+          <div class="item"><span class="badge">⚜</span>République du Cameroun</div>
+          <div class="item"><span class="badge">§</span>Loi 2010/012 protégée</div>
+          <div class="item"><span class="badge">▲</span>TLS 1.3 chiffrement</div>
+        </div>
+        <div>© MMXXVI — Tous droits réservés</div>
+      </div>
+    </section>
+
+    <section class="s1-signin">
+      <div class="s1-card">
+        <div class="eyebrow" style="margin-top:14px">Accès au portail</div>
+        <h2>Connexion</h2>
+        <div class="sub">Identifiez-vous pour accéder à votre espace</div>
+
+        <div class="tabs">
+          <button class="active">Investisseur</button>
+          <button>Personnel API</button>
+        </div>
+
+        <div class="field">
+          <label>Adresse email</label>
+          <input type="email" value="admin" placeholder="vous@entreprise.cm">
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <input type="password" value="admin" placeholder="••••••••">
+        </div>
+
+        <button class="btn btn-primary">Se connecter →</button>
+
+        <div class="alt">
+          Première visite ? <a href="#">Créer un compte investisseur</a>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 2 — Investor new (document upload)
-     ============================================================ -->
-<div id="s2" class="screen-label">
-  <span class="num">2</span>
-  <span class="name">Espace Investisseur — Nouveau dossier</span>
-  <span class="meta">Téléversement des pièces obligatoires · Suivi de complétude</span>
+<!-- =========================================================
+     II — Investor new dossier (editorial)
+     ========================================================= -->
+<div id="s2" class="scr-label">
+  <span class="num">ii</span>
+  <span class="ttl">Espace Investisseur — Nouveau dossier</span>
+  <span class="meta">Liste éditoriale des pièces · aside «Pourquoi ces pièces»</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">République du Cameroun <span class="dot">⚜</span> Agence de Promotion des Investissements <span class="dot">⚜</span> Espace Investisseur</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Espace Investisseur</div>
-          <div class="org">Agence de Promotion des Investissements</div>
+          <div class="top">Espace Investisseur</div>
+          <div class="org">Mon compte · Startup Camtech SARL</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar">SM</div>
+            <div class="gov-ava">SM</div>
             <div class="gov-user-meta">
               <div class="name">Sophie Mengue</div>
-              <div class="role">Startup Camtech SARL</div>
+              <div class="role">Investisseur</div>
             </div>
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
-    <div class="inv-page">
-      <div class="inv-page-inner">
-        <div class="inv-page-title">
-          <div>
-            <h1>Nouveau dossier d'agrément</h1>
-            <div class="sub">Téléversez les pièces obligatoires, puis soumettez votre demande au Guichet Unique.</div>
+    <div class="inv-stage">
+      <div class="inv-stage-inner">
+        <div class="inv-h">
+          <div class="title-block">
+            <div class="eyebrow">Dossier — Demande d'agrément</div>
+            <h1>Nouvelle demande d'incitations</h1>
+            <div class="sub">Téléversez les six pièces requises par l'Ordonnance n° 2025/002, puis soumettez votre dossier au Guichet Unique.</div>
           </div>
           <span class="pill review">3 / 6 pièces téléversées</span>
         </div>
 
         <div class="inv-cols">
           <div>
-            <div class="card">
-              <div class="card-section-title">
-                <h3>Pièces justificatives (Art. 6 de l'Ordonnance)</h3>
-                <span class="meta">Format accepté : PDF, JPG, PNG · 10 Mo max</span>
+            <div class="editorial-card">
+              <div class="card-head">
+                <h3>Pièces justificatives</h3>
+                <span class="meta">Art. 6 · PDF · 10 Mo maximum</span>
               </div>
 
-              <div class="doc-checklist">
-                <div class="doc-row uploaded">
-                  <div class="ico">PDF</div>
-                  <div>
-                    <div class="name">Autorisation d'exercice</div>
-                    <div class="meta">autorisation_minader.pdf · 1,2 Mo · téléversée le 12/05/2026</div>
+              <div class="doc-list">
+                <div class="doc-line uploaded">
+                  <div class="doc-num">i</div>
+                  <div class="doc-info">
+                    <div class="name">Autorisation d'exercice <span class="ref">art. 6.1</span></div>
+                    <div class="desc">Téléversée le 12 mai 2026 · autorisation_minader.pdf · 1,2 Mo</div>
                   </div>
-                  <button class="btn btn-secondary btn-sm">Remplacer</button>
+                  <button class="btn btn-outline btn-sm">Remplacer</button>
                 </div>
 
-                <div class="doc-row uploaded">
-                  <div class="ico">PDF</div>
-                  <div>
-                    <div class="name">Plan de recrutement Camerounais</div>
-                    <div class="meta">plan_recrutement.pdf · 845 Ko · téléversée le 12/05/2026</div>
+                <div class="doc-line uploaded">
+                  <div class="doc-num">ii</div>
+                  <div class="doc-info">
+                    <div class="name">Plan de recrutement Camerounais <span class="ref">art. 6.2.a</span></div>
+                    <div class="desc">Téléversée le 12 mai 2026 · plan_recrutement.pdf · 845 Ko</div>
                   </div>
-                  <button class="btn btn-secondary btn-sm">Remplacer</button>
+                  <button class="btn btn-outline btn-sm">Remplacer</button>
                 </div>
 
-                <div class="doc-row rejected">
-                  <div class="ico">PDF</div>
-                  <div>
-                    <div class="name">Plan de transfert de technologies</div>
-                    <div class="meta rejected">✕ Rejetée — « Document illisible aux pages 4–7. Merci de re-scanner en 300 DPI. »</div>
+                <div class="doc-line rejected">
+                  <div class="doc-num">iii</div>
+                  <div class="doc-info">
+                    <div class="name">Plan de transfert de technologies <span class="ref">art. 6.2.a</span></div>
+                    <div class="desc rejected">Rejetée · « Document illisible aux pages 4–7. Merci de re-scanner en 300 DPI minimum. »</div>
                   </div>
                   <button class="btn btn-danger btn-sm">Re-téléverser</button>
                 </div>
 
-                <div class="doc-row">
-                  <div class="ico">PDF</div>
-                  <div>
-                    <div class="name">Plan de sous-traitance locale</div>
-                    <div class="meta">Non téléversée</div>
+                <div class="doc-line">
+                  <div class="doc-num">iv</div>
+                  <div class="doc-info">
+                    <div class="name">Plan de sous-traitance locale <span class="ref">art. 6.2.a</span></div>
+                    <div class="desc">Pièce attendue</div>
                   </div>
-                  <button class="btn btn-primary btn-sm">Téléverser</button>
+                  <button class="btn btn-gold btn-sm">Téléverser</button>
                 </div>
 
-                <div class="doc-row uploaded">
-                  <div class="ico">PDF</div>
-                  <div>
-                    <div class="name">Justification du financement</div>
-                    <div class="meta">attestation_ifc.pdf · 2,1 Mo · téléversée le 12/05/2026</div>
+                <div class="doc-line uploaded">
+                  <div class="doc-num">v</div>
+                  <div class="doc-info">
+                    <div class="name">Justification du financement <span class="ref">art. 6.2.b</span></div>
+                    <div class="desc">Téléversée le 12 mai 2026 · attestation_ifc.pdf · 2,1 Mo</div>
                   </div>
-                  <button class="btn btn-secondary btn-sm">Remplacer</button>
+                  <button class="btn btn-outline btn-sm">Remplacer</button>
                 </div>
 
-                <div class="doc-row">
-                  <div class="ico">PDF</div>
-                  <div>
-                    <div class="name">Étude de faisabilité du projet</div>
-                    <div class="meta">Non téléversée</div>
+                <div class="doc-line">
+                  <div class="doc-num">vi</div>
+                  <div class="doc-info">
+                    <div class="name">Étude de faisabilité du projet <span class="ref">art. 6</span></div>
+                    <div class="desc">Pièce attendue</div>
                   </div>
-                  <button class="btn btn-primary btn-sm">Téléverser</button>
+                  <button class="btn btn-gold btn-sm">Téléverser</button>
                 </div>
               </div>
             </div>
 
-            <div class="inv-submit-bar">
-              <div class="status">
-                Statut : <strong>2 pièces manquantes</strong> · re-soumission possible après complétion
-              </div>
-              <button class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed">Soumettre le dossier →</button>
+            <div class="submit-bar">
+              <div class="status">Statut : <strong>deux pièces manquantes</strong> — soumission après complétion</div>
+              <button class="btn btn-gold" disabled style="opacity:0.4;cursor:not-allowed">Soumettre →</button>
             </div>
           </div>
 
           <aside>
-            <div class="aside-card">
-              <h4>📋 Pourquoi ces pièces ?</h4>
-              <ul>
-                <li><strong>Art. 6.1</strong>Autorisation d'exercice de l'activité dans un des secteurs éligibles (Art. 3).</li>
-                <li><strong>Art. 6.2.a</strong>Plans de recrutement, sous-traitance, transfert de technologies.</li>
-                <li><strong>Art. 6.2.b</strong>Justification de la capacité financière.</li>
-              </ul>
+            <div class="editorial-aside">
+              <div class="eyebrow">⚜ Cadre légal</div>
+              <h4>Pourquoi ces pièces ?</h4>
+              <div class="row">
+                <strong>Art. 6.1</strong>
+                <p>Autorisation d'exercer dans l'un des secteurs éligibles à l'agrément (Art. 3).</p>
+              </div>
+              <div class="row">
+                <strong>Art. 6.2.a</strong>
+                <p>Plans de recrutement, sous-traitance et transfert de technologies favorisant l'économie nationale.</p>
+              </div>
+              <div class="row">
+                <strong>Art. 6.2.b</strong>
+                <p>Démonstration de la capacité financière du porteur de projet.</p>
+              </div>
             </div>
 
-            <div class="aside-card" style="margin-top: 14px; background:#fffbeb; border-color:#fde68a">
-              <h4 style="color:#92400e">⏱ Délai légal d'instruction</h4>
-              <ul>
-                <li>10 jours ouvrés à compter de la délivrance du récépissé (Art. 30.3).</li>
-              </ul>
+            <div class="editorial-aside" style="margin-top:14px;background:var(--ink-black);color:var(--ivory);border-left-color:var(--gold-bullion)">
+              <div class="eyebrow">⏱ Délai légal</div>
+              <h4 style="color:var(--gold-glow)">10 jours ouvrés</h4>
+              <div class="row" style="border-top-color:rgba(196,164,104,0.2)">
+                <p style="color:rgba(250,247,242,0.78)">À compter de la délivrance du récépissé de dépôt par le Secrétariat (Art. 30.3).</p>
+              </div>
             </div>
           </aside>
         </div>
@@ -1489,113 +1716,102 @@ table.staff-table .ava-cell .ava {
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 3 — Existing investor
-     ============================================================ -->
-<div id="s3" class="screen-label">
-  <span class="num">3</span>
-  <span class="name">Espace Investisseur — Investisseur existant</span>
-  <span class="meta">Convention signée · Rapport annuel post-incitations (Art. 32)</span>
+<!-- =========================================================
+     III — Investor existing — Convention as certificate
+     ========================================================= -->
+<div id="s3" class="scr-label">
+  <span class="num">iii</span>
+  <span class="ttl">Espace Investisseur — Investisseur existant</span>
+  <span class="meta">Convention présentée comme certificat · rapport annuel · indicateurs</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">République du Cameroun <span class="dot">⚜</span> Agence de Promotion des Investissements <span class="dot">⚜</span> Espace Investisseur</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Espace Investisseur</div>
-          <div class="org">Agence de Promotion des Investissements</div>
+          <div class="top">Espace Investisseur</div>
+          <div class="org">Mon compte · SARL AGRO-CAM</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar">ET</div>
+            <div class="gov-ava">ET</div>
             <div class="gov-user-meta">
               <div class="name">Eric Tchoua</div>
-              <div class="role">SARL AGRO-CAM</div>
+              <div class="role">Investisseur · Dirigeant</div>
             </div>
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
-    <div class="inv-page">
-      <div class="inv-page-inner">
-        <div class="inv-page-title">
-          <div>
+    <div class="inv-stage">
+      <div class="inv-stage-inner">
+        <div class="inv-h">
+          <div class="title-block">
+            <div class="eyebrow">Tableau de bord</div>
             <h1>Mon espace investisseur</h1>
-            <div class="sub">Votre convention est active · Prochain rapport annuel dû le 31 mars 2027.</div>
+            <div class="sub">Votre convention est en cours d'exécution · prochain rapport annuel dû le 31 mars 2027</div>
           </div>
-          <button class="btn btn-primary">＋ Nouvelle demande</button>
+          <button class="btn btn-primary">+ Nouvelle demande</button>
         </div>
 
-        <div class="exist-conv">
-          <div class="card conv-card">
-            <span class="pill signed">Convention active</span>
-            <h3 class="mt-10">Convention d'investissement · Dossier 2025/000123</h3>
-            <div class="conv-meta">
-              <div>
-                <div class="label">Secteur</div>
-                <div class="value">Agriculture, élevage, pêche</div>
-              </div>
-              <div>
-                <div class="label">Catégorie</div>
-                <div class="value">A — &lt; 1 Md FCFA</div>
-              </div>
-              <div>
-                <div class="label">Montant agréé</div>
-                <div class="value tabular">800 000 000 FCFA</div>
-              </div>
-              <div>
-                <div class="label">ZDP</div>
-                <div class="value">Région du Nord</div>
-              </div>
-              <div>
-                <div class="label">N° d'agrément</div>
-                <div class="value tabular">2026/AGR/0042</div>
-              </div>
-              <div>
-                <div class="label">Signée le</div>
-                <div class="value tabular">28/04/2026</div>
-              </div>
+        <div class="exist-grid">
+          <div class="cert-card">
+            <div class="eyebrow">⚜ Convention d'investissement</div>
+            <h3>SARL AGRO-CAM</h3>
+            <div class="objet">« Unité agro-industrielle de transformation du manioc en farine et amidon, Garoua, Région du Nord — capacité 12 000 t/an. »</div>
+
+            <div class="cert-meta">
+              <div class="item"><div class="lbl">N° d'agrément</div><div class="val">2026/AGR/0042</div></div>
+              <div class="item"><div class="lbl">Signée le</div><div class="val">28 avril 2026</div></div>
+              <div class="item"><div class="lbl">Montant agréé</div><div class="val tabular">800 M FCFA</div></div>
+              <div class="item"><div class="lbl">Secteur</div><div class="val">Agriculture, élevage, pêche</div></div>
+              <div class="item"><div class="lbl">Catégorie</div><div class="val">A · &lt; 1 Md FCFA</div></div>
+              <div class="item"><div class="lbl">Zone</div><div class="val">ZDP · Région du Nord</div></div>
             </div>
-            <div class="flex gap-8 mt-10">
-              <button class="btn btn-primary">📄 Télécharger la convention (PDF)</button>
-              <button class="btn btn-secondary">📜 Acte d'agrément</button>
+
+            <div class="cert-actions">
+              <button class="btn btn-primary">📄 Télécharger la convention</button>
+              <button class="btn btn-outline">Acte d'agrément</button>
               <button class="btn btn-ghost">Historique des décisions</button>
             </div>
           </div>
 
-          <div class="card annual-card">
-            <h4>Rapport annuel (Art. 32)</h4>
-            <div class="due">📅 Échéance dans <strong>62 jours</strong> · 31 mars 2027</div>
+          <div class="editorial-card annual-card">
+            <div class="eyebrow">⚜ Obligation annuelle</div>
+            <h4>Rapport — Art. 32</h4>
+            <div class="due">
+              Échéance dans <strong>62 jours</strong><br>
+              <span style="font-size:11.5px">31 mars 2027 · amende 1 M FCFA / mois de retard</span>
+            </div>
             <div class="field">
               <label>Exercice fiscal</label>
               <select><option>2026</option></select>
             </div>
-            <button class="btn btn-primary" style="width:100%">Démarrer le rapport →</button>
-            <div class="text-muted mt-10" style="text-align:center">Une amende de 1 M FCFA / mois s'applique en cas de retard (Art. 32.3).</div>
+            <button class="btn btn-gold" style="width:100%">Démarrer le rapport →</button>
           </div>
         </div>
 
-        <div class="card" style="margin-top: 18px">
-          <div class="card-section-title">
-            <h3>Suivi annuel — exercice 2025</h3>
-            <span class="pill signed">Conforme · Comité d'audit</span>
+        <div class="editorial-card" style="margin-top:28px">
+          <div class="card-head">
+            <h3>Performance — Exercice 2025</h3>
+            <span class="pill signed">Conforme · audité par le Comité</span>
           </div>
-          <div class="fin-grid">
-            <div class="fin-tile">
+          <div class="kpi-row" style="margin-top:0">
+            <div class="kpi">
               <div class="lbl">Emplois créés</div>
-              <div class="num tabular">68<span class="unit"> / 52 prévus</span></div>
+              <div class="num tabular">68 <span class="unit"> / 52 prévus</span></div>
             </div>
-            <div class="fin-tile">
+            <div class="kpi">
               <div class="lbl">Investissement réalisé</div>
-              <div class="num tabular">780<span class="unit"> M FCFA</span></div>
+              <div class="num tabular">780 <span class="unit">M FCFA</span></div>
             </div>
-            <div class="fin-tile">
+            <div class="kpi">
               <div class="lbl">Exports</div>
-              <div class="num tabular">142<span class="unit"> M FCFA</span></div>
+              <div class="num tabular">142 <span class="unit">M FCFA</span></div>
             </div>
           </div>
         </div>
@@ -1604,111 +1820,129 @@ table.staff-table .ava-cell .ava {
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 4 — Investor progress tracker
-     ============================================================ -->
-<div id="s4" class="screen-label">
-  <span class="num">4</span>
-  <span class="name">Investisseur — Suivi du dossier</span>
-  <span class="meta">5 étapes visuelles · Chronologie détaillée · SLA visible</span>
+<!-- =========================================================
+     IV — Progress tracker (editorial stepper)
+     ========================================================= -->
+<div id="s4" class="scr-label">
+  <span class="num">iv</span>
+  <span class="ttl">Investisseur — Suivi du dossier</span>
+  <span class="meta">Stepper éditorial · chronologie typographique</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">République du Cameroun <span class="dot">⚜</span> Suivi du dossier d'agrément</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Espace Investisseur</div>
-          <div class="org">Agence de Promotion des Investissements</div>
+          <div class="top">Espace Investisseur</div>
+          <div class="org">Mon compte · SA CAMINDUSTRIE</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar">FK</div>
+            <div class="gov-ava">FK</div>
             <div class="gov-user-meta">
               <div class="name">Florence Kameni</div>
-              <div class="role">SA CAMINDUSTRIE</div>
+              <div class="role">Investisseur</div>
             </div>
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
-    <div class="inv-page">
-      <div class="inv-page-inner">
-        <div class="inv-page-title">
-          <div>
-            <h1>Dossier 2026/000124</h1>
-            <div class="sub">Soumis le 11 mai 2026 · Récépissé délivré le 12 mai 2026 (n° 2026/R0099)</div>
+    <div class="inv-stage">
+      <div class="inv-stage-inner">
+        <div class="inv-h">
+          <div class="title-block">
+            <div class="eyebrow">Dossier 2026/000124 · Soumis le 11 mai 2026</div>
+            <h1>Parcours de mon dossier</h1>
+            <div class="sub">Récépissé délivré le 12 mai 2026 — n° 2026/R0099 — délai légal d'instruction : 10 jours ouvrés</div>
           </div>
-          <span class="pill review">En cours d'instruction</span>
+          <span class="pill review">En instruction · J+6 / 10</span>
         </div>
 
-        <div class="card">
-          <h3 style="font-size:14px;color:var(--ink-90);margin-bottom:4px">Parcours de mon dossier</h3>
-          <div class="text-muted">Le délai légal d'instruction est de 10 jours ouvrés à compter du récépissé (Art. 30.3).</div>
+        <div class="editorial-card">
+          <div class="card-head">
+            <h3>Étapes de validation</h3>
+            <span class="sla ok">SLA · 5 j restants</span>
+          </div>
 
-          <div class="stepper">
-            <div class="stepper-fill"></div>
-            <div class="step done">
+          <div class="steplane">
+            <div class="step-cell done">
               <div class="dot">✓</div>
-              <div class="label">Secrétariat</div>
-              <div class="sub">Réceptionné · 1j 2h</div>
+              <div class="lbl">Secrétariat</div>
+              <div class="sub">Reçu · 1 j 2 h</div>
             </div>
-            <div class="step done">
+            <div class="step-cell done">
               <div class="dot">✓</div>
-              <div class="label">Dir. Investissements</div>
-              <div class="sub">Signé · 1j 8h</div>
+              <div class="lbl">Investissements</div>
+              <div class="sub">Signé · 1 j 8 h</div>
             </div>
-            <div class="step current">
-              <div class="dot">3</div>
-              <div class="label">Dir. Conformité</div>
-              <div class="sub">En cours · 14h</div>
+            <div class="step-cell current">
+              <div class="dot">iii</div>
+              <div class="lbl">Conformité</div>
+              <div class="sub">En cours · 14 h</div>
             </div>
-            <div class="step">
-              <div class="dot">4</div>
-              <div class="label">Dir. Rel. Extérieures</div>
+            <div class="step-cell">
+              <div class="dot">iv</div>
+              <div class="lbl">Rel. Extérieures</div>
               <div class="sub">À venir</div>
             </div>
-            <div class="step">
-              <div class="dot">5</div>
-              <div class="label">Directeur Général</div>
+            <div class="step-cell">
+              <div class="dot">v</div>
+              <div class="lbl">Directeur Général</div>
               <div class="sub">À venir</div>
             </div>
           </div>
         </div>
 
-        <div class="card mt-20">
-          <div class="card-section-title">
-            <h3>Chronologie détaillée</h3>
-            <span class="sla ok">SLA : OK · 5j restants</span>
+        <div class="editorial-card" style="margin-top:24px">
+          <div class="card-head">
+            <h3>Chronologie</h3>
+            <span class="meta">5 événements consignés</span>
           </div>
-          <ul class="timeline">
+
+          <ul class="timeline-editorial">
             <li>
-              <div class="when">Aujourd'hui · 09:14</div>
-              <div class="what">Transmis à la Direction de la Conformité</div>
-              <div class="by">par Mme A. Mbongo (Dir. Investissements)</div>
+              <div class="when">17 mai · 09:14</div>
+              <div class="mark"></div>
+              <div>
+                <div class="what">Transmis à la Direction de la Conformité</div>
+                <div class="by">par Mme A. Mbongo — Directrice des Investissements</div>
+              </div>
             </li>
             <li class="done">
-              <div class="when">Hier · 16:42</div>
-              <div class="what">Signature de la Direction des Investissements</div>
-              <div class="by">M. P. Nkomo — « Dossier complet, critères Art. 8 satisfaits. »</div>
+              <div class="when">16 mai · 16:42</div>
+              <div class="mark"></div>
+              <div>
+                <div class="what">Signature de la Direction des Investissements</div>
+                <div class="by">« Dossier complet, critères Art. 8 satisfaits. » — M. P. Nkomo</div>
+              </div>
             </li>
             <li class="done">
-              <div class="when">14 mai 2026 · 11:30</div>
-              <div class="what">Transmission au Directeur des Investissements</div>
-              <div class="by">par Mme M. Etoundi (Secrétariat)</div>
+              <div class="when">14 mai · 11:30</div>
+              <div class="mark"></div>
+              <div>
+                <div class="what">Transmission au Directeur des Investissements</div>
+                <div class="by">par Mme M. Etoundi — Secrétariat</div>
+              </div>
             </li>
             <li class="done">
-              <div class="when">12 mai 2026 · 09:02</div>
-              <div class="what">Récépissé de dépôt délivré (n° 2026/R0099)</div>
-              <div class="by">par Mme M. Etoundi (Secrétariat)</div>
+              <div class="when">12 mai · 09:02</div>
+              <div class="mark"></div>
+              <div>
+                <div class="what">Récépissé de dépôt délivré · n° 2026/R0099</div>
+                <div class="by">par Mme M. Etoundi — Secrétariat</div>
+              </div>
             </li>
             <li class="done">
-              <div class="when">11 mai 2026 · 14:22</div>
-              <div class="what">Dossier soumis en ligne</div>
-              <div class="by">par Florence Kameni</div>
+              <div class="when">11 mai · 14:22</div>
+              <div class="mark"></div>
+              <div>
+                <div class="what">Dossier soumis en ligne</div>
+                <div class="by">par Florence Kameni — SA CAMINDUSTRIE</div>
+              </div>
             </li>
           </ul>
         </div>
@@ -1717,27 +1951,28 @@ table.staff-table .ava-cell .ava {
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 5 — Secretary view + AI OCR pane
-     ============================================================ -->
-<div id="s5" class="screen-label">
-  <span class="num">5</span>
-  <span class="name">Personnel — Secrétariat (filtre de complétude)</span>
-  <span class="meta">3 colonnes · Inbox · Dossier ouvert · Pane IA OCR à droite</span>
+<!-- =========================================================
+     V — Secretary view + AI OCR
+     ========================================================= -->
+<div id="s5" class="scr-label">
+  <span class="num">v</span>
+  <span class="ttl">Secrétariat — Filtre de complétude (vue 3 colonnes)</span>
+  <span class="meta">Sidebar foncée · dossier ouvert · pane IA OCR à droite</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">Portail interne <span class="dot">⚜</span> Workflow d'agrément <span class="dot">⚜</span> Secrétariat</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Portail Interne</div>
+          <div class="top">Portail interne</div>
           <div class="org">Workflow d'agrément</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar">ME</div>
+            <div class="gov-ava">ME</div>
             <div class="gov-user-meta">
               <div class="name">Marie Etoundi</div>
               <div class="role">Secrétariat · Filtre de complétude</div>
@@ -1745,215 +1980,210 @@ table.staff-table .ava-cell .ava {
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
     <div class="staff-shell">
-      <!-- Left sidebar -->
-      <aside class="staff-sidebar">
-        <div class="sidebar-section">
-          <h5>Ma corbeille</h5>
-          <ul class="sidebar-list">
+      <aside class="staff-side">
+        <div class="section">
+          <h5>Ma corbeille (3)</h5>
+          <ul>
             <li class="active">
-              <div>
-                <span class="ref">2026/000125</span>
-                Data-Center Douala SUARL
+              <div class="ref">2026 / 000 125</div>
+              <div class="row">
+                <span class="name">Data-Center Douala</span>
+                <span class="pill review">Nouveau</span>
               </div>
-              <span class="pill review">Nouveau</span>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000126</span>
-                Startup Camtech SARL
+              <div class="ref">2026 / 000 126</div>
+              <div class="row">
+                <span class="name">Startup Camtech</span>
+                <span class="pill pending">3/6 pièces</span>
               </div>
-              <span class="pill pending">3/6 pièces</span>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000127</span>
-                SARL EnergyPlus
+              <div class="ref">2026 / 000 127</div>
+              <div class="row">
+                <span class="name">SARL EnergyPlus</span>
+                <span class="pill rejected">Renvoyé</span>
               </div>
-              <span class="pill rejected">Renvoyé</span>
             </li>
           </ul>
         </div>
-        <div class="sidebar-section">
+        <div class="section">
           <h5>Récemment traités</h5>
-          <ul class="sidebar-list">
+          <ul>
             <li>
-              <div>
-                <span class="ref">2026/000124</span>
-                SA CAMINDUSTRIE
+              <div class="ref">2026 / 000 124</div>
+              <div class="row">
+                <span class="name">SA CAMINDUSTRIE</span>
+                <span class="pill handed">Transmis</span>
               </div>
-              <span class="pill handed">Transmis</span>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000123</span>
-                SARL AGRO-CAM
+              <div class="ref">2026 / 000 123</div>
+              <div class="row">
+                <span class="name">SARL AGRO-CAM</span>
+                <span class="pill signed">Signé</span>
               </div>
-              <span class="pill signed">Signé</span>
             </li>
           </ul>
         </div>
       </aside>
 
-      <!-- Center main pane -->
       <main class="staff-main">
-        <div class="dossier-header">
-          <div class="dossier-title-row">
+        <div class="dossier-h">
+          <div class="top">
             <h2>Data-Center Douala SUARL</h2>
-            <span class="ref">2026/000125</span>
+            <span class="ref">2026 / 000 125</span>
             <span class="pill review">En vérification</span>
           </div>
-          <div class="dossier-meta-row">
-            <span>Soumis : <strong>14/05/2026 · 17:45</strong></span>
-            <span>Reçu chez moi : <strong>il y a 2h 14min</strong></span>
-            <span>SLA total : <span class="sla ok">OK · J+1/10</span></span>
-            <span>Pièces : <strong>7/6 (1 en plus)</strong></span>
+          <div class="meta">
+            <span>Soumis le<br><strong>14/05/2026 · 17h45</strong></span>
+            <span>Reçu chez moi<br><strong>il y a 2 h 14 min</strong></span>
+            <span>SLA global<br><strong style="color:var(--emerald-700)">OK · J+1 / 10</strong></span>
+            <span>Pièces<br><strong>7 / 6 (1 en plus)</strong></span>
           </div>
         </div>
 
-        <div class="action-bar">
-          <span class="step-info">Étape : <strong>1/5 — Secrétariat</strong></span>
-          <button class="btn btn-ghost">↶ Renvoyer à l'investisseur</button>
-          <button class="btn btn-secondary">💬 Commenter</button>
-          <div class="spacer"></div>
-          <button class="btn btn-danger">✕ Rejeter le dossier</button>
-          <button class="btn btn-secondary">✓ Signer</button>
-          <button class="btn btn-primary">→ Signer et transmettre</button>
+        <div class="action-rail">
+          <div class="step-info">Étape : <strong>I sur V — Secrétariat</strong></div>
+          <button class="btn btn-sm">↶ Renvoyer</button>
+          <button class="btn btn-sm">💬 Commenter</button>
+          <button class="btn btn-sm" style="background:rgba(110,22,32,0.4);border-color:rgba(110,22,32,0.6)">✕ Rejeter</button>
+          <button class="btn btn-gold btn-sm">✓ Signer & transmettre →</button>
         </div>
 
-        <div class="dossier-body">
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>📎 Pièces fournies (7)</h4>
-              <span class="text-muted">Cliquez pour visualiser</span>
+        <div class="dossier-b">
+          <div class="panel">
+            <div class="panel-head">
+              <h4>Pièces jointes au dossier · 7</h4>
+              <span class="hint">Cliquez pour visualiser</span>
             </div>
-            <div class="section-block-body">
-              <div class="doc-grid">
-                <div class="doc-mini active"><div class="ico">PDF</div><div class="name">Récépissé ART (régulation télécoms)</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Plan de recrutement 170 ETP</div><span class="pill pending">?</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Accord Equinix — formation continue</div><span class="pill rejected">✕</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Plan de sous-traitance BTP</div><span class="pill pending">?</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">IFC + Proparco — accord 9 Md</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Étude de faisabilité (84 pages)</div><span class="pill pending">?</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Titre foncier — zone industrielle Limbe</div><span class="pill pending">?</span></div>
+            <div class="panel-b">
+              <div class="doc-tiles">
+                <div class="doc-tile active"><div class="ico">PDF</div><div class="name">Récépissé ART</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Plan de recrutement 170 ETP</div><span class="pill pending">?</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Accord Equinix — formation</div><span class="pill rejected">✕</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Sous-traitance BTP</div><span class="pill pending">?</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">IFC + Proparco — 9 Md</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Étude de faisabilité (84 p.)</div><span class="pill pending">?</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Titre foncier · Limbé</div><span class="pill pending">?</span></div>
               </div>
             </div>
           </div>
 
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>📄 Document ouvert · « Récépissé ART »</h4>
-              <span class="text-muted">page 1 sur 3</span>
+          <div class="panel">
+            <div class="panel-head">
+              <h4>Document ouvert · « Récépissé ART »</h4>
+              <span class="hint">page i sur iii</span>
             </div>
-            <div class="section-block-body" style="padding: 0">
+            <div class="panel-b" style="padding:0">
               <div class="viewer">
                 <div class="page">
-                  <h1>RÉPUBLIQUE DU CAMEROUN<br><span style="font-size:10px;font-weight:400;color:var(--ink-70)">Agence de Régulation des Télécommunications</span></h1>
-                  <h2>RÉCÉPISSÉ N° ART/DG/0421/2026</h2>
+                  <h1>RÉPUBLIQUE DU CAMEROUN<span>Agence de Régulation des Télécommunications</span></h1>
+                  <h2>· Récépissé n° ART/DG/0421/2026 ·</h2>
                   <p><strong>Délivré à :</strong> DATA-CENTER DOUALA SUARL</p>
                   <p><strong>Forme juridique :</strong> SUARL</p>
                   <p><strong>NIU :</strong> M050246813579C</p>
-                  <p><strong>Activité autorisée :</strong> Hébergement et traitement de données numériques (centre de données Tier-III)</p>
-                  <p style="margin-top:12px">L'Agence de Régulation des Télécommunications atteste par les présentes que la société DATA-CENTER DOUALA SUARL est autorisée à exercer l'activité décrite ci-dessus, sous réserve du respect des conditions techniques et réglementaires en vigueur.</p>
-                  <p style="margin-top:18px;text-align:right">Yaoundé, le 12 mars 2026<br>Le Directeur Général,</p>
+                  <p><strong>Activité autorisée :</strong> Hébergement et traitement de données numériques (centre de données Tier-III).</p>
+                  <p style="margin-top:14px">L'Agence de Régulation des Télécommunications atteste par les présentes que la société DATA-CENTER DOUALA SUARL est autorisée à exercer l'activité décrite ci-dessus, sous réserve du respect des conditions techniques et réglementaires en vigueur.</p>
+                  <p style="margin-top:20px;text-align:right;font-style:italic">Yaoundé, le 12 mars 2026<br>Le Directeur Général,</p>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="comments">
-            <h5>💬 Commentaires sur ce document (2)</h5>
-            <div class="comment">
+            <h5>💬 Commentaires sur ce document</h5>
+            <div class="cmt">
               <div class="ava">ME</div>
               <div class="body">
-                <div class="meta"><span class="who">Marie Etoundi (Secrétariat)</span> · il y a 1h</div>
-                <div>Document lisible, signature conforme à celle au registre. Cohérence avec l'objet déclaré (centre de données).</div>
+                <div class="meta"><span class="who">Marie Etoundi</span> — Secrétariat · il y a 1 h</div>
+                <p>Document lisible, signature conforme à celle du registre. Cohérence avec l'objet déclaré (centre de données numériques).</p>
               </div>
             </div>
-            <div class="comment">
-              <div class="ava r">!</div>
+            <div class="cmt">
+              <div class="ava ai">AI</div>
               <div class="body">
-                <div class="meta"><span class="who">Assistant IA</span> · il y a 1h</div>
-                <div>⚠ Le NIU figurant sur le récépissé ART correspond bien à celui déclaré dans le dossier d'investissement (M050246813579C). Pas de divergence détectée.</div>
+                <div class="meta"><span class="who">Assistant IA</span> — Vérification · il y a 1 h</div>
+                <p>Le NIU figurant sur le récépissé ART (M050246813579C) correspond exactement à celui déclaré dans le dossier d'investissement. Aucune divergence détectée.</p>
               </div>
             </div>
-            <div class="comment-input">
+            <div class="cmt-input">
               <div class="ava">ME</div>
               <input type="text" placeholder="Ajouter un commentaire sur ce document…">
-              <button class="btn btn-secondary btn-sm">Envoyer</button>
+              <button class="btn btn-outline btn-sm">Envoyer</button>
             </div>
           </div>
         </div>
       </main>
 
-      <!-- Right AI pane -->
       <aside class="ai-pane">
-        <div class="ai-pane-head">
+        <div class="ai-h">
           <div class="ai-badge">AI</div>
-          <div class="title">
+          <div class="ti">
             <div class="name">Assistant Vérification</div>
-            <div class="sub">OCR + complétude · Claude Sonnet</div>
+            <div class="sub">OCR · Complétude · Cohérence</div>
           </div>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">1</span>Complétude des pièces</h5>
-          <p>Les <strong>6 pièces obligatoires (Art. 6)</strong> sont présentes. Une 7ème pièce supplémentaire (titre foncier) a été jointe — recommandée pour les projets fonciers comme celui-ci.</p>
-          <span class="verdict ok">✓ Complet</span>
+        <div class="ai-sec">
+          <h5><span class="roman">i.</span>Complétude des pièces</h5>
+          <p>Les six pièces requises par l'<strong>Art. 6</strong> sont présentes. Une septième pièce supplémentaire (titre foncier) a été jointe — pertinente pour les projets fonciers.</p>
+          <span class="verdict ok">Complet</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">2</span>OCR — pièce ouverte</h5>
+        <div class="ai-sec">
+          <h5><span class="roman">ii.</span>OCR — pièce ouverte</h5>
           <p><strong>Récépissé ART/DG/0421/2026</strong></p>
-          <p>Bénéficiaire : <em>DATA-CENTER DOUALA SUARL</em><br>NIU : <em>M050246813579C</em><br>Date : <em>12/03/2026</em></p>
+          <p>Bénéficiaire — <em>DATA-CENTER DOUALA SUARL</em><br>NIU — <em>M050246813579C</em><br>Date — <em>12 mars 2026</em></p>
           <div class="quote">« autorisée à exercer l'activité d'hébergement et traitement de données numériques, sous réserve du respect des conditions techniques »</div>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">3</span>Cohérence inter-documents</h5>
-          <p>NIU récépissé ART = NIU déclaré au dossier ✓<br>Adresse Limbé sur titre foncier = lieu d'implantation ✓<br>Montant attestation IFC (9 Md) ≥ investissement déclaré (8,5 Md) ✓</p>
-          <span class="verdict ok">✓ Cohérent</span>
+        <div class="ai-sec">
+          <h5><span class="roman">iii.</span>Cohérence inter-documents</h5>
+          <p>NIU récépissé ART = NIU dossier ✓<br>Adresse titre foncier (Limbé) = lieu d'implantation ✓<br>Attestation IFC (9 Md) ≥ montant investissement (8,5 Md) ✓</p>
+          <span class="verdict ok">Cohérent</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">4</span>Point d'attention</h5>
-          <p>Le « Plan de transfert de technologies » (PDF) présente des pages floues entre les feuillets 4 et 7. Risque de rejet à l'étape suivante.</p>
-          <span class="verdict warn">⚠ À signaler à l'investisseur</span>
+        <div class="ai-sec">
+          <h5><span class="roman">iv.</span>Point d'attention</h5>
+          <p>Le « Plan de transfert de technologies » présente des pages floues entre les feuillets 4 et 7. Risque de rejet à l'étape suivante si non corrigé.</p>
+          <span class="verdict warn">À signaler à l'investisseur</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">5</span>Recommandation</h5>
-          <p><strong>Délivrer le récépissé de dépôt</strong> et notifier l'investisseur qu'il doit re-téléverser le plan de transfert de technologies en meilleure résolution (300 DPI mini).</p>
+        <div class="ai-sec">
+          <h5><span class="roman">v.</span>Recommandation</h5>
+          <p><strong>Délivrer le récépissé</strong> et notifier l'investisseur du re-téléversement requis du plan de transfert de technologies en 300 DPI minimum.</p>
         </div>
       </aside>
     </div>
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 6 — Director view + AI compliance pane
-     ============================================================ -->
-<div id="s6" class="screen-label">
-  <span class="num">6</span>
-  <span class="name">Personnel — Direction (Investissements / Conformité / Rel. Extérieures)</span>
-  <span class="meta">Même structure 3 colonnes · Pane IA = analyse de conformité (Fond · Forme · Recommandation)</span>
+<!-- =========================================================
+     VI — Director view + AI compliance
+     ========================================================= -->
+<div id="s6" class="scr-label">
+  <span class="num">vi</span>
+  <span class="ttl">Direction — Investissements / Conformité / Rel. Extérieures</span>
+  <span class="meta">Pane IA = analyse de conformité (Présentation · Fond · Forme · Verdict)</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">Portail interne <span class="dot">⚜</span> Workflow d'agrément <span class="dot">⚜</span> Direction des Investissements</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Portail Interne</div>
+          <div class="top">Portail interne</div>
           <div class="org">Workflow d'agrément</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar">PN</div>
+            <div class="gov-ava">PN</div>
             <div class="gov-user-meta">
               <div class="name">Paul Nkomo</div>
               <div class="role">Directeur des Investissements</div>
@@ -1961,152 +2191,120 @@ table.staff-table .ava-cell .ava {
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
     <div class="staff-shell">
-      <aside class="staff-sidebar">
-        <div class="sidebar-section">
+      <aside class="staff-side">
+        <div class="section">
           <h5>Ma corbeille (4)</h5>
-          <ul class="sidebar-list">
+          <ul>
             <li class="active">
-              <div>
-                <span class="ref">2026/000124</span>
-                SA CAMINDUSTRIE
-              </div>
-              <span class="pill review">Nouveau</span>
+              <div class="ref">2026 / 000 124</div>
+              <div class="row"><span class="name">SA CAMINDUSTRIE</span><span class="pill review">Nouveau</span></div>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000122</span>
-                SARL VertiLines
-              </div>
-              <span class="pill pending">À examiner</span>
+              <div class="ref">2026 / 000 122</div>
+              <div class="row"><span class="name">VertiLines SARL</span><span class="pill pending">À examiner</span></div>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000121</span>
-                Cement-Cam SUARL
-              </div>
-              <span class="pill pending">À examiner</span>
+              <div class="ref">2026 / 000 121</div>
+              <div class="row"><span class="name">Cement-Cam SUARL</span><span class="pill pending">À examiner</span></div>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000119</span>
-                AgroPro SA
-              </div>
-              <span class="pill review">À examiner</span>
+              <div class="ref">2026 / 000 119</div>
+              <div class="row"><span class="name">AgroPro SA</span><span class="pill review">Urgent</span></div>
             </li>
           </ul>
         </div>
-
-        <div class="sidebar-section">
-          <h5>Mes signatures (cette semaine)</h5>
-          <ul class="sidebar-list">
-            <li><div>5 dossiers signés</div></li>
-            <li><div>2 dossiers retournés</div></li>
-            <li><div>1 dossier rejeté</div></li>
+        <div class="section">
+          <h5>Cette semaine</h5>
+          <ul>
+            <li><div class="row"><span class="name">5 signés</span></div></li>
+            <li><div class="row"><span class="name">2 retournés</span></div></li>
+            <li><div class="row"><span class="name">1 rejeté</span></div></li>
           </ul>
         </div>
       </aside>
 
       <main class="staff-main">
-        <div class="dossier-header">
-          <div class="dossier-title-row">
+        <div class="dossier-h">
+          <div class="top">
             <h2>SA CAMINDUSTRIE</h2>
-            <span class="ref">2026/000124</span>
+            <span class="ref">2026 / 000 124</span>
             <span class="pill review">En examen — Direction</span>
           </div>
-          <div class="dossier-meta-row">
-            <span>Reçu chez moi : <strong>il y a 14h 22min</strong></span>
-            <span>Délai à mon poste : <span class="sla ok">14h / 72h</span></span>
-            <span>Transmis par : <strong>Marie Etoundi (Secrétariat)</strong></span>
-            <span>SLA global : <span class="sla warn">J+6/10 ouvrés</span></span>
+          <div class="meta">
+            <span>Reçu chez moi<br><strong>il y a 14 h 22 min</strong></span>
+            <span>Délai à mon poste<br><strong style="color:var(--emerald-700)">14 h / 72 h</strong></span>
+            <span>Transmis par<br><strong>Marie Etoundi · Secrétariat</strong></span>
+            <span>SLA global<br><strong style="color:var(--st-pending-fg)">J+6 / 10 ouvrés</strong></span>
           </div>
         </div>
 
-        <div class="action-bar">
-          <span class="step-info">Étape : <strong>2/5 — Direction des Investissements</strong></span>
-          <button class="btn btn-ghost">↶ Renvoyer en arrière</button>
-          <button class="btn btn-secondary">💬 Commenter</button>
-          <div class="spacer"></div>
-          <button class="btn btn-danger">✕ Rejeter</button>
-          <button class="btn btn-secondary">✓ Signer (sans transmettre)</button>
-          <button class="btn btn-primary">→ Signer et transmettre à la Conformité</button>
+        <div class="action-rail">
+          <div class="step-info">Étape : <strong>II sur V — Direction des Investissements</strong></div>
+          <button class="btn btn-sm">↶ Renvoyer</button>
+          <button class="btn btn-sm">💬 Commenter</button>
+          <button class="btn btn-sm" style="background:rgba(110,22,32,0.4);border-color:rgba(110,22,32,0.6)">✕ Rejeter</button>
+          <button class="btn btn-gold btn-sm">✓ Signer & transmettre à la Conformité →</button>
         </div>
 
-        <div class="dossier-body">
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>📋 Synthèse du projet</h4>
-            </div>
-            <div class="section-block-body">
-              <div class="conv-meta" style="margin: 0">
-                <div>
-                  <div class="label">Secteur</div>
-                  <div class="value">Industrie lourde · ligne PEHD</div>
-                </div>
-                <div>
-                  <div class="label">Type</div>
-                  <div class="value">Extension (Art. 8)</div>
-                </div>
-                <div>
-                  <div class="label">Catégorie</div>
-                  <div class="value">B — 1 à 5 Md FCFA</div>
-                </div>
-                <div>
-                  <div class="label">Montant</div>
-                  <div class="value tabular">3 200 000 000 FCFA</div>
-                </div>
-                <div>
-                  <div class="label">Implantation</div>
-                  <div class="value">Douala (hors ZDP)</div>
-                </div>
-                <div>
-                  <div class="label">Critères Art. 8</div>
-                  <div class="value">3/3 satisfaits</div>
-                </div>
+        <div class="dossier-b">
+          <div class="panel">
+            <div class="panel-head"><h4>Synthèse du projet</h4></div>
+            <div class="panel-b">
+              <div class="cert-meta" style="margin:0;padding:0;border:none">
+                <div class="item"><div class="lbl">Secteur</div><div class="val">Industrie · ligne PEHD</div></div>
+                <div class="item"><div class="lbl">Type</div><div class="val">Extension · Art. 8</div></div>
+                <div class="item"><div class="lbl">Catégorie</div><div class="val">B · 1 — 5 Md FCFA</div></div>
+                <div class="item"><div class="lbl">Montant</div><div class="val tabular">3,2 Md FCFA</div></div>
+                <div class="item"><div class="lbl">Implantation</div><div class="val">Douala · hors ZDP</div></div>
+                <div class="item"><div class="lbl">Critères Art. 8</div><div class="val">3 / 3 satisfaits</div></div>
               </div>
             </div>
           </div>
 
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>📎 Pièces fournies (6) — toutes vérifiées au Secrétariat</h4>
-            </div>
-            <div class="section-block-body">
-              <div class="doc-grid">
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Agrément MINMIDT</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini active"><div class="ico">PDF</div><div class="name">Plan de recrutement (24 postes)</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Transfert tech. — Bauer GmbH</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Sous-traitance (18 fournisseurs)</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Prêt SCB + apport propre</div><span class="pill signed">✓</span></div>
-                <div class="doc-mini"><div class="ico">PDF</div><div class="name">Étude de faisabilité</div><span class="pill signed">✓</span></div>
+          <div class="panel">
+            <div class="panel-head"><h4>Pièces vérifiées au Secrétariat · 6/6 ✓</h4></div>
+            <div class="panel-b">
+              <div class="doc-tiles">
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Agrément MINMIDT</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile active"><div class="ico">PDF</div><div class="name">Plan recrutement (24)</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Transfert tech. — Bauer GmbH</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Sous-traitance (18)</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Prêt SCB + apport propre</div><span class="pill signed">✓</span></div>
+                <div class="doc-tile"><div class="ico">PDF</div><div class="name">Étude de faisabilité</div><span class="pill signed">✓</span></div>
               </div>
             </div>
           </div>
 
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>🕐 Chronologie</h4>
-            </div>
-            <div class="section-block-body">
-              <ul class="history-mini">
+          <div class="panel">
+            <div class="panel-head"><h4>Chronologie du dossier</h4></div>
+            <div class="panel-b">
+              <ul class="history-inline">
                 <li>
-                  <div class="ts">Hier · 11:30</div>
-                  <div class="what"><strong>Transmis au Directeur des Investissements</strong> <span class="who">par Marie Etoundi (Secrétariat)</span></div>
+                  <div class="ts">16 mai · 11:30</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Transmis au Directeur des Investissements</div>
+                    <div class="who">par Marie Etoundi · Secrétariat</div>
+                  </div>
                 </li>
                 <li>
-                  <div class="ts">Hier · 11:18</div>
-                  <div class="what"><strong>Signé par le Secrétariat</strong> <span class="who">— vérification complétude OK</span></div>
+                  <div class="ts">16 mai · 11:18</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Signé par le Secrétariat</div>
+                    <div class="who">Vérification de complétude conforme</div>
+                  </div>
                 </li>
                 <li>
-                  <div class="ts">12/05 · 09:50</div>
-                  <div class="what"><strong>Récépissé délivré</strong> <span class="who">n° 2026/R0099</span></div>
-                </li>
-                <li>
-                  <div class="ts">11/05 · 14:22</div>
-                  <div class="what"><strong>Dossier soumis</strong> <span class="who">par Florence Kameni</span></div>
+                  <div class="ts">12 mai · 09:50</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Récépissé délivré · n° 2026/R0099</div>
+                    <div class="who">par Marie Etoundi · Secrétariat</div>
+                  </div>
                 </li>
               </ul>
             </div>
@@ -2114,93 +2312,91 @@ table.staff-table .ava-cell .ava {
 
           <div class="comments">
             <h5>💬 Commentaires de la Direction</h5>
-            <div class="comment">
+            <div class="cmt">
               <div class="ava">PN</div>
               <div class="body">
-                <div class="meta"><span class="who">Paul Nkomo (Dir. Inv.)</span> · à l'instant</div>
-                <div>Projet d'extension cohérent. Production +35% confirmée par l'étude (page 12). Critères Art. 8 tous satisfaits. Prêt à transmettre à la Conformité.</div>
+                <div class="meta"><span class="who">Paul Nkomo</span> — Dir. Investissements · à l'instant</div>
+                <p>Projet d'extension cohérent. Production +35% confirmée par l'étude (page 12). Les critères de l'Article 8 sont tous satisfaits. Prêt à transmettre à la Conformité.</p>
               </div>
             </div>
-            <div class="comment-input">
+            <div class="cmt-input">
               <div class="ava">PN</div>
               <input type="text" placeholder="Ajouter un commentaire…">
-              <button class="btn btn-secondary btn-sm">Envoyer</button>
+              <button class="btn btn-outline btn-sm">Envoyer</button>
             </div>
           </div>
         </div>
       </main>
 
       <aside class="ai-pane">
-        <div class="ai-pane-head">
+        <div class="ai-h">
           <div class="ai-badge">AI</div>
-          <div class="title">
-            <div class="name">Analyse de conformité</div>
-            <div class="sub">Art. 1–52 · Claude Sonnet</div>
+          <div class="ti">
+            <div class="name">Analyse de Conformité</div>
+            <div class="sub">Fond · Forme · Verdict</div>
           </div>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">1</span>Présentation</h5>
-          <p>Le dossier est bien structuré, lisible, comportant les <strong>6 pièces de l'Art. 6</strong>. La rédaction est claire et la chronologie respectée (récépissé + 1 jour ouvré). Aucun défaut de présentation détecté.</p>
-          <span class="verdict ok">✓ Présentation conforme</span>
+        <div class="ai-sec">
+          <h5><span class="roman">i.</span>Présentation</h5>
+          <p>Le dossier est bien structuré et lisible. Les six pièces de l'<strong>Art. 6</strong> sont présentes, la chronologie est respectée. Aucun défaut de présentation détecté.</p>
+          <span class="verdict ok">Présentation conforme</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">2</span>Fond — éligibilité substantielle</h5>
-          <p><strong>Art. 3 (secteur éligible) :</strong> ✓ Industrie lourde / manufacturière.</p>
-          <p><strong>Art. 8 (extension) :</strong> Production +35% (>20% requis) ✓ · 24 emplois directs (≥1 par tranche de 50 M) ✓ · 58% d'intrants nationaux (>50% requis) ✓. <strong>3/3 critères remplis</strong>.</p>
-          <p><strong>Art. 11.2 (Catégorie B) :</strong> Montant 3,2 Md ⇒ crédit d'impôt 50%, exonération droits de mutation, amortissement accéléré 2x.</p>
-          <span class="verdict ok">✓ Fond conforme</span>
+        <div class="ai-sec">
+          <h5><span class="roman">ii.</span>Fond — éligibilité substantielle</h5>
+          <p><strong>Art. 3 · secteur éligible :</strong> ✓ Industrie lourde / manufacturière.</p>
+          <p><strong>Art. 8 · extension :</strong> Production +35% (>20% requis) ✓ · 24 emplois directs ✓ · 58% d'intrants nationaux (>50% requis) ✓. <strong>3 / 3 critères remplis.</strong></p>
+          <p><strong>Art. 11.2 · Catégorie B :</strong> Crédit d'impôt 50%, exonération des droits de mutation, amortissement accéléré 2×.</p>
+          <span class="verdict ok">Fond conforme</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">3</span>Forme — pièces et procédure</h5>
-          <p>Toutes les pièces sont signées, datées, en cours de validité. Les attestations bancaires (SCB) sont à jour. Le NIU est cohérent partout.</p>
-          <div class="quote">« Le bénéficiaire des incitations s'engage à respecter le programme de recrutement Camerounais annoncé » — clause type retrouvée page 14.</div>
-          <span class="verdict ok">✓ Forme conforme</span>
+        <div class="ai-sec">
+          <h5><span class="roman">iii.</span>Forme — pièces & procédure</h5>
+          <p>Toutes les pièces sont signées, datées, en cours de validité. Les attestations bancaires SCB sont actualisées. Le NIU est cohérent partout.</p>
+          <div class="quote">« Le bénéficiaire des incitations s'engage à respecter le programme de recrutement Camerounais annoncé » — clause type, p. 14.</div>
+          <span class="verdict ok">Forme conforme</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">4</span>Point d'attention</h5>
-          <p>Le partenariat Bauer GmbH (Allemagne) prévoit le détachement de 4 cadres Camerounais pendant 6 mois. <strong>Compatibilité Loi 2023/008 (PPP) à vérifier</strong> avec la Direction des Relations Extérieures.</p>
-          <span class="verdict warn">⚠ À soulever à l'étape 4</span>
+        <div class="ai-sec">
+          <h5><span class="roman">iv.</span>Point d'attention</h5>
+          <p>Le partenariat <strong>Bauer GmbH</strong> (Allemagne) prévoit le détachement de 4 cadres Camerounais pendant 6 mois. Compatibilité avec la Loi 2023/008 (PPP) à examiner par les Relations Extérieures.</p>
+          <span class="verdict warn">À soulever à l'étape iv</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">5</span>Recommandation</h5>
-          <p><strong>Signer et transmettre</strong> à la Direction de la Conformité. Joindre un commentaire signalant la clause Bauer GmbH pour l'examen ultérieur des Relations Extérieures.</p>
-        </div>
-
-        <div class="ai-section" style="background: var(--cmgreen-50); border-color: #cee8d8">
-          <h5><span class="num" style="background:var(--cmgreen-700);color:#fff">★</span>Verdict global</h5>
-          <span class="verdict ok">✓ Conformité globale : 94 / 100</span>
+        <div class="ai-sec consolidated">
+          <h5><span class="roman">v.</span>Verdict consolidé</h5>
+          <p>Recommandation : <strong>Signer et transmettre</strong> à la Direction de la Conformité, en joignant un commentaire sur la clause Bauer GmbH pour les Relations Extérieures.</p>
+          <div class="score">94<span class="unit"> / 100</span></div>
+          <span class="verdict ok" style="margin-top:14px">Conformité globale</span>
         </div>
       </aside>
     </div>
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 7 — DG signature
-     ============================================================ -->
-<div id="s7" class="screen-label">
-  <span class="num">7</span>
-  <span class="name">Personnel — Directeur Général · Signature finale</span>
-  <span class="meta">Synthèse des 4 étapes précédentes · Génération de la convention pour signature physique (wet signature)</span>
+<!-- =========================================================
+     VII — DG signature
+     ========================================================= -->
+<div id="s7" class="scr-label">
+  <span class="num">vii</span>
+  <span class="ttl">Directeur Général — Signature finale</span>
+  <span class="meta">Synthèse des 4 signatures · résumé financier généré par IA · convention prête</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">Portail interne <span class="dot">⚜</span> Workflow d'agrément <span class="dot">⚜</span> Directeur Général</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Portail Interne</div>
-          <div class="org">Workflow d'agrément</div>
+          <div class="top">Portail interne · Direction Générale</div>
+          <div class="org">Signature des conventions d'investissement</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar">PE</div>
+            <div class="gov-ava">PE</div>
             <div class="gov-user-meta">
               <div class="name">Dr. Pierre Eyenga</div>
               <div class="role">Directeur Général · API</div>
@@ -2208,137 +2404,121 @@ table.staff-table .ava-cell .ava {
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
-    <div class="staff-shell" style="grid-template-columns: 240px 1fr 360px">
-      <aside class="staff-sidebar">
-        <div class="sidebar-section">
-          <h5>En attente de signature DG</h5>
-          <ul class="sidebar-list">
+    <div class="staff-shell" style="grid-template-columns:260px 1fr 380px">
+      <aside class="staff-side">
+        <div class="section">
+          <h5>En attente de signature</h5>
+          <ul>
             <li class="active">
-              <div>
-                <span class="ref">2026/000124</span>
-                SA CAMINDUSTRIE
-              </div>
-              <span class="pill review">À signer</span>
+              <div class="ref">2026 / 000 124</div>
+              <div class="row"><span class="name">SA CAMINDUSTRIE</span><span class="pill review">À signer</span></div>
             </li>
             <li>
-              <div>
-                <span class="ref">2026/000118</span>
-                SARL EnergyPlus
-              </div>
-              <span class="pill pending">À examiner</span>
+              <div class="ref">2026 / 000 118</div>
+              <div class="row"><span class="name">SARL EnergyPlus</span><span class="pill pending">À examiner</span></div>
             </li>
           </ul>
         </div>
-        <div class="sidebar-section">
-          <h5>Dossiers clos (5)</h5>
-          <ul class="sidebar-list">
-            <li><div><span class="ref">2026/000115</span>SARL Aroma-Cam</div><span class="pill closed">Clos</span></li>
-            <li><div><span class="ref">2026/000112</span>TransMar SA</div><span class="pill closed">Clos</span></li>
+        <div class="section">
+          <h5>Dossiers clos · 2026</h5>
+          <ul>
+            <li><div class="ref">2026 / 000 115</div><div class="row"><span class="name">SARL Aroma-Cam</span><span class="pill closed">Clos</span></div></li>
+            <li><div class="ref">2026 / 000 112</div><div class="row"><span class="name">TransMar SA</span><span class="pill closed">Clos</span></div></li>
+            <li><div class="ref">2026 / 000 109</div><div class="row"><span class="name">CemBuild SUARL</span><span class="pill closed">Clos</span></div></li>
           </ul>
         </div>
       </aside>
 
       <main class="staff-main">
-        <div class="dossier-header">
-          <div class="dossier-title-row">
+        <div class="dossier-h">
+          <div class="top">
             <h2>SA CAMINDUSTRIE</h2>
-            <span class="ref">2026/000124</span>
+            <span class="ref">2026 / 000 124</span>
             <span class="pill review">En signature DG</span>
           </div>
-          <div class="dossier-meta-row">
-            <span>Parcours total : <strong>5 jours 14h</strong></span>
-            <span>SLA : <span class="sla ok">OK · 4j restants</span></span>
-            <span>Reçu chez moi : <strong>il y a 2h</strong></span>
-            <span>4 signatures préalables : <strong>✓ Secrétariat · ✓ Investissements · ✓ Conformité · ✓ Relations Extérieures</strong></span>
+          <div class="meta">
+            <span>Parcours total<br><strong>5 jours · 14 h</strong></span>
+            <span>SLA<br><strong style="color:var(--emerald-700)">OK · 4 j restants</strong></span>
+            <span>Reçu chez moi<br><strong>il y a 2 h</strong></span>
+            <span>Signatures préalables<br><strong style="color:var(--emerald-700)">4 / 4 ✓</strong></span>
           </div>
         </div>
 
-        <div class="action-bar">
-          <span class="step-info">Étape : <strong>5/5 — Directeur Général · Signature finale</strong></span>
-          <button class="btn btn-ghost">↶ Renvoyer à l'étape 4</button>
-          <button class="btn btn-secondary">📄 Aperçu de la convention (PDF)</button>
-          <div class="spacer"></div>
-          <button class="btn btn-danger">✕ Rejeter</button>
-          <button class="btn btn-primary" style="background:var(--cmgreen);padding:11px 22px">✓ Signer la convention et clore le dossier</button>
+        <div class="action-rail">
+          <div class="step-info">Étape : <strong>V sur V — Directeur Général · Signature finale</strong></div>
+          <button class="btn btn-sm">↶ Renvoyer à l'étape iv</button>
+          <button class="btn btn-sm">📄 Aperçu convention</button>
+          <button class="btn btn-sm" style="background:rgba(110,22,32,0.4);border-color:rgba(110,22,32,0.6)">✕ Rejeter</button>
+          <button class="btn btn-gold btn-sm" style="font-size:11px;padding:9px 18px">✓ Signer & clore le dossier</button>
         </div>
 
-        <div class="dossier-body">
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>📋 Synthèse — 4 signatures préalables</h4>
-            </div>
-            <div class="section-block-body">
-              <ul class="history-mini">
+        <div class="dossier-b">
+          <div class="panel">
+            <div class="panel-head"><h4>Synthèse — 4 signatures préalables</h4></div>
+            <div class="panel-b">
+              <ul class="history-inline">
                 <li>
-                  <div class="ts">Aujourd'hui · 10:32</div>
-                  <div class="what"><strong>Transmis au DG</strong> <span class="who">par Christine Abena (Dir. Rel. Extérieures)</span></div>
+                  <div class="ts">17 mai · 10:32</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Transmis au Directeur Général</div>
+                    <div class="who">par Christine Abena — Dir. Rel. Extérieures</div>
+                  </div>
                 </li>
                 <li>
-                  <div class="ts">Hier · 14:18</div>
-                  <div class="what"><strong>Signé par les Relations Extérieures</strong> <span class="who">— « Clause Bauer GmbH validée, compatible avec le PPP-cadre 2023/008. »</span></div>
+                  <div class="ts">16 mai · 14:18</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Signature des Relations Extérieures</div>
+                    <div class="who">« Clause Bauer GmbH validée, compatible avec le PPP-cadre 2023/008. »</div>
+                  </div>
                 </li>
                 <li>
-                  <div class="ts">14/05 · 16:42</div>
-                  <div class="what"><strong>Signé par la Conformité</strong> <span class="who">— « Régularité fiscale et douanière confirmée, aucun arriéré. »</span></div>
+                  <div class="ts">14 mai · 16:42</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Signature de la Conformité</div>
+                    <div class="who">« Régularité fiscale et douanière confirmée, aucun arriéré. »</div>
+                  </div>
                 </li>
                 <li>
-                  <div class="ts">14/05 · 11:18</div>
-                  <div class="what"><strong>Signé par les Investissements</strong> <span class="who">— « Critères Art. 8 tous satisfaits, prêt à transmettre. »</span></div>
+                  <div class="ts">14 mai · 11:18</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Signature des Investissements</div>
+                    <div class="who">« Critères Art. 8 tous satisfaits, prêt à transmettre. »</div>
+                  </div>
                 </li>
                 <li>
-                  <div class="ts">12/05 · 09:50</div>
-                  <div class="what"><strong>Récépissé délivré</strong> <span class="who">par Marie Etoundi (Secrétariat)</span></div>
+                  <div class="ts">12 mai · 09:50</div>
+                  <div class="mk"></div>
+                  <div>
+                    <div class="what">Récépissé délivré · n° 2026/R0099</div>
+                    <div class="who">par Marie Etoundi — Secrétariat</div>
+                  </div>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div class="section-block">
-            <div class="section-block-head">
-              <h4>💰 Synthèse financière (générée par IA)</h4>
-              <span class="text-muted">Données extraites de l'étude de faisabilité + attestations bancaires</span>
+          <div class="panel">
+            <div class="panel-head">
+              <h4>Synthèse financière · générée par l'IA</h4>
+              <span class="hint">Extraite de l'étude de faisabilité + attestations</span>
             </div>
-            <div class="section-block-body">
+            <div class="panel-b">
               <div class="fin-grid">
-                <div class="fin-tile">
-                  <div class="lbl">Investissement total</div>
-                  <div class="num tabular">3,2<span class="unit"> Md FCFA</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">Crédit d'impôt (50%)</div>
-                  <div class="num tabular">1,6<span class="unit"> Md FCFA</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">Emplois directs prévus</div>
-                  <div class="num tabular">24<span class="unit"> ETP</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">Apport propre</div>
-                  <div class="num tabular">700<span class="unit"> M FCFA</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">Prêt SCB</div>
-                  <div class="num tabular">2,5<span class="unit"> Md FCFA</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">TRI projeté (5 ans)</div>
-                  <div class="num tabular">18,4<span class="unit"> %</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">VAN projetée</div>
-                  <div class="num tabular">+ 920<span class="unit"> M FCFA</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">Délai de retour</div>
-                  <div class="num tabular">4,2<span class="unit"> ans</span></div>
-                </div>
-                <div class="fin-tile">
-                  <div class="lbl">Redevance annuelle (Art. 48)</div>
-                  <div class="num tabular">3,2<span class="unit"> M FCFA</span></div>
-                </div>
+                <div class="fin-tile"><div class="lbl">Investissement total</div><div class="num tabular">3,2 <span class="unit">Md FCFA</span></div></div>
+                <div class="fin-tile"><div class="lbl">Crédit d'impôt (50%)</div><div class="num tabular">1,6 <span class="unit">Md FCFA</span></div></div>
+                <div class="fin-tile"><div class="lbl">Emplois directs prévus</div><div class="num tabular">24 <span class="unit">ETP</span></div></div>
+                <div class="fin-tile"><div class="lbl">Apport propre</div><div class="num tabular">700 <span class="unit">M FCFA</span></div></div>
+                <div class="fin-tile"><div class="lbl">Prêt SCB</div><div class="num tabular">2,5 <span class="unit">Md FCFA</span></div></div>
+                <div class="fin-tile"><div class="lbl">TRI projeté (5 ans)</div><div class="num tabular">18,4 <span class="unit">%</span></div></div>
+                <div class="fin-tile"><div class="lbl">VAN projetée</div><div class="num tabular">+ 920 <span class="unit">M FCFA</span></div></div>
+                <div class="fin-tile"><div class="lbl">Délai de retour</div><div class="num tabular">4,2 <span class="unit">ans</span></div></div>
+                <div class="fin-tile"><div class="lbl">Redevance annuelle (Art. 48)</div><div class="num tabular">3,2 <span class="unit">M FCFA</span></div></div>
               </div>
             </div>
           </div>
@@ -2346,65 +2526,67 @@ table.staff-table .ava-cell .ava {
       </main>
 
       <aside class="ai-pane">
-        <div class="ai-pane-head">
+        <div class="ai-h">
           <div class="ai-badge">AI</div>
-          <div class="title">
+          <div class="ti">
             <div class="name">Synthèse pour le DG</div>
-            <div class="sub">Verdict consolidé · Claude Sonnet</div>
+            <div class="sub">Verdict consolidé</div>
           </div>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">★</span>Verdict consolidé</h5>
-          <p>Le dossier <strong>2026/000124 — SA CAMINDUSTRIE</strong> a passé les 4 étapes précédentes <strong>sans réserve</strong>. Critères d'éligibilité (Art. 8) entièrement satisfaits. Conformité fiscale, douanière et de relations extérieures confirmée.</p>
-          <span class="verdict ok">✓ Recommandation : Signer</span>
+        <div class="ai-sec consolidated">
+          <h5><span class="roman">★</span>Recommandation</h5>
+          <p>Le dossier <strong>2026 / 000 124 — SA CAMINDUSTRIE</strong> a passé les quatre étapes précédentes sans réserve. Critères d'éligibilité <strong>Art. 8</strong> entièrement satisfaits.</p>
+          <div class="score">94<span class="unit"> / 100</span></div>
+          <span class="verdict ok" style="margin-top:14px">Signer la convention</span>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">1</span>Conformité au cadre légal</h5>
-          <p>Aligné avec l'Ordonnance n° 2025/002 · Art. 8 (extension) · Art. 11.2 (Catégorie B incitations).</p>
+        <div class="ai-sec">
+          <h5><span class="roman">i.</span>Conformité légale</h5>
+          <p>Aligné avec l'<strong>Ordonnance n° 2025/002</strong> · Art. 8 (extension) · Art. 11.2 (Catégorie B).</p>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">2</span>Risques résiduels</h5>
-          <p>Aucun risque significatif identifié. La clause Bauer GmbH a été validée par les Rel. Extérieures.</p>
+        <div class="ai-sec">
+          <h5><span class="roman">ii.</span>Risques résiduels</h5>
+          <p>Aucun risque significatif identifié. La clause Bauer GmbH a été validée par les Relations Extérieures.</p>
         </div>
 
-        <div class="ai-section">
-          <h5><span class="num">3</span>Impact estimé</h5>
-          <p>24 emplois directs · production +35% · contribution fiscale supplémentaire estimée à 180 M FCFA/an dès la phase d'exploitation.</p>
+        <div class="ai-sec">
+          <h5><span class="roman">iii.</span>Impact estimé</h5>
+          <p>24 emplois directs · production +35% · contribution fiscale supplémentaire estimée à <strong>180 M FCFA / an</strong> dès l'exploitation.</p>
         </div>
 
-        <div class="ai-section" style="background:#fffbeb;border-color:#fde68a">
-          <h5 style="color:#92400e"><span class="num" style="background:#fcd116;color:#92400e">!</span>Action requise après signature</h5>
-          <p>1. Convention imprimée et signée manuscritement<br>2. Téléversement du scan signé dans le système<br>3. Notification automatique à l'investisseur + transmission DGI/DGD</p>
+        <div class="ai-sec" style="background:rgba(196,164,104,0.08);border-color:var(--gold-bullion)">
+          <h5 style="color:var(--gold-glow)"><span class="roman">!</span>Après signature</h5>
+          <p>1. Convention imprimée et signée manuscritement<br>2. Téléversement du scan signé<br>3. Notification automatique à l'investisseur + DGI/DGD</p>
         </div>
       </aside>
     </div>
   </div>
 </div>
 
-<!-- ============================================================
-     SCREEN 8 — Admin user management
-     ============================================================ -->
-<div id="s8" class="screen-label">
-  <span class="num">8</span>
-  <span class="name">Admin — Gestion du personnel API</span>
-  <span class="meta">Création de comptes staff · Attribution des rôles · Email requis</span>
+<!-- =========================================================
+     VIII — Admin user management
+     ========================================================= -->
+<div id="s8" class="scr-label">
+  <span class="num">viii</span>
+  <span class="ttl">Administration — Gestion du personnel</span>
+  <span class="meta">Table éditoriale du personnel · formulaire de création (email + rôle)</span>
 </div>
-<div class="screen-wrap">
-  <div class="screen-frame">
-    <header class="gov-header">
-      <div class="gov-header-inner">
-        <div class="gov-crest">API</div>
+<div class="scr-wrap">
+  <div class="scr-frame">
+    <div class="gov-bar">Portail interne <span class="dot">⚜</span> Administration <span class="dot">⚜</span> Gestion du personnel</div>
+    <header class="gov-head">
+      <div class="gov-head-inner">
+        <div class="gov-crest">A</div>
         <div class="gov-title">
-          <div class="eyebrow">Portail Interne · Administration</div>
-          <div class="org">Gestion du personnel</div>
+          <div class="top">Portail interne · Administration</div>
+          <div class="org">Personnel & Rôles</div>
         </div>
-        <div class="gov-header-actions">
+        <div class="gov-actions">
           <div class="gov-lang"><button class="active">FR</button><button>EN</button></div>
           <div class="gov-user">
-            <div class="gov-avatar" style="background:var(--cmyellow);color:var(--ink-100)">AD</div>
+            <div class="gov-ava" style="background:var(--gold-bullion);color:var(--ink-black)">AD</div>
             <div class="gov-user-meta">
               <div class="name">Administrateur</div>
               <div class="role">admin@api.cm</div>
@@ -2412,26 +2594,26 @@ table.staff-table .ava-cell .ava {
           </div>
         </div>
       </div>
-      <div class="gov-flag-stripe"></div>
     </header>
 
-    <div class="admin-page" style="position: relative">
-      <div class="toast-demo">
+    <div class="admin-page" style="position:relative">
+      <div class="toast">
         <div class="check">✓</div>
         <div>Compte créé · email de bienvenue envoyé à <strong>p.nkomo@api.cm</strong></div>
       </div>
 
-      <div class="admin-page-inner">
-        <div class="inv-page-title">
-          <div>
+      <div class="admin-inner">
+        <div class="inv-h">
+          <div class="title-block">
+            <div class="eyebrow">Administration</div>
             <h1>Personnel API</h1>
-            <div class="sub">10 comptes actifs · 5 rôles couverts · Dernière création : il y a 2 min</div>
+            <div class="sub">10 comptes actifs · 5 rôles couverts · dernière création il y a 2 minutes</div>
           </div>
         </div>
 
         <div class="admin-cols">
-          <div class="card" style="padding: 0">
-            <table class="staff-table">
+          <div class="table-card">
+            <table class="staff-tbl">
               <thead>
                 <tr>
                   <th>Nom complet</th>
@@ -2444,96 +2626,113 @@ table.staff-table .ava-cell .ava {
               <tbody>
                 <tr>
                   <td>
-                    <div class="ava-cell">
-                      <div class="ava">ME</div>
-                      <div><strong>Marie Etoundi</strong><div class="text-muted">créée le 02/04/2026</div></div>
+                    <div class="name-cell">
+                      <div class="ava-sm">ME</div>
+                      <div>
+                        <strong>Marie Etoundi</strong>
+                        <div class="meta">créée le 02 avril 2026</div>
+                      </div>
                     </div>
                   </td>
                   <td class="email">m.etoundi@api.cm</td>
-                  <td>Secrétariat</td>
+                  <td class="role">Secrétariat</td>
                   <td><span class="pill signed">Actif</span></td>
                   <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
                 </tr>
                 <tr>
                   <td>
-                    <div class="ava-cell">
-                      <div class="ava">PN</div>
-                      <div><strong>Paul Nkomo</strong><div class="text-muted">créée le 02/04/2026</div></div>
+                    <div class="name-cell">
+                      <div class="ava-sm">PN</div>
+                      <div>
+                        <strong>Paul Nkomo</strong>
+                        <div class="meta">créée le 02 avril 2026</div>
+                      </div>
                     </div>
                   </td>
                   <td class="email">p.nkomo@api.cm</td>
-                  <td>Directeur des Investissements</td>
+                  <td class="role">Dir. des Investissements</td>
                   <td><span class="pill signed">Actif</span></td>
                   <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
                 </tr>
                 <tr>
                   <td>
-                    <div class="ava-cell">
-                      <div class="ava">CA</div>
-                      <div><strong>Christine Abena</strong><div class="text-muted">créée le 02/04/2026</div></div>
-                    </div>
-                  </td>
-                  <td class="email">c.abena@api.cm</td>
-                  <td>Directrice des Relations Extérieures</td>
-                  <td><span class="pill signed">Actif</span></td>
-                  <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="ava-cell">
-                      <div class="ava">JM</div>
-                      <div><strong>Jeanne Mballa</strong><div class="text-muted">créée le 04/04/2026</div></div>
+                    <div class="name-cell">
+                      <div class="ava-sm">JM</div>
+                      <div>
+                        <strong>Jeanne Mballa</strong>
+                        <div class="meta">créée le 04 avril 2026</div>
+                      </div>
                     </div>
                   </td>
                   <td class="email">j.mballa@api.cm</td>
-                  <td>Directrice de la Conformité</td>
+                  <td class="role">Dir. de la Conformité</td>
                   <td><span class="pill signed">Actif</span></td>
                   <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
                 </tr>
                 <tr>
                   <td>
-                    <div class="ava-cell">
-                      <div class="ava">PE</div>
-                      <div><strong>Dr. Pierre Eyenga</strong><div class="text-muted">créée le 02/04/2026</div></div>
+                    <div class="name-cell">
+                      <div class="ava-sm">CA</div>
+                      <div>
+                        <strong>Christine Abena</strong>
+                        <div class="meta">créée le 02 avril 2026</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="email">c.abena@api.cm</td>
+                  <td class="role">Dir. des Relations Extérieures</td>
+                  <td><span class="pill signed">Actif</span></td>
+                  <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="name-cell">
+                      <div class="ava-sm">PE</div>
+                      <div>
+                        <strong>Dr. Pierre Eyenga</strong>
+                        <div class="meta">créée le 02 avril 2026</div>
+                      </div>
                     </div>
                   </td>
                   <td class="email">p.eyenga@api.cm</td>
-                  <td>Directeur Général</td>
+                  <td class="role">Directeur Général</td>
                   <td><span class="pill signed">Actif</span></td>
                   <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
                 </tr>
                 <tr>
                   <td>
-                    <div class="ava-cell">
-                      <div class="ava">SN</div>
-                      <div><strong>Samuel Ngono</strong><div class="text-muted">créée le 02/04/2026</div></div>
+                    <div class="name-cell">
+                      <div class="ava-sm" style="background:var(--graphite)">SN</div>
+                      <div>
+                        <strong>Samuel Ngono</strong>
+                        <div class="meta">créée le 02 avril 2026</div>
+                      </div>
                     </div>
                   </td>
                   <td class="email">s.ngono@api.cm</td>
-                  <td>Secrétariat</td>
+                  <td class="role">Secrétariat</td>
                   <td><span class="pill closed">Inactif</span></td>
-                  <td style="text-align:right"><button class="btn btn-ghost btn-sm">Modifier</button></td>
+                  <td style="text-align:right"><button class="btn btn-ghost btn-sm">Réactiver</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div class="card">
-            <div class="card-section-title">
-              <h3>＋ Créer un nouveau personnel</h3>
-            </div>
+          <div class="create-card">
+            <div class="eyebrow">⚜ Nouveau compte</div>
+            <h3>Créer un personnel</h3>
 
             <div class="field">
               <label>Nom complet</label>
               <input type="text" placeholder="Prénom NOM">
             </div>
             <div class="field">
-              <label>Adresse email <span style="color:var(--cmred)">*</span></label>
+              <label>Adresse email <span style="color:var(--burgundy)">*</span></label>
               <input type="email" placeholder="p.nom@api.cm">
-              <div class="hint">Un email de bienvenue avec lien de définition de mot de passe sera envoyé.</div>
+              <div class="hint">Un email de bienvenue avec lien de définition de mot de passe sera envoyé automatiquement.</div>
             </div>
             <div class="field">
-              <label>Rôle <span style="color:var(--cmred)">*</span></label>
+              <label>Rôle <span style="color:var(--burgundy)">*</span></label>
               <select>
                 <option>— Sélectionner un rôle —</option>
                 <option>Secrétariat</option>
@@ -2543,14 +2742,14 @@ table.staff-table .ava-cell .ava {
                 <option>Directeur Général</option>
                 <option>Administrateur</option>
               </select>
-              <div class="hint">Le rôle détermine la corbeille de l'utilisateur et les actions disponibles.</div>
+              <div class="hint">Le rôle détermine la corbeille de l'utilisateur et les actions qui lui sont autorisées.</div>
             </div>
             <div class="field">
               <label>Téléphone (optionnel)</label>
               <input type="tel" placeholder="+237 6 XX XX XX XX">
             </div>
 
-            <button class="btn btn-primary" style="width:100%;margin-top:6px">Créer le compte et envoyer l'email</button>
+            <button class="btn btn-primary" style="width:100%;margin-top:6px">Créer le compte & envoyer l'email →</button>
           </div>
         </div>
       </div>
@@ -2558,13 +2757,10 @@ table.staff-table .ava-cell .ava {
   </div>
 </div>
 
-<!-- ============================================================
-     FOOTER
-     ============================================================ -->
-<footer style="text-align:center;padding:36px 24px;color:var(--ink-50);font-size:12px;border-top:1px solid var(--ink-15);background:#fff">
-  Design preview v1 · 2026-05-17 · API Cameroun
-  <br>
-  <span style="font-size:11px">Visual review only · No backend · Replace with production Next.js components after approval</span>
+<footer class="foot">
+  <div class="gold">⚜ Design Preview v2 ⚜</div>
+  <div style="margin-top:8px">Editorial · Sovereign · Premium &nbsp;·&nbsp; 24 mai MMXXVI</div>
+  <div style="margin-top:6px;letter-spacing:0.6px">Maquette visuelle uniquement — implémentation Next.js après approbation</div>
 </footer>
 
 </body>
