@@ -4,36 +4,77 @@
 
 @layer base {
   :root {
-    --bg-page: #f6f7f9;
-    --bg-surface: #ffffff;
-    --color-ink: #1f2937;
-    --color-muted: #6b7280;
-    --color-cmgreen: #006633;
-    --color-cmred: #ce1126;
-    --color-cmyellow: #fcd116;
+    --bg: #ffffff;
+    --bg-soft: #fafafa;
+    --ink: #0c1220;
+    --ink-2: #1f2937;
+    --ink-3: #475569;
+    --emerald-800: #006b3a;
+    --gold-600: #c1973f;
+    --gold-700: #a47e2c;
   }
 
-  html { -webkit-font-smoothing: antialiased; }
-  body { background: var(--bg-page); color: var(--color-ink); }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+  body {
+    background: var(--bg-soft);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: -0.003em;
+  }
 
   *:focus-visible {
-    outline: 2px solid var(--color-cmgreen);
+    outline: 2px solid var(--emerald-800);
     outline-offset: 2px;
     border-radius: 4px;
   }
 }
 
 @layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition;
+    letter-spacing: 0.04em;
+  }
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-cmgreen-700 px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-cmgreen-800 focus:outline-none;
+    @apply btn bg-cmgreen-800 text-white hover:bg-cmgreen-900;
   }
-  .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-ink transition hover:bg-surface-sunken;
+  .btn-gold {
+    @apply btn bg-gold-600 text-obsidian hover:bg-gold-500;
   }
-  .card {
-    @apply rounded-xl border border-border bg-surface p-5 shadow-soft;
+  .btn-outline {
+    @apply btn border border-line-2 bg-white text-ink hover:bg-surface-2;
   }
+  .btn-ghost {
+    @apply btn text-ink-3 hover:text-ink hover:bg-surface-2;
+  }
+  .btn-danger {
+    @apply btn bg-cmred text-white hover:opacity-90;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
   .pill {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-[10.5px] font-semibold uppercase border;
+    letter-spacing: 0.06em;
+  }
+  .pill::before {
+    content: '';
+    width: 5px; height: 5px; border-radius: 9999px;
+    background: currentColor;
+  }
+  .pill.pending  { background: theme('colors.statePend.bg');   color: theme('colors.statePend.fg');   border-color: theme('colors.statePend.fg'); }
+  .pill.review   { background: theme('colors.stateRev.bg');    color: theme('colors.stateRev.fg');    border-color: theme('colors.stateRev.fg'); }
+  .pill.signed   { background: theme('colors.stateSign.bg');   color: theme('colors.stateSign.fg');   border-color: theme('colors.stateSign.fg'); }
+  .pill.rejected { background: theme('colors.stateRej.bg');    color: theme('colors.stateRej.fg');    border-color: theme('colors.stateRej.fg'); }
+  .pill.closed   { background: theme('colors.stateClosed.bg'); color: theme('colors.stateClosed.fg'); border-color: theme('colors.stateClosed.fg'); }
+}
+
+@layer utilities {
+  .serif { font-family: var(--font-serif), Georgia, serif; letter-spacing: -0.005em; }
+  .tabular { font-variant-numeric: tabular-nums; }
+  .smallcaps {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 600;
   }
 }

@@ -5,39 +5,61 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Cameroon flag-derived palette + neutrals (matches the demo's accent system)
-        cmgreen: {
-          50:  '#e8f5ed',
-          100: '#c5e6cf',
-          200: '#9fd6af',
-          300: '#73c489',
-          400: '#4ab46c',
-          500: '#1ea54f',
-          600: '#0e8a3f',
-          700: '#006633', // Cameroon flag green
-          800: '#004d26',
-          900: '#062a16',
+        // v3 — bright editorial palette
+        ink: {
+          DEFAULT: '#0c1220',
+          2: '#1f2937',
+          3: '#475569',
+          4: '#64748b',
+          5: '#94a3b8',
         },
-        cmred:   { DEFAULT: '#ce1126' },  // Cameroon flag red
-        cmyellow:{ DEFAULT: '#fcd116' },  // Cameroon flag yellow
-        ink:     { DEFAULT: '#1f2937', muted: '#6b7280', faint: '#9ca3af' },
-        surface: { DEFAULT: '#ffffff', sunken: '#f6f7f9', raised: '#fcfcfd' },
-        border:  { DEFAULT: '#e5e7eb', strong: '#d1d5db' },
-        success: { DEFAULT: '#0e8a3f', bg: '#dcfce7' },
-        warning: { DEFAULT: '#b45309', bg: '#fef3c7' },
-        danger:  { DEFAULT: '#b91c1c', bg: '#fee2e2' },
-        info:    { DEFAULT: '#1e40af', bg: '#dbeafe' },
+        line: {
+          DEFAULT: '#e5e9ee',
+          2: '#d4dae2',
+        },
+        surface: {
+          DEFAULT: '#ffffff',
+          2: '#f5f6f8',
+          3: '#eef1f4',
+        },
+        bgsoft: '#fafafa',
+        obsidian: '#0c1220',
+        // Brand
+        cmgreen: {
+          50:  '#e6f5ed',
+          600: '#0aa052',
+          700: '#00873f',
+          800: '#006b3a',
+          900: '#003e25',
+        },
+        cmred:    { DEFAULT: '#b03b3b', 50: '#fdeaea' },
+        cmyellow: { DEFAULT: '#fcd116' },
+        gold: {
+          50:  '#fbf5e6',
+          200: '#f0e1b8',
+          500: '#d6b15e',
+          600: '#c1973f',
+          700: '#a47e2c',
+        },
+        // Status (v3, brighter & clearer)
+        statePend:   { bg: '#fef3c7', fg: '#92510e' },
+        stateRev:    { bg: '#e0ecff', fg: '#1d4ed8' },
+        stateSign:   { bg: '#d4f4dd', fg: '#086a3c' },
+        stateRej:    { bg: '#fde4e4', fg: '#a82626' },
+        stateClosed: { bg: '#e5e9ee', fg: '#475569' },
       },
       fontFamily: {
-        sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+        sans: ['var(--font-inter)', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        display: ['var(--font-serif)', 'Georgia', 'serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        soft: '0 1px 3px rgba(0,0,0,0.06)',
-        card: '0 4px 12px rgba(0,0,0,0.06)',
-        lift: '0 8px 24px rgba(0,0,0,0.08)',
+        soft: '0 1px 3px rgba(12, 18, 32, 0.06)',
+        card: '0 4px 12px rgba(12, 18, 32, 0.06)',
+        lift: '0 12px 32px -8px rgba(12, 18, 32, 0.12)',
       },
-      borderRadius: {
-        '4xl': '2rem',
+      letterSpacing: {
+        widest: '0.2em',
       },
     },
   },
