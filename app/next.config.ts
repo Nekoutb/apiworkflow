@@ -3,9 +3,15 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Server actions are enabled by default in Next 15
+  // Server actions are enabled by default in Next 15.
   experimental: {
-    // empty for now — slot for future feature flags
+    // Allow up to 10 MB so investor PDF uploads (10 Mo per spec) succeed.
+    // Default is 1 MB.  Vercel Functions accept ~4.5 MB on Hobby/Pro free
+    // tier; for larger PDFs we'll switch to @vercel/blob client-side
+    // direct upload in a later activity.
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
   // Headers for security baseline
   async headers() {

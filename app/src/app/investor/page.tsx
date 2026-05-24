@@ -25,9 +25,15 @@ import type { Convention, ConventionStage, ConventionStatus, Sector } from '@pri
 export const metadata = { title: 'Mes dossiers · Espace Investisseur' };
 export const dynamic = 'force-dynamic';
 
-export default async function InvestorHomePage() {
+export default async function InvestorHomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ submitted?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?type=investor');
+
+  const { submitted } = await searchParams;
 
   const investor = await db.investor.findUnique({
     where: { userId: session.user.id },
@@ -88,6 +94,20 @@ export default async function InvestorHomePage() {
         {investor.raisonSociale} · {investor.legalForm ?? 'forme juridique non renseignée'} ·{' '}
         {investor.city ?? '—'}{investor.region ? ` (${investor.region})` : ''}
       </p>
+
+      {submitted && (
+        <div className="mt-6 flex items-start gap-3 border-l-4 border-cmgreen-700 bg-cmgreen-50 px-4 py-3">
+          <span className="text-[18px] leading-none text-cmgreen-800">✓</span>
+          <div className="text-[13px] leading-relaxed text-ink">
+            <strong className="block text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800">
+              Dossier soumis
+            </strong>
+            Votre dossier <strong className="font-mono">{submitted}</strong> a été transmis au
+            Secrétariat. Un email de confirmation vous a été envoyé. L&apos;instruction démarre
+            sous 10 jours ouvrés.
+          </div>
+        </div>
+      )}
 
       {all.length === 0 && <EmptyState isExisting={investor.isExisting} />}
 
@@ -188,8 +208,11 @@ type ConventionRow = Pick<
 >;
 
 function ConventionInProgressCard({ cv }: { cv: ConventionRow }) {
+  const isDraft = cv.status === 'DRAFT' || cv.status === 'RETURNED';
+  const href = isDraft ? `/investor/conventions/${cv.id}/edit` : `/investor/conventions/${cv.id}`;
+
   return (
-    <article className="border border-line bg-white">
+    <article className="group border border-line bg-white transition hover:border-cmgreen-700 hover:shadow-lift">
       {/* Header band */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-bgsoft px-5 py-3">
         <span className="inline-block border border-line-2 bg-white px-2 py-0.5 font-sans text-[11px] font-bold tracking-[0.06em] text-ink-2">
@@ -215,18 +238,29 @@ function ConventionInProgressCard({ cv }: { cv: ConventionRow }) {
       </dl>
 
       {/* Stage progress — labels go BELOW so they never overlap the dots */}
-      <div className="mx-5 mb-5 mt-5 border-t border-line pt-4">
+      <div className="mx-5 mt-5 border-t border-line pt-4">
         <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-3">
-          Étape actuelle
+          {isDraft ? 'Statut' : 'Étape actuelle'}
         </div>
         <div className="serif mt-1 text-[15px] font-semibold text-ink">
-          {stageLabel(cv.currentStage)}
-          <span className="ml-2 font-sans text-[11px] font-normal uppercase tracking-[0.12em] text-ink-4">
-            ({stageIndex(cv.currentStage) + 1} / 5)
-          </span>
+          {isDraft ? statusLabel(cv.status) : stageLabel(cv.currentStage)}
+          {!isDraft && (
+            <span className="ml-2 font-sans text-[11px] font-normal uppercase tracking-[0.12em] text-ink-4">
+              ({stageIndex(cv.currentStage) + 1} / 5)
+            </span>
+          )}
         </div>
         <ProgressBar current={cv.currentStage} status={cv.status} />
       </div>
+
+      {/* CTA */}
+      <Link
+        href={href}
+        className="flex items-center justify-between border-t border-line bg-white px-5 py-3 text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 transition group-hover:bg-cmgreen-50"
+      >
+        {isDraft ? 'Continuer le dossier' : 'Voir le suivi'}
+        <span aria-hidden>→</span>
+      </Link>
     </article>
   );
 }
