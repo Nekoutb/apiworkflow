@@ -258,6 +258,23 @@ ok "    · Database '${DB_NAME}' owned by '${DB_USER}' (password unchanged)"
 # Compose the connection string
 DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@127.0.0.1:5432/${DB_NAME}"
 
+# ---------- 6d. Auth secret (auto-generated once, never rotated) ------------
+# Same policy as the DB password — if a file exists, reuse it. Otherwise
+# generate a fresh 43-char base64 string (32 bytes of entropy) and persist.
+# Rotating this string invalidates all logged-in user sessions, so we keep
+# it stable across re-runs of bootstrap.
+AUTH_SECRET_FILE="/root/.${APP_NAME}-auth-secret"
+if [[ -f "$AUTH_SECRET_FILE" ]]; then
+  AUTH_SECRET="$(cat "$AUTH_SECRET_FILE")"
+  log "    · Reusing existing AUTH_SECRET from $AUTH_SECRET_FILE"
+else
+  AUTH_SECRET="$(openssl rand -base64 32)"
+  echo -n "$AUTH_SECRET" > "$AUTH_SECRET_FILE"
+  chmod 600 "$AUTH_SECRET_FILE"
+  log "    · Generated new AUTH_SECRET (stored at $AUTH_SECRET_FILE)"
+fi
+ok "    · AUTH_SECRET ready (unchanged on re-runs)"
+
 # Nightly backup cron — keeps 7 days, dumps to /var/backups/<APP_NAME>/
 BACKUP_DIR="/var/backups/${APP_NAME}"
 mkdir -p "$BACKUP_DIR"
@@ -282,17 +299,19 @@ chown -R "$APP_USER:$APP_USER" "$APP_ROOT"
 mkdir -p /var/log/${APP_NAME}
 chown -R "$APP_USER:$APP_USER" /var/log/${APP_NAME}
 
-# Persist runtime config so vps-deploy.sh and PM2 use the auto-picked port
-# DATABASE_URL is included so GitHub Actions can fall back to the local DB
-# when APP_DATABASE_URL secret is not set — making the install zero-touch.
+# Persist runtime config so vps-deploy.sh and PM2 use the auto-picked port.
+# DATABASE_URL and AUTH_SECRET are included so GitHub Actions can fall back
+# to local values when the APP_* secrets are not set — making zero-touch
+# installs possible (no GitHub secrets required for the app runtime).
 cat > "$APP_ROOT/shared/runtime.env" <<EOF
 # Auto-written by vps-bootstrap.sh — DO NOT EDIT MANUALLY (re-run bootstrap)
 APP_NAME=${APP_NAME}
 APP_PORT=${APP_PORT}
 APP_USER=${APP_USER}
 APP_DOMAIN=${APP_DOMAIN}
-# Local Postgres connection (fallback for APP_DATABASE_URL)
+# Fallbacks for APP_* GitHub secrets when those are not set
 LOCAL_DATABASE_URL=${DATABASE_URL}
+LOCAL_AUTH_SECRET=${AUTH_SECRET}
 EOF
 chown "$APP_USER:$APP_USER" "$APP_ROOT/shared/runtime.env"
 chmod 600 "$APP_ROOT/shared/runtime.env"
@@ -397,6 +416,7 @@ echo "  App port    : ${APP_PORT}  $( [[ "$APP_PORT" != "$ORIGINAL_PORT" ]] && e
 echo "  Database    : postgresql://${DB_USER}:***@127.0.0.1:5432/${DB_NAME}  (local, auto-provisioned)"
 echo "  DB password : stored at $DB_PASS_FILE (root-only, never rotated)"
 echo "  DB backups  : ${BACKUP_DIR}/  (nightly at 02:30 UTC, 7-day retention)"
+echo "  AUTH_SECRET : stored at $AUTH_SECRET_FILE (root-only, never rotated)"
 if [[ ${#OTHER_APPS[@]} -gt 0 ]]; then
   echo "  Co-tenants  : ${OTHER_APPS[*]}  (untouched)"
 fi
@@ -405,15 +425,15 @@ echo "==============================================================="
 echo "  📋  ADD THESE TO GITHUB → Settings → Secrets and variables → Actions"
 echo "==============================================================="
 echo
-echo "  Required:"
+echo "  Required (SSH transport only):"
 echo "    VPS_HOST      = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
 echo "    VPS_USER      = $APP_USER"
 echo "    VPS_PASSWORD  = (the password you assigned to ${APP_USER} manually)"
-echo "    APP_AUTH_SECRET = (run: openssl rand -base64 32)"
 echo
-echo "  Optional:"
+echo "  Optional — leave unset for fully autonomous defaults from this VPS:"
 echo "    VPS_PORT             = 22  (default)"
-echo "    APP_DATABASE_URL     = (leave unset → uses local Postgres set up above)"
+echo "    APP_DATABASE_URL     = (unset → uses local Postgres set up above)"
+echo "    APP_AUTH_SECRET      = (unset → uses local secret set up above)"
 echo "    APP_ANTHROPIC_API_KEY, APP_BLOB_READ_WRITE_TOKEN, APP_RESEND_API_KEY"
 echo
 echo "  This script DOES NOT create users, DOES NOT set passwords, and"
