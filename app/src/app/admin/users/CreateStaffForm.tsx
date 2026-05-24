@@ -1,11 +1,8 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import {
-  createStaffAction,
-  initialCreateStaffState,
-  type CreateStaffState,
-} from '@/lib/actions/users';
+import { createStaffAction } from '@/lib/actions/users';
+import { initialCreateStaffState, type CreateStaffState } from '@/lib/users-config';
 import { ROLE_LABELS_FR, STAFF_ROLES } from '@/lib/roles';
 
 export function CreateStaffForm() {

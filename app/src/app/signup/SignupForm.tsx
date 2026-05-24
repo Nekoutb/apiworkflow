@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { useActionState } from 'react';
+import { signupAction } from '@/lib/actions/signup';
 import {
   initialSignupState,
-  signupAction,
   SIGNUP_LEGAL_FORMS,
   SIGNUP_REGIONS,
   type SignupState,
-} from '@/lib/actions/signup';
+} from '@/lib/signup-config';
 
 export function SignupForm() {
   const [state, formAction, pending] = useActionState<SignupState, FormData>(

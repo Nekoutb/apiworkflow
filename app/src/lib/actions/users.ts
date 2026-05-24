@@ -8,13 +8,9 @@ import { auth } from '@/lib/auth';
 import { isStaffRole, roleLabel } from '@/lib/roles';
 import { sendEmail, welcomeStaffEmail } from '@/lib/email';
 
-export type CreateStaffState =
-  | { status: 'idle' }
-  | { status: 'error'; error: string; values?: { name?: string; email?: string; role?: string; phone?: string } }
-  | { status: 'success'; email: string; emailMode: 'sent' | 'logged' | 'error' };
-
-const initialState: CreateStaffState = { status: 'idle' };
-export const initialCreateStaffState = initialState;
+import type { CreateStaffState } from '@/lib/users-config';
+// Re-exported for callers that previously imported it from this file.
+export type { CreateStaffState } from '@/lib/users-config';
 
 async function requireAdmin() {
   const session = await auth();
