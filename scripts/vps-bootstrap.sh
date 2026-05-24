@@ -217,6 +217,58 @@ F2BEOF
   ok   "fail2ban enabled"
 fi
 
+# ---------- 6c. PostgreSQL (local DB — zero external dependency) ------------
+# Generates a random password ONCE per fresh install. On re-runs the
+# existing DB and password are left intact.
+DB_NAME="${DB_NAME:-${APP_NAME}}"
+DB_USER="${DB_USER:-${APP_NAME}}"
+DB_PASS_FILE="/root/.${APP_NAME}-db-password"
+
+log "    · Installing PostgreSQL 16"
+if ! command -v psql >/dev/null; then
+  # Use the system default Postgres (Ubuntu 24.04 = 16, 22.04 = 14 — both fine)
+  apt-get install -y -qq postgresql postgresql-contrib
+  systemctl enable --now postgresql >/dev/null
+fi
+PG_VERSION="$(psql --version | awk '{print $3}' | cut -d. -f1)"
+ok "    · PostgreSQL ${PG_VERSION} ready"
+
+# Create or load the DB password (NEVER rotates an existing one)
+if [[ -f "$DB_PASS_FILE" ]]; then
+  DB_PASSWORD="$(cat "$DB_PASS_FILE")"
+  log "    · Reusing existing DB password from $DB_PASS_FILE"
+else
+  DB_PASSWORD="$(openssl rand -base64 30 | tr -d '/+=' | cut -c1-28)"
+  echo -n "$DB_PASSWORD" > "$DB_PASS_FILE"
+  chmod 600 "$DB_PASS_FILE"
+  log "    · Generated new DB password (stored at $DB_PASS_FILE)"
+fi
+
+# Create role + DB (idempotent — re-runs are no-ops)
+sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" | grep -q 1 || \
+  sudo -u postgres psql -c "CREATE USER \"${DB_USER}\" WITH ENCRYPTED PASSWORD '${DB_PASSWORD}';"
+
+sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" | grep -q 1 || \
+  sudo -u postgres psql -c "CREATE DATABASE \"${DB_NAME}\" OWNER \"${DB_USER}\" ENCODING 'UTF8';"
+
+# Grant schema privileges (Postgres 15+ requires this explicitly)
+sudo -u postgres psql -d "${DB_NAME}" -c "GRANT ALL ON SCHEMA public TO \"${DB_USER}\";" >/dev/null
+ok "    · Database '${DB_NAME}' owned by '${DB_USER}' (password unchanged)"
+
+# Compose the connection string
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@127.0.0.1:5432/${DB_NAME}"
+
+# Nightly backup cron — keeps 7 days, dumps to /var/backups/<APP_NAME>/
+BACKUP_DIR="/var/backups/${APP_NAME}"
+mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
+cat >/etc/cron.d/${APP_NAME}-pgbackup <<CRONEOF
+# ${APP_NAME} — nightly Postgres backup at 02:30 UTC
+30 2 * * * postgres pg_dump -Fc -f ${BACKUP_DIR}/${DB_NAME}-\$(date +\%Y\%m\%d).dump ${DB_NAME} && find ${BACKUP_DIR} -name '${DB_NAME}-*.dump' -mtime +7 -delete
+CRONEOF
+chmod 644 /etc/cron.d/${APP_NAME}-pgbackup
+ok "    · Nightly backup configured (${BACKUP_DIR}, 7-day retention)"
+
 # ---------- 7. Release folder layout (Capistrano-style) ----------------------
 log "7/9 · Preparing release layout under $APP_ROOT"
 mkdir -p "$APP_ROOT"/{releases,shared/logs}
@@ -231,15 +283,19 @@ mkdir -p /var/log/${APP_NAME}
 chown -R "$APP_USER:$APP_USER" /var/log/${APP_NAME}
 
 # Persist runtime config so vps-deploy.sh and PM2 use the auto-picked port
+# DATABASE_URL is included so GitHub Actions can fall back to the local DB
+# when APP_DATABASE_URL secret is not set — making the install zero-touch.
 cat > "$APP_ROOT/shared/runtime.env" <<EOF
 # Auto-written by vps-bootstrap.sh — DO NOT EDIT MANUALLY (re-run bootstrap)
 APP_NAME=${APP_NAME}
 APP_PORT=${APP_PORT}
 APP_USER=${APP_USER}
 APP_DOMAIN=${APP_DOMAIN}
+# Local Postgres connection (fallback for APP_DATABASE_URL)
+LOCAL_DATABASE_URL=${DATABASE_URL}
 EOF
 chown "$APP_USER:$APP_USER" "$APP_ROOT/shared/runtime.env"
-chmod 644 "$APP_ROOT/shared/runtime.env"
+chmod 600 "$APP_ROOT/shared/runtime.env"
 
 # Also append PORT to .env.production so Next.js binds to the right port
 if ! grep -q "^PORT=" "$APP_ROOT/shared/.env.production" 2>/dev/null; then
@@ -338,6 +394,9 @@ echo "  Runtime cfg : $APP_ROOT/shared/runtime.env  (auto-managed)"
 echo "  Logs        : /var/log/${APP_NAME}/"
 echo "  Domain      : https://${APP_DOMAIN}"
 echo "  App port    : ${APP_PORT}  $( [[ "$APP_PORT" != "$ORIGINAL_PORT" ]] && echo "(auto-picked — $ORIGINAL_PORT was in use)" || echo "" )"
+echo "  Database    : postgresql://${DB_USER}:***@127.0.0.1:5432/${DB_NAME}  (local, auto-provisioned)"
+echo "  DB password : stored at $DB_PASS_FILE (root-only, never rotated)"
+echo "  DB backups  : ${BACKUP_DIR}/  (nightly at 02:30 UTC, 7-day retention)"
 if [[ ${#OTHER_APPS[@]} -gt 0 ]]; then
   echo "  Co-tenants  : ${OTHER_APPS[*]}  (untouched)"
 fi
@@ -346,10 +405,16 @@ echo "==============================================================="
 echo "  📋  ADD THESE TO GITHUB → Settings → Secrets and variables → Actions"
 echo "==============================================================="
 echo
-echo "  VPS_HOST      = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
-echo "  VPS_USER      = $APP_USER"
-echo "  VPS_PORT      = 22"
-echo "  VPS_PASSWORD  = (the password you assigned to ${APP_USER} manually)"
+echo "  Required:"
+echo "    VPS_HOST      = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
+echo "    VPS_USER      = $APP_USER"
+echo "    VPS_PASSWORD  = (the password you assigned to ${APP_USER} manually)"
+echo "    APP_AUTH_SECRET = (run: openssl rand -base64 32)"
+echo
+echo "  Optional:"
+echo "    VPS_PORT             = 22  (default)"
+echo "    APP_DATABASE_URL     = (leave unset → uses local Postgres set up above)"
+echo "    APP_ANTHROPIC_API_KEY, APP_BLOB_READ_WRITE_TOKEN, APP_RESEND_API_KEY"
 echo
 echo "  This script DOES NOT create users, DOES NOT set passwords, and"
 echo "  DOES NOT rotate anything. Re-running is fully idempotent."

@@ -111,11 +111,13 @@ GitHub → **Settings** → **Secrets and variables** → **Actions** → **New 
 
 | Secret | Required? | Value |
 |---|---|---|
-| `APP_DATABASE_URL` | ✅ Required | Your Postgres connection string (e.g. Neon) |
 | `APP_AUTH_SECRET` | ✅ Required | Run `openssl rand -base64 32` and paste the output |
+| `APP_DATABASE_URL` | Optional | Postgres URL (Neon, RDS, etc.). Leave **unset** to use the local Postgres that `vps-bootstrap.sh` auto-provisions on the VPS |
 | `APP_ANTHROPIC_API_KEY` | Optional | Claude API key — leave unset for graceful stub |
 | `APP_BLOB_READ_WRITE_TOKEN` | Optional | Vercel Blob token — leave unset for graceful stub |
 | `APP_RESEND_API_KEY` | Optional | Resend email key — leave unset for graceful stub |
+
+**About the database:** `vps-bootstrap.sh` installs PostgreSQL 16 locally on the VPS, creates a `cmipaportal` database + user with a random 28-char password, and writes the connection string to `/var/www/cmipaportal/shared/runtime.env`. The deploy workflow reads it from there. Nightly `pg_dump` backups go to `/var/backups/cmipaportal/` with 7-day retention. Set `APP_DATABASE_URL` only if you want to override (e.g. use a managed Neon/RDS instance instead).
 
 To rotate any value, just update the GitHub Secret and trigger a deploy — the file gets overwritten atomically (`chmod 600`) on the server. There is no other source of truth.
 
