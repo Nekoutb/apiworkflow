@@ -17,3 +17,6 @@ Thumbs.db
 .env.local
 *.pem
 *.key
+
+# Claude Code local cache
+.claude/
