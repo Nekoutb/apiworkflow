@@ -50,9 +50,22 @@ rollback on failure.
 | Zero downtime | Atomic symlink swap of `current/` |
 | Rollback safety | Keep last 5 releases; `pm2 reload` to previous on health-check fail |
 | No secrets in git | `.env.production` lives in `shared/` on the VPS only |
-| Other apps on box | Dedicated SSH user you choose (not root), scoped sudoers |
+| Other apps on box | Dedicated SSH user you choose (not root), scoped sudoers; nginx vhost detection refuses to overwrite; UFW additive; default site untouched |
+| Port collision | Auto-detects free port if 3000 is busy, persists choice in `shared/runtime.env`, exports as `PORT` to PM2 |
 | Fast deploys | Hardlinked `node_modules` reuse when lockfile unchanged |
 | Visibility | GitHub Actions logs + `/var/log/cmipaportal/deploy-*.log` |
+
+### Server-adaptation checks performed at bootstrap
+
+Before installing anything, the script runs a `0/9 · Inspect server` step that:
+
+1. **Lists other apps under `/var/www`** — prints their names as a warning so you know what's co-tenant. Their files, processes, and configs are never touched.
+2. **Scans nginx `sites-enabled/` for a conflicting vhost** on `cmipaportal.com`. If another vhost already claims the domain, bootstrap **refuses to overwrite** and exits with the offending file path.
+3. **Auto-picks a free TCP port** starting at 3000. If 3000 is busy, tries 3001, 3002, … Picks the first free one and persists it to `/var/www/cmipaportal/shared/runtime.env`. The deploy script reads this file and passes `PORT=<picked>` to PM2 + nginx upstream.
+4. **Inventories existing PM2 processes** — printed as a warning so you can see what else is running. We only manage our own `cmipaportal` process name.
+5. **Inventories existing Let's Encrypt certs** — printed as info. Certbot is scoped by domain so other sites are unaffected.
+6. **UFW is additive** — if it's already active with custom rules, we just `ufw allow OpenSSH` + `ufw allow 'Nginx Full'`. If it was inactive, we enable it (SSH already whitelisted, so you won't be locked out).
+7. **The default nginx site is left in place** — nginx routes by `server_name`, so leaving `sites-enabled/default` alone is safe and avoids breaking other apps that may rely on it.
 
 ---
 

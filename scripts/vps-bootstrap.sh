@@ -51,6 +51,65 @@ require_root() {
 
 require_root
 
+# ---------- 0. Inspect the server (adapt rather than overwrite) -------------
+log "0/9 · Inspecting server (adapting to existing apps)"
+
+# 0a. Detect other apps under /var/www so we can warn about co-tenancy
+OTHER_APPS=()
+if [[ -d /var/www ]]; then
+  while IFS= read -r dir; do
+    name="$(basename "$dir")"
+    [[ "$name" == "$APP_NAME" || "$name" == "html" ]] && continue
+    OTHER_APPS+=("$name")
+  done < <(find /var/www -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+fi
+if [[ ${#OTHER_APPS[@]} -gt 0 ]]; then
+  warn "Other apps detected under /var/www: ${OTHER_APPS[*]}"
+  warn "This script will NOT touch their files, nginx vhosts, PM2 procs, or SSL certs."
+fi
+
+# 0b. Detect existing nginx vhosts that already serve our domain
+if [[ -d /etc/nginx/sites-enabled ]]; then
+  EXISTING_VHOST="$(grep -rl "server_name.*${APP_DOMAIN}" /etc/nginx/sites-enabled/ 2>/dev/null | grep -v "${APP_NAME}" | head -1 || true)"
+  if [[ -n "$EXISTING_VHOST" ]]; then
+    err "Another nginx vhost already claims ${APP_DOMAIN}: $EXISTING_VHOST"
+    err "Refusing to overwrite. Remove or rename that vhost first."
+    exit 1
+  fi
+fi
+
+# 0c. Pick a free port if APP_PORT is taken by another app
+detect_free_port() {
+  local p="$1"
+  while ss -ltn "( sport = :$p )" 2>/dev/null | grep -q LISTEN; do
+    p=$((p+1))
+  done
+  echo "$p"
+}
+ORIGINAL_PORT="$APP_PORT"
+APP_PORT="$(detect_free_port "$APP_PORT")"
+if [[ "$APP_PORT" != "$ORIGINAL_PORT" ]]; then
+  warn "Port $ORIGINAL_PORT is already in use — falling back to $APP_PORT"
+else
+  ok "Port $APP_PORT is free"
+fi
+
+# 0d. Detect existing PM2 procs (informational, no action)
+if command -v pm2 >/dev/null; then
+  PM2_PROCS="$(pm2 jlist 2>/dev/null | jq -r '.[].name' 2>/dev/null | grep -v "^${APP_NAME}$" || true)"
+  if [[ -n "$PM2_PROCS" ]]; then
+    warn "Existing PM2 processes (untouched): $(echo $PM2_PROCS | tr '\n' ' ')"
+  fi
+fi
+
+# 0e. Detect existing Let's Encrypt certs for other domains (informational)
+if [[ -d /etc/letsencrypt/live ]]; then
+  EXISTING_CERTS="$(ls /etc/letsencrypt/live/ 2>/dev/null | grep -v "^${APP_DOMAIN}$" || true)"
+  if [[ -n "$EXISTING_CERTS" ]]; then
+    ok "Existing SSL certs (won't touch): $(echo $EXISTING_CERTS | tr '\n' ' ')"
+  fi
+fi
+
 # ---------- 1. System update -------------------------------------------------
 log "1/9 · Updating system packages"
 export DEBIAN_FRONTEND=noninteractive
@@ -80,12 +139,18 @@ apt-get install -y -qq nginx certbot python3-certbot-nginx
 systemctl enable --now nginx >/dev/null
 ok "nginx $(nginx -v 2>&1 | awk -F/ '{print $2}')"
 
-# ---------- 5. Firewall ------------------------------------------------------
+# ---------- 5. Firewall (additive — never disrupts existing rules) ----------
 log "5/9 · Configuring UFW firewall"
-ufw allow OpenSSH        >/dev/null 2>&1 || true
-ufw allow 'Nginx Full'   >/dev/null 2>&1 || true
-yes | ufw enable         >/dev/null 2>&1 || true
-ok "Firewall: SSH + HTTP + HTTPS open"
+UFW_STATUS="$(ufw status 2>/dev/null | head -1 | awk '{print $2}')"
+ufw allow OpenSSH      >/dev/null 2>&1 || true
+ufw allow 'Nginx Full' >/dev/null 2>&1 || true
+if [[ "$UFW_STATUS" == "active" ]]; then
+  ok "Firewall already active — added SSH + HTTP/HTTPS rules (other rules untouched)"
+else
+  warn "UFW was inactive — enabling now (SSH already whitelisted, you won't be kicked out)"
+  yes | ufw enable >/dev/null 2>&1 || true
+  ok "Firewall: SSH + HTTP + HTTPS open"
+fi
 
 # ---------- 6. Verify the SSH user exists ------------------------------------
 # This script does NOT create users. You create the user manually beforehand:
@@ -180,7 +245,25 @@ fi
 # Log directory
 mkdir -p /var/log/${APP_NAME}
 chown -R "$APP_USER:$APP_USER" /var/log/${APP_NAME}
-ok "Release layout ready"
+
+# Persist runtime config so vps-deploy.sh and PM2 use the auto-picked port
+cat > "$APP_ROOT/shared/runtime.env" <<EOF
+# Auto-written by vps-bootstrap.sh — DO NOT EDIT MANUALLY (re-run bootstrap)
+APP_NAME=${APP_NAME}
+APP_PORT=${APP_PORT}
+APP_USER=${APP_USER}
+APP_DOMAIN=${APP_DOMAIN}
+EOF
+chown "$APP_USER:$APP_USER" "$APP_ROOT/shared/runtime.env"
+chmod 644 "$APP_ROOT/shared/runtime.env"
+
+# Also append PORT to .env.production so Next.js binds to the right port
+if ! grep -q "^PORT=" "$APP_ROOT/shared/.env.production" 2>/dev/null; then
+  echo "PORT=${APP_PORT}" >> "$APP_ROOT/shared/.env.production"
+else
+  sed -i "s/^PORT=.*/PORT=${APP_PORT}/" "$APP_ROOT/shared/.env.production"
+fi
+ok "Release layout ready (PORT=${APP_PORT} persisted)"
 
 # ---------- 8. Prepare home/.ssh skeleton (no key needed for password auth) -
 USER_HOME="$(getent passwd "$APP_USER" | cut -d: -f6)"
@@ -236,8 +319,9 @@ server {
 }
 NGINXEOF
   ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/${APP_NAME}
-  # Remove default site if it still occupies port 80
-  rm -f /etc/nginx/sites-enabled/default
+  # Note: we intentionally do NOT remove sites-enabled/default — other apps
+  # on this box may rely on it. nginx routes by server_name, so leaving it
+  # alone is safe; our ${APP_DOMAIN} vhost wins for our domain.
   nginx -t && systemctl reload nginx
 fi
 ok "nginx site installed"
@@ -266,8 +350,13 @@ echo
 echo "  SSH user    : $APP_USER  (you chose this — bootstrap will never change its password)"
 echo "  App root    : $APP_ROOT"
 echo "  Env file    : $APP_ROOT/shared/.env.production  (EDIT THIS)"
+echo "  Runtime cfg : $APP_ROOT/shared/runtime.env  (auto-managed)"
 echo "  Logs        : /var/log/${APP_NAME}/"
 echo "  Domain      : https://${APP_DOMAIN}"
+echo "  App port    : ${APP_PORT}  $( [[ "$APP_PORT" != "$ORIGINAL_PORT" ]] && echo "(auto-picked — $ORIGINAL_PORT was in use)" || echo "" )"
+if [[ ${#OTHER_APPS[@]} -gt 0 ]]; then
+  echo "  Co-tenants  : ${OTHER_APPS[*]}  (untouched)"
+fi
 echo
 echo "==============================================================="
 echo "  📋  ADD THESE TO GITHUB → Settings → Secrets and variables → Actions"

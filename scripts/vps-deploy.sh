@@ -29,8 +29,14 @@
 set -Eeuo pipefail
 
 APP_NAME="${APP_NAME:-cmipaportal}"
-APP_PORT="${APP_PORT:-3000}"
 APP_ROOT="/var/www/${APP_NAME}"
+
+# Prefer the port chosen by bootstrap (may differ from 3000 if 3000 was busy)
+if [[ -f "$APP_ROOT/shared/runtime.env" ]]; then
+  # shellcheck disable=SC1091
+  source "$APP_ROOT/shared/runtime.env"
+fi
+APP_PORT="${APP_PORT:-3000}"
 RELEASE="${1:?usage: vps-deploy.sh <release-folder-name>}"
 RELEASE_DIR="${APP_ROOT}/releases/${RELEASE}"
 CURRENT_LINK="${APP_ROOT}/current"
@@ -117,8 +123,11 @@ ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 ok "Symlink swapped"
 
 # ---------- 5. PM2 restart (zero-downtime reload) ---------------------------
-log "Restarting PM2 process"
+log "Restarting PM2 process (binding to port ${APP_PORT})"
 cd "$CURRENT_LINK/app"
+
+# Export PORT so `npm start` ──▶ `next start --port ${PORT:-3000}` honours it
+export PORT="$APP_PORT"
 
 # ecosystem on the fly so PM2 always points at $CURRENT_LINK/app
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
@@ -131,7 +140,7 @@ else
     -- start
   pm2 save
 fi
-ok "PM2 restarted"
+ok "PM2 restarted on port ${APP_PORT}"
 
 # ---------- 6. Health check -------------------------------------------------
 log "Waiting for app to respond on http://127.0.0.1:${APP_PORT}"
