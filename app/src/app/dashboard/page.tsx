@@ -13,6 +13,9 @@ export default async function DashboardPage() {
   if (!session?.user) redirect('/login');
 
   const roleEnum = session.user.role;
+  // Staff dashboard is for staff only; investors get bounced to their space.
+  if (roleEnum === 'INVESTOR') redirect('/investor');
+
   const role = isStaffRole(roleEnum) ? roleLabel(roleEnum) : '—';
   const isAdmin = roleEnum === 'ADMIN';
 

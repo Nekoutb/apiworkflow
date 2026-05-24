@@ -26,7 +26,8 @@ export async function loginAction(
     await signIn('credentials', {
       email: emailToUse,
       password,
-      redirectTo: '/dashboard',
+      // /post-login decides where to send the user based on their type.
+      redirectTo: '/post-login',
     });
   } catch (err) {
     const e = err as { type?: string; digest?: string };
