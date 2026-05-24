@@ -52,6 +52,50 @@
 
 ---
 
+# 0bis. Amendement workflow (2026-05-24)
+
+**Décision additionnelle (post-approbation v2) :** le **Service du Courrier** est désormais
+le passage obligé pour **tous les mouvements internes entre la Direction Générale et les
+Directions, dans les deux sens** :
+
+- **GM → Direction** : après dispatch, le document n'est jamais transmis directement au
+  destinataire. Il passe d'abord par le Service du Courrier, qui le réceptionne, l'enregistre
+  dans le chrono interne, puis le ventile vers la Direction destinataire.
+- **Direction → GM** : symétriquement, lorsqu'une Direction renvoie un document traité au DG,
+  il transite par le Service du Courrier qui l'enregistre puis le transmet au DG.
+
+Le workflow passe donc de **5 phases à 7 phases** :
+
+| Phase | Avant | Après |
+|---|---|---|
+| 1 | Réception externe (Courrier) | Réception externe (Courrier) — *inchangée* |
+| 2 | Analyse IA + Dispatch DG | Analyse IA + Décision d'assignation DG |
+| **3** | *(absent)* | **Ventilation par le Courrier vers la Direction** |
+| 4 | Instruction par la Direction | Instruction par la Direction |
+| **5** | *(absent)* | **Retour via le Courrier vers le DG** |
+| 6 | Décision DG | Décision DG |
+| 7 | Réponse + Clôture | Réponse + Clôture (Bureau Départ) |
+
+**Impact sur les activités :**
+
+| Activité | Avant | Après |
+|---|---|---|
+| **B5** | Bureau Arrivée (externe seulement) | **Service du Courrier — Arrivée externe + Ventilation interne (DG → Directions)** |
+| **B6** | Bureau Départ + Archives | **Service du Courrier — Retour interne (Directions → DG) + Bureau Départ + Archives** |
+| **B9** | DG dispatch direct au destinataire | DG dispatch transite par Courrier (état IN_TRANSIT_TO_UNIT) |
+| **B16** | Return-to-DG direct | Return transite par Courrier (état IN_TRANSIT_TO_DG) |
+
+**Impact sur le schéma Prisma :** ajout additif (non-destructif) lors de B5 :
+
+- `HandoffType` gagne : `DG_TO_COURRIER_DISPATCH`, `COURRIER_TO_UNIT`, `UNIT_TO_COURRIER_RETURN`, `COURRIER_TO_DG_RETURN`
+- `DocumentStatus` gagne : `IN_TRANSIT_TO_UNIT`, `IN_TRANSIT_TO_DG`
+- `NotificationKind` gagne : `COURRIER_HAS_DISPATCH`, `COURRIER_HAS_RETURN`
+
+La communication **horizontale** entre Directeurs reste directe (peer-to-peer), non passée par
+le Courrier — sauf indication contraire ultérieure.
+
+---
+
 # 0. Décisions cadrantes (validées 2026-05-24)
 
 | # | Question | Décision | Implication plan |
@@ -218,31 +262,58 @@ without prior registration. Replaces the investor-only `/signup`.
 
 **TEST GATE B4:** open /submit in incognito, upload a PDF, see confirmation with n° courrier, receive accusé email.
 
-### B5 — Bureau Courrier « Arrivée » dashboard ⬜
-**Goal:** for documents arriving physically, the Bureau Arrivée scans them and injects them
-into the workflow. For online submissions, this dashboard validates and forwards.
+### B5 — Service du Courrier — Arrivée externe + Ventilation interne ⬜
+**Goal:** Service du Courrier handles both (a) external incoming documents and (b) internal
+dispatches from the DG to Directions. Both flows converge in the same dashboard with
+distinct tabs/queues.
 
 | # | Sub-task | Status |
 |---|---|---|
-| B5.1 | `/staff/courrier/arrivee` — list of new documents (online + physical pending registration) | ⬜ |
-| B5.2 | "Enregistrer un courrier physique" button — opens form with metadata + scan upload | ⬜ |
-| B5.3 | Per-doc action: assign n° courrier, validate metadata, push to DG queue | ⬜ |
-| B5.4 | Send / re-send accusé to émetteur | ⬜ |
-| B5.5 | Tableau de bord de circulation (Art. 16) — registry view with timestamps | ⬜ |
+| B5.1 | `/staff/courrier` — unified dashboard with 4 tabs: Arrivée externe · À ventiler (DG→Dir) · De retour (Dir→DG) · Départ externe | ⬜ |
+| **Arrivée externe (tab 1)** | | |
+| B5.2 | List of new documents (online + physical pending registration) | ⬜ |
+| B5.3 | "Enregistrer un courrier physique" button — form + scan upload | ⬜ |
+| B5.4 | Per-doc action: assign n° courrier, validate metadata, push to DG queue (handoff `COURRIER_TO_DG_NEW`) | ⬜ |
+| B5.5 | Send / re-send accusé to émetteur | ⬜ |
+| B5.6 | Tableau de bord de circulation (Art. 16) — registry view with timestamps | ⬜ |
+| **À ventiler (tab 2 · DG → Direction)** | | |
+| B5.7 | List of documents dispatched by the DG (state `IN_TRANSIT_TO_UNIT`) | ⬜ |
+| B5.8 | Per-doc: see destinataire role + DG instructions, sign internal transmission, ventilate (handoff `COURRIER_TO_UNIT`, state → `ASSIGNED`) | ⬜ |
+| B5.9 | Notification to destinataire (in-app + email) | ⬜ |
+| B5.10 | Internal chrono entry (separate from external Arrivée chrono) | ⬜ |
 
-**TEST GATE B5:** as `arrivee@api.cm`, scan a physical doc, register it, see it forwarded to DG. Émetteur receives accusé.
+**Schema additions (Prisma push additive, no data loss):**
+- `HandoffType`: add `DG_TO_COURRIER_DISPATCH`, `COURRIER_TO_UNIT`
+- `DocumentStatus`: add `IN_TRANSIT_TO_UNIT`
+- `NotificationKind`: add `COURRIER_HAS_DISPATCH`, `DOCUMENT_VENTILATED`
 
-### B6 — Bureau Courrier « Départ » & Archives ⬜
-**Goal:** outgoing channel for DG responses + archival.
+**TEST GATE B5:** (a) as `arrivee@api.cm`, scan a physical doc, register it, DG sees it; (b) as DG, dispatch a document — it lands in Courrier's "À ventiler" tab, not directly in Director's inbox; (c) as Chef du Courrier, ventilate it — only then does the destinataire receive notification.
+
+### B6 — Service du Courrier — Retour interne + Bureau Départ + Archives ⬜
+**Goal:** symmetric to B5 for the return path (Directions → DG) plus outgoing external
+responses and archival.
 
 | # | Sub-task | Status |
 |---|---|---|
-| B6.1 | `/staff/courrier/depart` — list of DG-approved responses awaiting expedition | ⬜ |
-| B6.2 | Action: expedite by email (sign + send) and/or print for physical dispatch | ⬜ |
-| B6.3 | `/staff/courrier/archives` — long-term storage view, search by n° / date / émetteur | ⬜ |
-| B6.4 | Auto-archive document after DG marks "clos" | ⬜ |
+| **De retour (tab 3 · Direction → DG)** | | |
+| B6.1 | List of documents returned by Directions (state `IN_TRANSIT_TO_DG`) | ⬜ |
+| B6.2 | Per-doc: see Direction's recommendation, register return chrono, forward to DG (handoff `COURRIER_TO_DG_RETURN`, state → `AWAITING_DG_DECISION`) | ⬜ |
+| B6.3 | Notification to DG | ⬜ |
+| **Départ externe (tab 4 · DG → émetteur)** | | |
+| B6.4 | List of DG-approved responses awaiting expedition | ⬜ |
+| B6.5 | Action: expedite by email (sign + send) and/or print for physical dispatch (handoff `COURRIER_RESPONSE_OUT`, state → `RESPONSE_SENT`) | ⬜ |
+| B6.6 | Notification to émetteur | ⬜ |
+| **Archives (Art. 18)** | | |
+| B6.7 | `/staff/courrier/archives` — long-term storage view | ⬜ |
+| B6.8 | Search by n° / date / émetteur / nature | ⬜ |
+| B6.9 | Auto-archive document after DG marks "clos" | ⬜ |
 
-**TEST GATE B6:** complete a full Courrier → DG → Courrier round-trip; archived document searchable by n° courrier.
+**Schema additions (Prisma push additive):**
+- `HandoffType`: add `UNIT_TO_COURRIER_RETURN`, `COURRIER_TO_DG_RETURN`, `COURRIER_RESPONSE_OUT`
+- `DocumentStatus`: add `IN_TRANSIT_TO_DG`
+- `NotificationKind`: add `COURRIER_HAS_RETURN`
+
+**TEST GATE B6:** complete a full round-trip Courrier → DG → Courrier → Direction → Courrier → DG → Courrier → expedition externe. Verify each transit step is registered and notifications fire correctly. Closed document searchable in Archives.
 
 ---
 
@@ -278,7 +349,8 @@ suggestion. Cached so re-opens are free.
 
 ### B9 — DG dispatch UI ⬜
 **Goal:** the click-through experience for the DG to confirm or modify the assignment and add
-instructions.
+instructions. **The dispatch action does NOT send the document directly to the destinataire —
+it sends it to the Service du Courrier for internal ventilation (cf. amendment 0bis).**
 
 | # | Sub-task | Status |
 |---|---|---|
@@ -286,10 +358,11 @@ instructions.
 | B9.2 | "Confirmer la suggestion IA" green button (1 click → assign) | ⬜ |
 | B9.3 | "Modifier l'assignation" → searchable picker grouped by Direction / Sous-dir / Service | ⬜ |
 | B9.4 | Textarea: instructions complémentaires | ⬜ |
-| B9.5 | Server action `assignDocument(docId, unitRole, instructions)` — creates `Assignment` row, writes audit, notifies destinataire | ⬜ |
-| B9.6 | After assignment, doc leaves DG inbox, lands in destinataire's corbeille | ⬜ |
+| B9.5 | Server action `dispatchDocument(docId, destinataireRole, instructions)` — creates pre-Assignment row (status=PENDING_COURRIER_DISPATCH), writes `Handoff(type=DG_TO_COURRIER_DISPATCH)`, sets `Document.status=IN_TRANSIT_TO_UNIT`, notifies Service du Courrier | ⬜ |
+| B9.6 | After dispatch: doc leaves DG inbox, appears in Courrier's "À ventiler" queue (B5.7). It will land in the destinataire's corbeille only after the Courrier ventilates (B5.8) | ⬜ |
+| B9.7 | DG can track the document's transit state on his inbox (badge: "En attente de ventilation par le Courrier") | ⬜ |
 
-**TEST GATE B9:** dispatch 3 documents (confirm AI suggestion · modify · with instructions). Each lands in correct corbeille within 1 s. DG inbox count decreases. Notification fires to destinataire.
+**TEST GATE B9:** dispatch 3 documents (confirm AI suggestion · modify · with instructions). Each lands in **Courrier "À ventiler"**, not directly in destinataire's corbeille. DG inbox count decreases. Notification fires to Service du Courrier. Once Courrier ventilates (B5.8), the destinataire is then notified.
 
 ---
 
@@ -395,17 +468,20 @@ then re-injecting it into the internal treatment chain.
 
 ## Phase 4 — Closure cycle
 
-### B16 — Return to DG (treatment complete) ⬜
+### B16 — Return to DG (treatment complete · via Service du Courrier) ⬜
 **Goal:** when a Director judges treatment is complete, they consolidate and send back to DG.
+**Per amendment 0bis, the return transits via the Service du Courrier (not directly to DG).**
 
 | # | Sub-task | Status |
 |---|---|---|
 | B16.1 | Director sees "Renvoyer au DG" button when chain has returned up to them | ⬜ |
 | B16.2 | Form: recommandation finale (rich text) + summary of attachments added | ⬜ |
-| B16.3 | Server action `returnToDg(docId, recommendation)` — `Handoff(type=RETURN_TO_DG)`, status → AWAITING_DG_DECISION | ⬜ |
-| B16.4 | Document appears in DG inbox with new tag "À décider" | ⬜ |
+| B16.3 | Server action `returnDocumentToDg(docId, recommendation)` — writes `Handoff(type=UNIT_TO_COURRIER_RETURN)`, sets `Document.status=IN_TRANSIT_TO_DG`, notifies Service du Courrier | ⬜ |
+| B16.4 | Document appears in Courrier's "De retour" queue (B6.1), NOT yet in DG inbox | ⬜ |
+| B16.5 | Once Courrier forwards (B6.2), document lands in DG inbox tagged "À décider" with recommendation visible | ⬜ |
+| B16.6 | The Director can track the document's transit state on their workspace (badge: "En attente de transmission par le Courrier") | ⬜ |
 
-**TEST GATE B16:** complete treatment, return to DG, DG sees the doc with consolidated recommendation.
+**TEST GATE B16:** complete treatment, click "Renvoyer au DG", verify doc lands in **Courrier "De retour"** (not directly in DG inbox). As Chef du Courrier, forward — only then DG sees the doc with consolidated recommendation.
 
 ### B17 — DG decision UI ⬜
 **Goal:** the DG takes the final action.
