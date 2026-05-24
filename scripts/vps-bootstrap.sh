@@ -222,25 +222,9 @@ log "7/9 · Preparing release layout under $APP_ROOT"
 mkdir -p "$APP_ROOT"/{releases,shared/logs}
 chown -R "$APP_USER:$APP_USER" "$APP_ROOT"
 
-# Place .env.production into shared/ (DO NOT commit this file)
-if [[ ! -f "$APP_ROOT/shared/.env.production" ]]; then
-  cat > "$APP_ROOT/shared/.env.production" <<'ENVEOF'
-# === FILL IN BEFORE FIRST DEPLOY ============================================
-DATABASE_URL="postgresql://USER:PASS@HOST/DB?sslmode=require"
-AUTH_SECRET="REPLACE_WITH_OPENSSL_RAND_BASE64_32"
-AUTH_URL="https://cmipaportal.com"
-NEXTAUTH_URL="https://cmipaportal.com"
-NODE_ENV="production"
-
-# Optional integrations (leave empty to use graceful stubs)
-ANTHROPIC_API_KEY=""
-BLOB_READ_WRITE_TOKEN=""
-RESEND_API_KEY=""
-ENVEOF
-  chown "$APP_USER:$APP_USER" "$APP_ROOT/shared/.env.production"
-  chmod 600 "$APP_ROOT/shared/.env.production"
-  warn "Created template $APP_ROOT/shared/.env.production — edit it BEFORE deploying"
-fi
+# Note: .env.production is NOT created here. GitHub Actions writes it on
+# every deploy from the APP_* secrets. The shared/ folder exists so scp
+# has a destination — that's all.
 
 # Log directory
 mkdir -p /var/log/${APP_NAME}
@@ -349,7 +333,7 @@ echo "==============================================================="
 echo
 echo "  SSH user    : $APP_USER  (you chose this — bootstrap will never change its password)"
 echo "  App root    : $APP_ROOT"
-echo "  Env file    : $APP_ROOT/shared/.env.production  (EDIT THIS)"
+echo "  Env file    : $APP_ROOT/shared/.env.production  (auto-synced from GitHub Secrets each deploy)"
 echo "  Runtime cfg : $APP_ROOT/shared/runtime.env  (auto-managed)"
 echo "  Logs        : /var/log/${APP_NAME}/"
 echo "  Domain      : https://${APP_DOMAIN}"

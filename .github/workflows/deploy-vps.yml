@@ -9,21 +9,31 @@ name: Deploy to VPS (cmipaportal.com)
 #    - Manual: Actions tab → "Deploy to VPS" → Run workflow
 #
 #  Required GitHub Secrets (set under Settings → Secrets and variables → Actions):
-#    VPS_HOST           — server IP (e.g. 45.32.150.96)
-#    VPS_USER           — deploy user on the server (e.g. "deploy")
-#    VPS_PORT           — SSH port (usually 22)
-#    VPS_PASSWORD       — SSH password for the deploy user (printed by
-#                         scripts/vps-bootstrap.sh). Stored encrypted in
-#                         GitHub Secrets, never echoed to logs.
-#    VPS_KNOWN_HOSTS    — output of: ssh-keyscan -H <VPS_HOST>
-#                         (optional but recommended; falls back to StrictHostKeyChecking=no)
 #
-#  No build-time secrets are needed — the app reads its real env at runtime
-#  from /var/www/cmipaportal/shared/.env.production (set during bootstrap).
+#  ── SSH transport ────────────────────────────────────────────────────────────
+#    VPS_HOST            — server IP (e.g. 45.32.150.96)
+#    VPS_USER            — Linux user on the server (you chose this manually)
+#    VPS_PASSWORD        — SSH password for VPS_USER (you set with `passwd`)
+#    VPS_PORT            — SSH port (OPTIONAL — defaults to 22)
+#    VPS_KNOWN_HOSTS     — output of `ssh-keyscan -H <VPS_HOST>`
+#                          (OPTIONAL but recommended)
 #
-#  Security note: password auth is less robust than SSH keys. We mitigate by
-#  installing fail2ban on the server (5 fails / 10min → 1h ban) and keeping
-#  the password only in GitHub Secrets + root-owned file on the VPS.
+#  ── App runtime env (sync'd to /var/www/cmipaportal/shared/.env.production) ─
+#    APP_DATABASE_URL          — Postgres connection string (REQUIRED)
+#    APP_AUTH_SECRET           — random base64 (openssl rand -base64 32) (REQUIRED)
+#    APP_ANTHROPIC_API_KEY     — Claude API key (OPTIONAL — stub if empty)
+#    APP_BLOB_READ_WRITE_TOKEN — Vercel Blob token (OPTIONAL — stub if empty)
+#    APP_RESEND_API_KEY        — Resend email key (OPTIONAL — stub if empty)
+#
+#  On every deploy, the workflow rebuilds .env.production on the runner from
+#  these secrets, scps it to the VPS atomically (chmod 600), then runs the
+#  remote deploy script. NO manual SSH or file editing is ever required.
+#
+#  Security notes:
+#    - All secrets are masked in workflow logs (GitHub Actions does this auto)
+#    - The env file is uploaded to a temp path then atomically mv'd into place
+#    - The runner copy is shredded before the job exits
+#    - Password auth is mitigated by fail2ban on the server (5 fails/10min → 1h ban)
 # -----------------------------------------------------------------------------
 
 on:
@@ -227,6 +237,78 @@ jobs:
             "tar -xzf /tmp/release-${RELEASE_ID}.tar.gz -C $REMOTE_DIR --strip-components=0 && \
              rm /tmp/release-${RELEASE_ID}.tar.gz && \
              ls -la $REMOTE_DIR/app | head -20"
+
+      - name: 🔑 Sync .env.production from GitHub Secrets
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          # ── Required ────────────────────────────────────────────────────
+          APP_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
+          APP_AUTH_SECRET:  ${{ secrets.APP_AUTH_SECRET }}
+          # ── Optional integrations (graceful stubs if empty) ─────────────
+          APP_ANTHROPIC_API_KEY:     ${{ secrets.APP_ANTHROPIC_API_KEY }}
+          APP_BLOB_READ_WRITE_TOKEN: ${{ secrets.APP_BLOB_READ_WRITE_TOKEN }}
+          APP_RESEND_API_KEY:        ${{ secrets.APP_RESEND_API_KEY }}
+        run: |
+          # Required secret validation
+          missing=()
+          [ -z "$APP_DATABASE_URL" ] && missing+=("APP_DATABASE_URL")
+          [ -z "$APP_AUTH_SECRET" ]  && missing+=("APP_AUTH_SECRET")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required GitHub Secrets: ${missing[*]}"
+            echo "Add them under Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+
+          # Pick the port the bootstrap chose (read from VPS) — fallback 3000
+          REMOTE_PORT=$(sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "grep -E '^APP_PORT=' ${APP_REMOTE_ROOT}/shared/runtime.env 2>/dev/null | cut -d= -f2" \
+            || echo "")
+          REMOTE_PORT="${REMOTE_PORT:-3000}"
+          echo "→ Using PORT=$REMOTE_PORT (from VPS runtime.env)"
+
+          # Build .env.production on the runner — never logged
+          TMP_ENV="$(mktemp)"
+          {
+            echo "# Auto-written by GitHub Actions on $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo "# Source: GitHub repository secrets. DO NOT EDIT MANUALLY."
+            echo "# To change a value, update the secret in GitHub and re-deploy."
+            echo ""
+            echo "DATABASE_URL=\"${APP_DATABASE_URL}\""
+            echo "AUTH_SECRET=\"${APP_AUTH_SECRET}\""
+            echo "AUTH_URL=\"https://cmipaportal.com\""
+            echo "NEXTAUTH_URL=\"https://cmipaportal.com\""
+            echo "NODE_ENV=\"production\""
+            echo "PORT=${REMOTE_PORT}"
+            echo "AUTH_TRUST_HOST=\"true\""
+            echo ""
+            echo "# Optional integrations (empty = use graceful stubs)"
+            echo "ANTHROPIC_API_KEY=\"${APP_ANTHROPIC_API_KEY}\""
+            echo "BLOB_READ_WRITE_TOKEN=\"${APP_BLOB_READ_WRITE_TOKEN}\""
+            echo "RESEND_API_KEY=\"${APP_RESEND_API_KEY}\""
+          } > "$TMP_ENV"
+          chmod 600 "$TMP_ENV"
+
+          # Ensure shared/ exists (user owns /var/www/$APP_NAME after bootstrap)
+          sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p ${APP_REMOTE_ROOT}/shared"
+
+          # Upload to a temp path first, then atomic mv (no half-written window)
+          REMOTE_TMP="/tmp/.env.production.$$"
+          sshpass -e scp -P "$VPS_PORT" $SSH_OPTS \
+            "$TMP_ENV" \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:"$REMOTE_TMP"
+
+          sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "mv $REMOTE_TMP ${APP_REMOTE_ROOT}/shared/.env.production && \
+             chmod 600 ${APP_REMOTE_ROOT}/shared/.env.production && \
+             echo '✓ .env.production synced ('$(wc -l < ${APP_REMOTE_ROOT}/shared/.env.production)' lines)'"
+
+          # Wipe the local copy from the runner FS (the runner is ephemeral
+          # anyway, but belt-and-suspenders)
+          shred -u "$TMP_ENV" 2>/dev/null || rm -f "$TMP_ENV"
 
       - name: 🚀 Run remote deploy script
         id: remote_deploy
