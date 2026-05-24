@@ -48,6 +48,9 @@ env:
   APP_NAME: cmipaportal
   APP_REMOTE_ROOT: /var/www/cmipaportal
   NODE_VERSION: '20'
+  # Default SSH port to 22 when the VPS_PORT secret is missing or empty.
+  # GitHub Actions `||` returns the right-hand side when the left is empty.
+  VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
 
 jobs:
   # ===========================================================================
@@ -156,6 +159,23 @@ jobs:
           name: release-${{ needs.build.outputs.release_id }}
           path: /tmp
 
+      - name: ✅ Validate required secrets
+        env:
+          VPS_HOST_CHECK: ${{ secrets.VPS_HOST }}
+          VPS_USER_CHECK: ${{ secrets.VPS_USER }}
+          VPS_PASS_CHECK: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          missing=()
+          [ -z "$VPS_HOST_CHECK" ] && missing+=("VPS_HOST")
+          [ -z "$VPS_USER_CHECK" ] && missing+=("VPS_USER")
+          [ -z "$VPS_PASS_CHECK" ] && missing+=("VPS_PASSWORD")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Missing required GitHub Secrets: ${missing[*]}"
+            echo "Add them under Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "✓ All required secrets present (VPS_PORT defaults to 22 if unset; using $VPS_PORT)"
+
       - name: 🔐 Setup SSH (password auth via sshpass)
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
@@ -180,7 +200,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -p ${{ secrets.VPS_PORT }} $SSH_OPTS \
+          sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             'echo "Connected as $(whoami)@$(hostname) — uname=$(uname -srm)"'
 
@@ -192,17 +212,17 @@ jobs:
           REMOTE_DIR="${APP_REMOTE_ROOT}/releases/${RELEASE_ID}"
 
           echo "→ Creating $REMOTE_DIR on VPS"
-          sshpass -e ssh -p ${{ secrets.VPS_PORT }} $SSH_OPTS \
+          sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "mkdir -p $REMOTE_DIR && rm -rf /tmp/release-${RELEASE_ID}.tar.gz"
 
           echo "→ Uploading artifact (scp)"
-          sshpass -e scp -P ${{ secrets.VPS_PORT }} $SSH_OPTS \
+          sshpass -e scp -P "$VPS_PORT" $SSH_OPTS \
             /tmp/release.tar.gz \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/release-${RELEASE_ID}.tar.gz
 
           echo "→ Extracting on VPS"
-          sshpass -e ssh -p ${{ secrets.VPS_PORT }} $SSH_OPTS \
+          sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "tar -xzf /tmp/release-${RELEASE_ID}.tar.gz -C $REMOTE_DIR --strip-components=0 && \
              rm /tmp/release-${RELEASE_ID}.tar.gz && \
@@ -217,7 +237,7 @@ jobs:
           REMOTE_SCRIPT="${APP_REMOTE_ROOT}/releases/${RELEASE_ID}/scripts/vps-deploy.sh"
 
           # The artifact contains scripts/vps-deploy.sh — make it executable & run it
-          sshpass -e ssh -p ${{ secrets.VPS_PORT }} $SSH_OPTS \
+          sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
             "chmod +x $REMOTE_SCRIPT && APP_NAME=${APP_NAME} bash $REMOTE_SCRIPT $RELEASE_ID"
 
