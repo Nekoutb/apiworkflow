@@ -103,18 +103,50 @@ export async function rejectDocumentAction(formData: FormData): Promise<void> {
     },
   });
 
+  // In-app notification + email so the investor knows immediately.
+  const docTitle = REQUIRED_DOC_LABELS[doc.kind] ?? doc.kind;
   if (cv.investor.user.id) {
     await notifyInvestor({
       forUserId: cv.investor.user.id,
       conventionId: cv.id,
       kind: 'DOCUMENT_INCOMPLETE',
-      title: `Pièce à retransmettre — ${cv.reference}`,
+      title: `Pièce à retransmettre · ${docTitle} — ${cv.reference}`,
       body: reason,
+    });
+  }
+  if (cv.investor.user.email) {
+    await sendEmail({
+      to: cv.investor.user.email,
+      subject: `${cv.reference} · pièce à retransmettre (${docTitle})`,
+      html: documentRejectionEmailHtml({
+        contactName: cv.investor.user.name ?? cv.investor.raisonSociale,
+        reference: cv.reference,
+        documentTitle: docTitle,
+        reason,
+        conventionLink: `/investor/conventions/${cv.id}/edit`,
+      }),
     });
   }
 
   refreshConvention(doc.conventionId);
 }
+
+// FR labels for each required document kind (used in notification + email)
+const REQUIRED_DOC_LABELS: Record<string, string> = {
+  ACTIVITY_AUTHORIZATION: 'Autorisation d\'exercice',
+  RECRUITMENT_PLAN:       'Plan de recrutement camerounais',
+  TECH_TRANSFER_PLAN:     'Plan de transfert de technologies',
+  LOCAL_SUBCONTRACTING:   'Plan de sous-traitance locale',
+  FINANCING_PROOF:        'Justification du financement',
+  FEASIBILITY_STUDY:      'Étude de faisabilité',
+  REGISTRATION:           'Registre du commerce',
+  TAX_ID:                 'Attestation NIU',
+  NON_REDEVANCE:          'Attestation de non-redevance',
+  COMPANY_STATUTES:       'Statuts de la société',
+  ENVIRONMENTAL_STUDY:    'Étude d\'impact environnemental',
+  ANNUAL_REPORT:          'Rapport annuel',
+  OTHER:                  'Pièce justificative',
+};
 
 // =============================================================
 // Issue récépissé (Secrétariat only)
@@ -397,6 +429,51 @@ function recepisseEmailHtml(args: { contactName: string; raisonSociale: string; 
             étape de validation.
           </p>
         </div>
+      </div>
+      <div style="border-top: 1px solid #e5e5e5; padding: 18px 28px; font-size: 11px; color: #8a8a8a;">
+        ⚜ API Cameroun · Secrétariat
+      </div>
+    </div>
+  `;
+}
+
+function documentRejectionEmailHtml(args: {
+  contactName: string;
+  reference: string;
+  documentTitle: string;
+  reason: string;
+  conventionLink: string;
+}): string {
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0a0a0a; max-width: 560px; margin: 0 auto;">
+      <div style="border-top: 4px solid #c1973f; padding: 32px 28px 8px;">
+        <div style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #6b6b6b; font-weight: 700;">
+          Agence de Promotion des Investissements
+        </div>
+        <h1 style="font-family: Georgia, serif; font-size: 22px; margin: 12px 0 6px;">Une pièce de votre dossier est à retransmettre</h1>
+        <p style="font-size: 14px; color: #444; line-height: 1.6;">Bonjour ${escHtml(args.contactName)},</p>
+        <p style="font-size: 14px; color: #444; line-height: 1.6;">
+          Le Secrétariat de l&#39;API a examiné votre dossier <strong>${escHtml(args.reference)}</strong>.
+          La pièce <strong>${escHtml(args.documentTitle)}</strong> doit être retransmise pour pouvoir
+          poursuivre l&#39;instruction.
+        </p>
+        <div style="border-left: 3px solid #c1973f; padding: 12px 16px; margin: 18px 0; background: #fbf5e6;">
+          <strong style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #a47e2c;">
+            Motif communiqué par le Secrétariat
+          </strong>
+          <p style="font-size: 13.5px; color: #1f2937; line-height: 1.6; margin: 6px 0 0; white-space: pre-wrap;">${escHtml(args.reason)}</p>
+        </div>
+        <p style="font-size: 13px; color: #444; line-height: 1.6;">
+          Connectez-vous à votre espace pour remplacer la pièce concernée. L&#39;instruction
+          reprendra dès qu&#39;une version conforme aura été déposée. Le récépissé de dépôt
+          n&#39;est pas encore délivré et le délai légal n&#39;a donc pas commencé à courir
+          (Art. 30.3).
+        </p>
+        <p style="font-size: 13px;">
+          <a href="${args.conventionLink}" style="display:inline-block; background:#006b3a; color:#fff; padding:10px 16px; text-decoration:none; font-weight:bold; letter-spacing:0.06em; text-transform:uppercase; font-size:11.5px;">
+            Ouvrir mon dossier →
+          </a>
+        </p>
       </div>
       <div style="border-top: 1px solid #e5e5e5; padding: 18px 28px; font-size: 11px; color: #8a8a8a;">
         ⚜ API Cameroun · Secrétariat

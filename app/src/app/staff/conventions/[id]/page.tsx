@@ -6,9 +6,11 @@ import { formatFcfaCompact } from '@/lib/fcfa';
 import { sectorLabel, stageLabel, statusLabel, statusPillClass, STAGE_LABELS_FR, STAGE_ORDER } from '@/lib/stages';
 import { isStaffRole, roleLabel } from '@/lib/roles';
 import { canActOnStage, nextStage } from '@/lib/staff-permissions';
-import { REQUIRED_DOCS, findRequiredDoc } from '@/lib/required-documents';
+import { REQUIRED_DOCS } from '@/lib/required-documents';
+import { isClaudeConfigured } from '@/lib/claude';
 import { DocumentTile, type DocumentTileData } from './DocumentTile';
 import { ActionRail, type ActionContext } from './ActionRail';
+import { AiPane, type AiAnalysisItem } from './AiPane';
 import type { StaffRole, WorkflowAction } from '@prisma/client';
 
 export const metadata = { title: 'Dossier · Workflow d\'agrément' };
@@ -41,6 +43,7 @@ export default async function StaffConventionPage({
         take: 8,
         include: { actor: { select: { name: true, staffRole: true } } },
       },
+      aiAnalyses: { orderBy: { generatedAt: 'desc' }, take: 30 },
     },
   });
   if (!cv) notFound();
@@ -213,17 +216,32 @@ export default async function StaffConventionPage({
           </div>
         </div>
 
-        {/* Right — action rail (A10 will add the AI pane above this) */}
-        <aside>
+        {/* Right — action rail + Claude pane */}
+        <aside className="space-y-4">
           <ActionRail ctx={actionCtx} />
 
-          <div className="mt-4 border border-dashed border-line-2 bg-white p-4 text-[11px] italic leading-relaxed text-ink-4">
-            <strong className="block text-[10px] font-bold uppercase tracking-[0.14em] text-gold-700">
-              ⚜ Pane IA (à venir · A10)
-            </strong>
-            Résumé OCR du dossier, vérification de cohérence et conformité au Code, calcul de la
-            catégorie d&apos;investissement — assistant Claude.
-          </div>
+          <AiPane
+            conventionId={cv.id}
+            claudeLive={isClaudeConfigured()}
+            canAct={canAct}
+            analyses={cv.aiAnalyses.map((a): AiAnalysisItem => {
+              const docKind = a.documentId
+                ? cv.documents.find((d) => d.id === a.documentId)?.kind ?? null
+                : null;
+              const slot = docKind ? REQUIRED_DOCS.find((s) => s.kind === docKind) : null;
+              return {
+                id: a.id,
+                documentId: a.documentId,
+                documentTitle: slot?.title ?? (docKind ? String(docKind) : null),
+                generatedAt: a.generatedAt.toISOString(),
+                summary: a.summary,
+                contentJson: a.contentJson,
+                modelName: a.modelName,
+                tokensIn: a.tokensIn,
+                tokensOut: a.tokensOut,
+              };
+            })}
+          />
         </aside>
       </div>
     </section>

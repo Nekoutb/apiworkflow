@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { acceptDocumentAction, rejectDocumentAction } from '@/lib/actions/staff-workflow';
+import { runDocumentAnalysisAction } from '@/lib/actions/ai-analysis';
 
 export type DocumentTileData = {
   id: string;
@@ -53,6 +54,17 @@ export function DocumentTile({
     setError(null);
     startTransition(async () => {
       try { await rejectDocumentAction(fd); setShowReject(false); }
+      catch (e) { setError((e as Error).message); }
+    });
+  };
+
+  const analyse = () => {
+    if (!canEdit) return;
+    const fd = new FormData();
+    fd.set('documentId', doc.id);
+    setError(null);
+    startTransition(async () => {
+      try { await runDocumentAnalysisAction(fd); }
       catch (e) { setError((e as Error).message); }
     });
   };
@@ -139,6 +151,15 @@ export function DocumentTile({
               className="border border-line-2 bg-white px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-ink-2 transition hover:border-cmred hover:text-cmred disabled:opacity-50"
             >
               Rejeter…
+            </button>
+            <button
+              type="button"
+              onClick={analyse}
+              disabled={pending}
+              title="Analyse Claude · OCR + conformité"
+              className="border border-obsidian bg-obsidian px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-gold-500 transition hover:bg-ink disabled:opacity-50"
+            >
+              ⚡ Analyser
             </button>
           </div>
         )}
