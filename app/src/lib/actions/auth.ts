@@ -19,8 +19,10 @@ export async function loginAction(
   }
 
   try {
-    // Auth.js normalises "admin" as an email; accept it as such.
-    const emailToUse = email === 'admin' ? 'admin@api.cm' : email;
+    // Build-mode convenience: a bare username (no "@") is treated as the
+    // local-part of an @api.cm address.  So "admin" → admin@api.cm,
+    // "secretariat" → secretariat@api.cm, "test.user" → test.user@api.cm.
+    const emailToUse = email.includes('@') ? email : `${email}@api.cm`;
     await signIn('credentials', {
       email: emailToUse,
       password,

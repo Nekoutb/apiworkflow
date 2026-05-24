@@ -30,6 +30,11 @@ export function LoginForm() {
           placeholder="vous@entreprise.cm"
           className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[14px] text-ink placeholder:text-ink-4 focus:border-cmgreen-800 focus:outline-none focus:ring-1 focus:ring-cmgreen-800"
         />
+        <div className="mt-1.5 text-[11px] italic text-ink-3">
+          Astuce dev&nbsp;: <code className="not-italic font-mono">admin</code>,{' '}
+          <code className="not-italic font-mono">secretariat</code>,{' '}
+          <code className="not-italic font-mono">dg</code>… → @api.cm est ajouté automatiquement.
+        </div>
       </div>
 
       <div>
