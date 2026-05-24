@@ -20,3 +20,8 @@ Thumbs.db
 
 # Claude Code local cache
 .claude/
+
+# Database backups (contain real data — never commit)
+backups/
+*.dump
+*.sql.gz
