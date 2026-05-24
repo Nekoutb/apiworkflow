@@ -164,7 +164,7 @@ async function main() {
 
   // ---- Wipe sample conventions so the seed is idempotent ----
   await db.convention.deleteMany({
-    where: { reference: { in: ['CV-2026-000001', 'CV-2026-000002', 'CV-2026-000003'] } },
+    where: { reference: { in: ['CV-2026-000001', 'CV-2026-000002', 'CV-2026-000003', 'CV-2026-000004', 'CV-2026-000005'] } },
   });
 
   // ---- Sample convention 1: DRAFT (still being prepared) ----
@@ -303,12 +303,91 @@ async function main() {
   });
   console.log(`   ✓ ${cv3.reference} · Cameroun Solar Power · SIGNED par DG`);
 
+  // ---- Sample convention 4: SUBMITTED · awaiting récépissé at SECRETARY ----
+  // Investor submitted 18 hours ago — récépissé not yet issued.
+  const cv4Amount = 1_700_000_000n;
+  const cv4 = await db.convention.create({
+    data: {
+      reference: 'CV-2026-000004',
+      investorId: techcam.id,
+      projectName: 'Data-Center Douala',
+      sector: Sector.NUMERIQUE,
+      region: 'Littoral',
+      investmentFcfa: cv4Amount,
+      jobsPlanned: 65,
+      category: categoryFor(cv4Amount),
+      status: ConventionStatus.SUBMITTED,
+      currentStage: ConventionStage.SECRETARY,
+      submittedAt: hoursAgo(18),
+    },
+  });
+  // 6 docs uploaded
+  const cv4DocKinds: DocumentKind[] = ['REGISTRATION', 'TAX_ID', 'NON_REDEVANCE', 'COMPANY_STATUTES', 'FEASIBILITY_STUDY', 'FINANCING_PROOF'];
+  await db.document.createMany({
+    data: cv4DocKinds.map((kind, i) => ({
+      conventionId: cv4.id,
+      kind,
+      fileName: `${kind.toLowerCase()}-techcam2.pdf`,
+      storageUri: `seed://${kind.toLowerCase()}-techcam2.pdf`,
+      sha256: String.fromCharCode(65 + i).repeat(64),
+      sizeBytes: 150_000 + i * 20_000,
+      mimeType: 'application/pdf',
+      verification: 'PENDING',
+    })),
+  });
+  await db.workflowEvent.create({
+    data: { conventionId: cv4.id, stage: 'SECRETARY', action: 'RECEIVED', createdAt: hoursAgo(18), comment: 'Dossier soumis par l\'investisseur.' },
+  });
+  console.log(`   ✓ ${cv4.reference} · TechCam · SUBMITTED · à vérifier (Secrétariat, J-0h18)`);
+
+  // ---- Sample convention 5: SUBMITTED · at DIR_INVESTMENTS ----
+  // Récépissé issued 3 days ago, Secrétariat signed off 2 days ago, currently at Investments.
+  const cv5Amount = 2_400_000_000n;
+  const cv5 = await db.convention.create({
+    data: {
+      reference: 'CV-2026-000005',
+      investorId: agrovert.id,
+      projectName: 'Plateforme logistique Bafoussam',
+      sector: Sector.DISTRIBUTION,
+      region: 'Ouest',
+      investmentFcfa: cv5Amount,
+      jobsPlanned: 95,
+      category: categoryFor(cv5Amount),
+      status: ConventionStatus.SUBMITTED,
+      currentStage: ConventionStage.DIR_INVESTMENTS,
+      submittedAt: daysAgo(4),
+      recepisseAt: daysAgo(3),
+      recepisseNo: 'REC-2026-000005',
+    },
+  });
+  const cv5DocKinds: DocumentKind[] = ['REGISTRATION', 'TAX_ID', 'NON_REDEVANCE', 'COMPANY_STATUTES', 'FEASIBILITY_STUDY', 'FINANCING_PROOF'];
+  await db.document.createMany({
+    data: cv5DocKinds.map((kind, i) => ({
+      conventionId: cv5.id, kind, fileName: `${kind.toLowerCase()}-bafoussam.pdf`,
+      storageUri: `seed://${kind.toLowerCase()}-bafoussam.pdf`, sha256: String.fromCharCode(73 + i).repeat(64),
+      sizeBytes: 180_000 + i * 22_000, mimeType: 'application/pdf', verification: 'ACCEPTED', verifiedAt: daysAgo(2),
+    })),
+  });
+  await db.workflowEvent.createMany({
+    data: [
+      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'RECEIVED',       createdAt: daysAgo(4), comment: 'Dossier soumis.' },
+      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'RECEIPT_ISSUED', createdAt: daysAgo(3), comment: 'Récépissé REC-2026-000005 délivré.' },
+      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'SIGNED_OFF',     createdAt: daysAgo(2), comment: '6/6 pièces conformes.' },
+      { conventionId: cv5.id, stage: 'SECRETARY',       action: 'HANDED_OFF',     createdAt: daysAgo(2) },
+      { conventionId: cv5.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',       createdAt: daysAgo(2) },
+    ],
+  });
+  console.log(`   ✓ ${cv5.reference} · AgroVert · SUBMITTED · stage DIR_INVESTMENTS (J+2)`);
+
   console.log('\n✅ Done. All accounts use password: admin');
   console.log('   Login shortcut: "admin", "secretariat", "dg"… auto-appends @api.cm');
 }
 
 function daysAgo(n: number): Date {
   return new Date(Date.now() - n * 24 * 60 * 60 * 1000);
+}
+function hoursAgo(n: number): Date {
+  return new Date(Date.now() - n * 60 * 60 * 1000);
 }
 
 main()

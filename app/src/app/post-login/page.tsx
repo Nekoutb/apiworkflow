@@ -21,7 +21,8 @@ export default async function PostLoginPage() {
 
   // Staff users have a non-INVESTOR role — anything except the sentinel.
   if (session.user.role && session.user.role !== 'INVESTOR') {
-    redirect('/dashboard');
+    // ADMIN gets the admin dashboard; workflow staff land on their corbeille.
+    redirect(session.user.role === 'ADMIN' ? '/dashboard' : '/staff/inbox');
   }
 
   // Investor branch — figure out where to land based on the Investor row.
