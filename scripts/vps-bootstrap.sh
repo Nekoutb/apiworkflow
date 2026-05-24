@@ -23,10 +23,21 @@ APP_NAME="${APP_NAME:-cmipaportal}"
 APP_DOMAIN="${APP_DOMAIN:-cmipaportal.com}"
 APP_DOMAIN_WWW="${APP_DOMAIN_WWW:-www.cmipaportal.com}"
 APP_PORT="${APP_PORT:-3000}"
-APP_USER="${APP_USER:-deploy}"
 APP_ROOT="/var/www/${APP_NAME}"
 LE_EMAIL="${LE_EMAIL:-admin@cmipaportal.com}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
+
+# APP_USER is REQUIRED — you must specify which Linux user GitHub Actions
+# will SSH in as. This script does NOT create the user and does NOT set a
+# password. You create the user (`adduser <name>`), set its password
+# (`passwd <name>`) yourself, then pass the username here.
+APP_USER="${APP_USER:-}"
+if [[ -z "$APP_USER" ]]; then
+  printf "\033[1;31m✗ APP_USER is required. Example:\033[0m\n"
+  printf "    APP_USER=myuser LE_EMAIL=you@example.com bash %s\n" "$0"
+  printf "  (Create the user first with: adduser myuser && passwd myuser)\n"
+  exit 1
+fi
 
 # ---------- Pretty logging ---------------------------------------------------
 log()  { printf "\033[1;36m▶ %s\033[0m\n" "$*"; }
@@ -76,33 +87,40 @@ ufw allow 'Nginx Full'   >/dev/null 2>&1 || true
 yes | ufw enable         >/dev/null 2>&1 || true
 ok "Firewall: SSH + HTTP + HTTPS open"
 
-# ---------- 6. Deploy user ---------------------------------------------------
-# NOTE: This script NEVER sets, generates, or rotates the deploy user's
-# password. You set it yourself once via `passwd $APP_USER` after bootstrap,
-# then add that same value to the VPS_PASSWORD GitHub secret. Re-running
-# bootstrap leaves the existing password untouched.
-NEEDS_PASSWORD=0
+# ---------- 6. Verify the SSH user exists ------------------------------------
+# This script does NOT create users. You create the user manually beforehand:
+#     adduser <username>
+#     passwd <username>
+# Then pass APP_USER=<username> to this script. Re-runs leave password intact.
 if ! id -u "$APP_USER" >/dev/null 2>&1; then
-  log "6/9 · Creating deploy user: $APP_USER (NO password set — you set it manually)"
-  adduser --disabled-password --gecos "" "$APP_USER"
-  usermod -aG sudo "$APP_USER"
-  # Allow passwordless reload of nginx only — limited scope
-  cat >/etc/sudoers.d/${APP_USER}-${APP_NAME} <<EOF
-${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl reload nginx, /bin/systemctl restart nginx
-EOF
-  chmod 440 /etc/sudoers.d/${APP_USER}-${APP_NAME}
-  NEEDS_PASSWORD=1
+  err "6/9 · User '$APP_USER' does not exist on this system."
+  err "      Create it first:"
+  err "        adduser $APP_USER"
+  err "        passwd  $APP_USER"
+  err "      Then re-run this script with APP_USER=$APP_USER"
+  exit 1
 fi
 
-# Detect whether the user currently has a usable password (for the summary msg)
+# Install a scoped sudoers rule (idempotent) so the SSH user can reload nginx
+# without a password — needed by vps-deploy.sh for the nginx symlink swap.
+SUDOERS_FILE="/etc/sudoers.d/${APP_USER}-${APP_NAME}"
+if [[ ! -f "$SUDOERS_FILE" ]]; then
+  log "    · Granting $APP_USER limited sudo (nginx reload only)"
+  cat >"$SUDOERS_FILE" <<EOF
+${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl reload nginx, /bin/systemctl restart nginx
+EOF
+  chmod 440 "$SUDOERS_FILE"
+fi
+
+# Detect whether the user currently has a usable password (informational only)
 PW_STATUS="$(passwd -S "$APP_USER" 2>/dev/null | awk '{print $2}')"
 case "$PW_STATUS" in
-  P) PW_STATE="set (unchanged)" ;;
-  L) PW_STATE="locked"; NEEDS_PASSWORD=1 ;;
-  NP) PW_STATE="empty"; NEEDS_PASSWORD=1 ;;
-  *) PW_STATE="unknown ($PW_STATUS)"; NEEDS_PASSWORD=1 ;;
+  P) PW_STATE="set (unchanged — bootstrap will NOT touch it)" ;;
+  L) PW_STATE="LOCKED — run: passwd $APP_USER" ;;
+  NP) PW_STATE="EMPTY — run: passwd $APP_USER" ;;
+  *) PW_STATE="unknown ($PW_STATUS) — verify with: passwd -S $APP_USER" ;;
 esac
-ok "Deploy user: $APP_USER · password ${PW_STATE}"
+ok "SSH user: $APP_USER · password ${PW_STATE}"
 
 # ---------- 6b. SSH hardening for password auth ------------------------------
 # Enable password auth ONLY for the deploy user, keep root key-only.
@@ -165,11 +183,16 @@ chown -R "$APP_USER:$APP_USER" /var/log/${APP_NAME}
 ok "Release layout ready"
 
 # ---------- 8. Prepare home/.ssh skeleton (no key needed for password auth) -
-SSH_DIR="/home/${APP_USER}/.ssh"
-mkdir -p "$SSH_DIR"
-chmod 700 "$SSH_DIR"
-chown -R "$APP_USER:$APP_USER" "$SSH_DIR"
-ok "8/9 · SSH home prepared (password auth mode — no key needed)"
+USER_HOME="$(getent passwd "$APP_USER" | cut -d: -f6)"
+if [[ -n "$USER_HOME" && -d "$USER_HOME" ]]; then
+  SSH_DIR="${USER_HOME}/.ssh"
+  mkdir -p "$SSH_DIR"
+  chmod 700 "$SSH_DIR"
+  chown -R "$APP_USER:$APP_USER" "$SSH_DIR"
+  ok "8/9 · SSH home prepared at $SSH_DIR (password auth mode)"
+else
+  warn "8/9 · Could not resolve home for $APP_USER — skipping .ssh setup"
+fi
 
 # ---------- 9. nginx site (HTTP only — certbot will add HTTPS later) --------
 NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}"
@@ -240,7 +263,7 @@ echo "==============================================================="
 echo "  ✅  Bootstrap complete"
 echo "==============================================================="
 echo
-echo "  Deploy user : $APP_USER"
+echo "  SSH user    : $APP_USER  (you chose this — bootstrap will never change its password)"
 echo "  App root    : $APP_ROOT"
 echo "  Env file    : $APP_ROOT/shared/.env.production  (EDIT THIS)"
 echo "  Logs        : /var/log/${APP_NAME}/"
@@ -253,22 +276,10 @@ echo
 echo "  VPS_HOST      = $(curl -s ifconfig.me || hostname -I | awk '{print $1}')"
 echo "  VPS_USER      = $APP_USER"
 echo "  VPS_PORT      = 22"
-echo "  VPS_PASSWORD  = (the password you set with passwd ${APP_USER})"
+echo "  VPS_PASSWORD  = (the password you assigned to ${APP_USER} manually)"
 echo
-if [[ $NEEDS_PASSWORD -eq 1 ]]; then
-  echo "  ⚠️  ACTION REQUIRED — the ${APP_USER} user has no usable password yet."
-  echo "  ⚠️  Set one now (this script will NEVER touch it):"
-  echo
-  echo "        passwd ${APP_USER}"
-  echo
-  echo "  ⚠️  Then add the same value into GitHub Secrets as VPS_PASSWORD."
-else
-  echo "  ✓  The ${APP_USER} user already has a password — leave it as is."
-  echo "  ✓  Make sure GitHub Secrets → VPS_PASSWORD matches it."
-fi
-echo
-echo "  This script DOES NOT rotate passwords. Re-running is safe — your"
-echo "  existing password stays intact."
+echo "  This script DOES NOT create users, DOES NOT set passwords, and"
+echo "  DOES NOT rotate anything. Re-running is fully idempotent."
 echo
 echo "  Then push to main — the workflow will deploy automatically."
 echo "==============================================================="
