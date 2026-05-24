@@ -141,7 +141,7 @@ model Investor {
   isExisting    Boolean @default(false)
 
   conventions   Convention[]
-  reports       PostIncentiveReport[]
+  annualReports AnnualReport[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -208,6 +208,13 @@ model Convention {
   workflowEvents WorkflowEvent[]
   comments       Comment[]
   notifications  Notification[]
+
+  // Post-signature submissions (Art. 32, 33, 34, 36, 48)
+  equipmentList       EquipmentList?
+  annualReports       AnnualReport[]
+  royaltyPayments     RoyaltyPayment[]
+  extensionRequests   ExtensionRequest[]
+  attestationRequest  AttestationRequest?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -498,32 +505,120 @@ enum NotificationKind {
 }
 
 // ---------------------------------------------------------
-// Post-incentive annual report (Art. 32 — existing investors)
+// Post-signature submissions (Art. 32, 33, 34, 36, 48)
 // ---------------------------------------------------------
 
-model PostIncentiveReport {
+// Art. 32 — annual report on investment execution.
+model AnnualReport {
   id           String     @id @default(cuid())
+  conventionId String
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
   investorId   String
   investor     Investor   @relation(fields: [investorId], references: [id], onDelete: Cascade)
 
-  // Optional link to the convention this report concerns
-  conventionId String?
-
   fiscalYear  Int
   submittedAt DateTime  @default(now())
+  submittedByUserId String?
 
-  jobsActual       Int?
-  investmentActual BigInt?
+  // Performance vs commitments
+  jobsActual          Int?
+  investmentActualFcfa BigInt?
+  exportsActualFcfa    BigInt?
+  localPurchasesFcfa   BigInt?
 
-  reportFileUri String?
+  // Free-form narrative
+  notes        String?  @db.Text
 
-  // Late submissions accrue a 1 M FCFA / month fine (Art. 32.3)
-  isLate         Boolean @default(false)
-  monthsLate     Int     @default(0)
-  fineAccruedFcfa BigInt @default(0)
+  // Optional supporting PDF
+  attachmentUri String?
 
-  @@unique([investorId, fiscalYear, conventionId])
+  // SLA bookkeeping — late = 1 M FCFA / month (Art. 32.3)
+  isLate          Boolean @default(false)
+  monthsLate      Int     @default(0)
+  fineAccruedFcfa BigInt  @default(0)
+
+  status SubmissionStatus @default(PENDING)
+
+  @@unique([conventionId, fiscalYear])
+  @@index([investorId])
   @@index([fiscalYear])
+}
+
+// Art. 33 — equipment list, one-off, validated jointly by API + DGD.
+model EquipmentList {
+  id           String     @id @default(cuid())
+  conventionId String     @unique
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  submittedAt DateTime @default(now())
+  submittedByUserId String?
+
+  // [{ description, qty, hsCode, unitValueFcfa, ... }]
+  itemsJson      Json
+  totalValueFcfa BigInt
+
+  attachmentUri String?
+  status SubmissionStatus @default(PENDING)
+}
+
+// Art. 48 — annual royalty (0.1 %, plancher 100 k, plafond 5 M FCFA).
+model RoyaltyPayment {
+  id           String     @id @default(cuid())
+  conventionId String
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  fiscalYear     Int
+  amountDueFcfa  BigInt
+  amountPaidFcfa BigInt?
+  paidAt         DateTime?
+  proofUri       String?
+
+  status SubmissionStatus @default(PENDING)
+  createdAt DateTime @default(now())
+
+  @@unique([conventionId, fiscalYear])
+}
+
+// Art. 36 — extension of installation / exploitation deadlines.
+model ExtensionRequest {
+  id           String     @id @default(cuid())
+  conventionId String
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  reason          String   @db.Text
+  requestedMonths Int      // capped at 24 (Art. 36.3)
+  attachmentUri   String?
+
+  submittedAt DateTime @default(now())
+  submittedByUserId String?
+
+  status SubmissionStatus @default(PENDING)
+  decidedAt DateTime?
+  decisionNotes String? @db.Text
+}
+
+// Art. 34 — attestation de réalisation (one per convention).
+model AttestationRequest {
+  id           String     @id @default(cuid())
+  conventionId String     @unique
+  convention   Convention @relation(fields: [conventionId], references: [id], onDelete: Cascade)
+
+  expectedCompletionDate DateTime
+  notes                  String? @db.Text
+  attachmentUri          String?
+
+  submittedAt DateTime @default(now())
+  submittedByUserId String?
+
+  inspectionScheduledAt DateTime?
+  status SubmissionStatus @default(PENDING)
+}
+
+enum SubmissionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  PAID    // for royalties
 }
 
 // ---------------------------------------------------------

@@ -223,7 +223,7 @@ export default async function ConventionTrackerPage({
       </div>
 
       {/* Footer actions */}
-      <div className="mt-8 flex items-center gap-3">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
         <Link
           href="/investor"
           className="border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink"
@@ -231,14 +231,21 @@ export default async function ConventionTrackerPage({
           ← Mes dossiers
         </Link>
         {isSigned && (
-          <button
-            type="button"
-            disabled
-            title="Téléchargement activé en A7"
-            className="bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white opacity-50"
-          >
-            📄 Télécharger la convention
-          </button>
+          <>
+            <Link
+              href={`/investor/conventions/${cv.id}/print`}
+              target="_blank"
+              className="bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+            >
+              📄 Télécharger la convention
+            </Link>
+            <Link
+              href={`/investor/conventions/${cv.id}/obligations`}
+              className="border border-cmgreen-700 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 transition hover:bg-cmgreen-50"
+            >
+              Obligations post-signature →
+            </Link>
+          </>
         )}
       </div>
     </section>

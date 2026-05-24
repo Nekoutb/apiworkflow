@@ -327,22 +327,19 @@ function SignedConventionCard({ cv }: { cv: ConventionRow }) {
           </dl>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled
-              className="bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white opacity-50"
-              title="Disponible en A7"
+            <Link
+              href={`/investor/conventions/${cv.id}/print`}
+              target="_blank"
+              className="bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
             >
               📄 Télécharger la convention
-            </button>
-            <button
-              type="button"
-              disabled
-              className="border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 opacity-50"
-              title="Disponible en A7"
+            </Link>
+            <Link
+              href={`/investor/conventions/${cv.id}`}
+              className="border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink"
             >
-              Acte d&apos;agrément
-            </button>
+              Voir le suivi
+            </Link>
           </div>
         </div>
       </div>
@@ -365,10 +362,12 @@ function SignedConventionCard({ cv }: { cv: ConventionRow }) {
           ))}
         </ul>
 
-        <div className="mt-5 border-t border-line pt-3 text-[11px] italic text-ink-4">
-          Les formulaires de transmission seront activés à l&apos;étape A7. Les échéances ci-dessus
-          se mettent à jour automatiquement.
-        </div>
+        <Link
+          href={`/investor/conventions/${cv.id}/obligations`}
+          className="mt-5 block border border-cmgreen-700 bg-white px-4 py-2.5 text-center text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 transition hover:bg-cmgreen-50"
+        >
+          Tableau de bord des obligations →
+        </Link>
       </div>
     </article>
   );
@@ -377,39 +376,44 @@ function SignedConventionCard({ cv }: { cv: ConventionRow }) {
 function ObligationRow({ o }: { o: PostSignatureObligation }) {
   const daysLeft = o.deadlineLabel ? daysFromDeadlineLabel(o.deadlineLabel) : null;
   return (
-    <li className="border-l-2 border-line-2 pl-3.5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-gold-700">
-            {o.article} · {cadenceLabel(o.cadence)}
-          </div>
-          <div className="serif mt-0.5 text-[14px] font-semibold leading-snug text-ink">
-            {o.title}
-          </div>
-          <div className="mt-1 text-[12px] leading-snug text-ink-2">{o.description}</div>
-          {o.penalty && (
-            <div className="mt-1 text-[11px] italic text-cmred">
-              ⚠ Pénalité&nbsp;: {o.penalty}
+    <li>
+      <Link
+        href={o.href}
+        className="group block border-l-2 border-line-2 pl-3.5 transition hover:border-cmgreen-800"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-gold-700">
+              {o.article} · {cadenceLabel(o.cadence)}
             </div>
+            <div className="serif mt-0.5 text-[14px] font-semibold leading-snug text-ink group-hover:text-cmgreen-800">
+              {o.title} <span aria-hidden className="ml-0.5 text-[12px] opacity-0 transition group-hover:opacity-100">→</span>
+            </div>
+            <div className="mt-1 text-[12px] leading-snug text-ink-2">{o.description}</div>
+            {o.penalty && (
+              <div className="mt-1 text-[11px] italic text-cmred">
+                ⚠ Pénalité&nbsp;: {o.penalty}
+              </div>
+            )}
+          </div>
+          {o.status && (
+            <span className={`pill ${obligationStatusClass(o.status)} flex-none`}>
+              {OBLIGATION_STATUS_LABEL[o.status]}
+            </span>
           )}
         </div>
-        {o.status && (
-          <span className={`pill ${obligationStatusClass(o.status)} flex-none`}>
-            {OBLIGATION_STATUS_LABEL[o.status]}
-          </span>
+        {o.deadlineLabel && (
+          <div className="mt-1.5 text-[11.5px] text-ink-3">
+            Échéance&nbsp;: <strong className="font-semibold text-ink-2">{o.deadlineLabel}</strong>
+            {daysLeft !== null && daysLeft >= 0 && (
+              <span className="ml-1.5 text-ink-4">(dans {daysLeft} j)</span>
+            )}
+            {daysLeft !== null && daysLeft < 0 && (
+              <span className="ml-1.5 text-cmred">(en retard de {Math.abs(daysLeft)} j)</span>
+            )}
+          </div>
         )}
-      </div>
-      {o.deadlineLabel && (
-        <div className="mt-1.5 text-[11.5px] text-ink-3">
-          Échéance&nbsp;: <strong className="font-semibold text-ink-2">{o.deadlineLabel}</strong>
-          {daysLeft !== null && daysLeft >= 0 && (
-            <span className="ml-1.5 text-ink-4">(dans {daysLeft} j)</span>
-          )}
-          {daysLeft !== null && daysLeft < 0 && (
-            <span className="ml-1.5 text-cmred">(en retard de {Math.abs(daysLeft)} j)</span>
-          )}
-        </div>
-      )}
+      </Link>
     </li>
   );
 }
