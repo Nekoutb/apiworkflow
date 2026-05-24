@@ -151,11 +151,14 @@ export default async function EditConventionPage({
 
           <div className="border-l-4 border-gold-500 bg-obsidian p-5 text-white">
             <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold-500">
-              ⏱ Délai légal
+              ⏱ Délai légal d&apos;instruction
             </div>
             <h3 className="serif mt-2 text-[16px] font-bold text-gold-500">10 jours ouvrés</h3>
             <p className="mt-2 text-[12px] italic text-white/75">
-              À compter de la délivrance du récépissé de dépôt par le Secrétariat (Art. 30.3).
+              Après soumission, le Secrétariat vérifie la conformité de votre dossier puis vous
+              délivre un récépissé de dépôt par email. <strong className="not-italic font-semibold text-gold-500">Le délai
+              de 10 jours court à compter de ce récépissé</strong> (Art. 30.3 de l&apos;Ordonnance
+              n° 2025/002), pas à compter de la soumission.
             </p>
           </div>
 

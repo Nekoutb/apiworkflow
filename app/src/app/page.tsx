@@ -78,7 +78,7 @@ export default function LandingPage() {
           </div>
 
           <aside className="flex flex-col bg-white px-12 py-24">
-            <Stat num="10" unit="j ouvrés" label="Délai légal d'instruction · Art. 30.3" />
+            <Stat num="10" unit="j ouvrés" label="Délai légal après récépissé · Art. 30.3" />
             <Stat num="5" label="Étapes de validation · Secrétariat → DG" />
             <Stat num="8" label="Secteurs prioritaires éligibles · Art. 3" />
             <Stat num="II" unit="langues" label="Français · English" last />

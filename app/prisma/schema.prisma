@@ -176,13 +176,17 @@ model Convention {
   currentStage ConventionStage  @default(SECRETARY)
 
   // Key timestamps
-  submittedAt DateTime?
-  signedAt    DateTime?
+  submittedAt DateTime?  // when investor submitted the dossier
+  recepisseAt DateTime?  // when Secrétariat issued the récépissé — starts the 10-day clock (Art. 30.3)
+  signedAt    DateTime?  // when DG signed the convention
   closedAt    DateTime?
 
   // Reference numbers issued along the way
-  recepisseNo String?
-  agreementNo String?
+  recepisseNo String?    // récépissé number, set when recepisseAt is set
+  agreementNo String?    // convention number, set when signedAt is set
+
+  // Who issued the récépissé (Secrétariat user)
+  recepisseUserId String?
 
   // DG who signed the final convention
   signerUserId String?
@@ -345,11 +349,12 @@ model WorkflowEvent {
 
 // Each stage emits the same shape of events.
 enum WorkflowAction {
-  RECEIVED   // arrived at this stage
-  SIGNED_OFF // current director signed off (review complete)
-  HANDED_OFF // transferred to the next stage
-  RETURNED   // sent back to investor
-  REJECTED   // rejected at this stage
+  RECEIVED        // arrived at this stage
+  RECEIPT_ISSUED  // récépissé de dépôt délivré — only emitted at SECRETARY stage; starts the 10-day clock (Art. 30.3)
+  SIGNED_OFF      // current director signed off (review complete)
+  HANDED_OFF      // transferred to the next stage
+  RETURNED        // sent back to investor for completion
+  REJECTED        // rejected at this stage
 }
 
 // ---------------------------------------------------------

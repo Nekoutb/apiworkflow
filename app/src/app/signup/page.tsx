@@ -61,7 +61,7 @@ export default async function SignupPage() {
               </p>
 
               <ul className="mt-7 space-y-2.5 text-[13px] text-ink-2">
-                <Tick>Délai légal d&apos;instruction&nbsp;: 10 jours ouvrés (Art. 30.3)</Tick>
+                <Tick>Délai légal d&apos;instruction&nbsp;: 10 jours ouvrés après récépissé du Secrétariat (Art. 30.3)</Tick>
                 <Tick>5 étapes de validation, du Secrétariat au Directeur Général</Tick>
                 <Tick>Suivi en temps réel · notifications par email</Tick>
                 <Tick>Convention numérique téléchargeable une fois signée</Tick>

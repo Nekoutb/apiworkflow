@@ -51,6 +51,7 @@ export default async function InvestorHomePage({
           status: true,
           currentStage: true,
           submittedAt: true,
+          recepisseAt: true,
           signedAt: true,
           agreementNo: true,
           recepisseNo: true,
@@ -96,15 +97,24 @@ export default async function InvestorHomePage({
       </p>
 
       {submitted && (
-        <div className="mt-6 flex items-start gap-3 border-l-4 border-cmgreen-700 bg-cmgreen-50 px-4 py-3">
-          <span className="text-[18px] leading-none text-cmgreen-800">✓</span>
-          <div className="text-[13px] leading-relaxed text-ink">
-            <strong className="block text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800">
-              Dossier soumis
-            </strong>
-            Votre dossier <strong className="font-mono">{submitted}</strong> a été transmis au
-            Secrétariat. Un email de confirmation vous a été envoyé. L&apos;instruction démarre
-            sous 10 jours ouvrés.
+        <div className="mt-6 border-l-4 border-cmgreen-700 bg-cmgreen-50 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <span className="text-[18px] leading-none text-cmgreen-800">✓</span>
+            <div className="text-[13px] leading-relaxed text-ink">
+              <strong className="block text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800">
+                Dossier soumis
+              </strong>
+              Votre dossier <strong className="font-mono">{submitted}</strong> a été transmis au
+              Secrétariat. Un accusé de transmission vous a été envoyé par email.
+            </div>
+          </div>
+          <div className="mt-3 border-t border-cmgreen-700/30 pt-3 pl-7 text-[12.5px] leading-relaxed text-ink-2">
+            <strong className="text-ink">Prochaine étape&nbsp;:</strong> le Secrétariat va
+            vérifier la conformité de votre dossier (pièces complètes, lisibles, conformes aux
+            articles 6 et 7). S&apos;il est conforme, vous recevrez un{' '}
+            <strong>récépissé de dépôt par email</strong>. Le délai légal d&apos;instruction de{' '}
+            <strong>10 jours ouvrés</strong> court à compter de la délivrance de ce récépissé
+            (Art. 30.3 de l&apos;Ordonnance n° 2025/002).
           </div>
         </div>
       )}
@@ -204,12 +214,13 @@ type ConventionRow = Pick<
   Convention,
   | 'id' | 'reference' | 'projectName' | 'sector' | 'region'
   | 'investmentFcfa' | 'jobsPlanned' | 'status' | 'currentStage'
-  | 'submittedAt' | 'signedAt' | 'agreementNo' | 'recepisseNo' | 'category' | 'createdAt'
+  | 'submittedAt' | 'recepisseAt' | 'signedAt' | 'agreementNo' | 'recepisseNo' | 'category' | 'createdAt'
 >;
 
 function ConventionInProgressCard({ cv }: { cv: ConventionRow }) {
   const isDraft = cv.status === 'DRAFT' || cv.status === 'RETURNED';
   const href = isDraft ? `/investor/conventions/${cv.id}/edit` : `/investor/conventions/${cv.id}`;
+  const awaitingRecepisse = cv.status === 'SUBMITTED' && !cv.recepisseAt;
 
   return (
     <article className="group border border-line bg-white transition hover:border-cmgreen-700 hover:shadow-lift">
@@ -240,17 +251,31 @@ function ConventionInProgressCard({ cv }: { cv: ConventionRow }) {
       {/* Stage progress — labels go BELOW so they never overlap the dots */}
       <div className="mx-5 mt-5 border-t border-line pt-4">
         <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-3">
-          {isDraft ? 'Statut' : 'Étape actuelle'}
+          {isDraft ? 'Statut' : awaitingRecepisse ? 'En attente du récépissé' : 'Étape actuelle'}
         </div>
         <div className="serif mt-1 text-[15px] font-semibold text-ink">
-          {isDraft ? statusLabel(cv.status) : stageLabel(cv.currentStage)}
-          {!isDraft && (
+          {isDraft
+            ? statusLabel(cv.status)
+            : awaitingRecepisse
+              ? 'Vérification de conformité par le Secrétariat'
+              : stageLabel(cv.currentStage)}
+          {!isDraft && !awaitingRecepisse && (
             <span className="ml-2 font-sans text-[11px] font-normal uppercase tracking-[0.12em] text-ink-4">
               ({stageIndex(cv.currentStage) + 1} / 5)
             </span>
           )}
         </div>
         <ProgressBar current={cv.currentStage} status={cv.status} />
+        {awaitingRecepisse && (
+          <p className="mt-2 text-[11.5px] italic text-ink-3">
+            Le délai légal de 10 j ouvrés (Art. 30.3) commencera à courir dès l&apos;émission du récépissé.
+          </p>
+        )}
+        {!isDraft && !awaitingRecepisse && cv.recepisseAt && (
+          <p className="mt-2 text-[11.5px] italic text-ink-3">
+            Récépissé délivré le {cv.recepisseAt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })} — J+{daysSince(cv.recepisseAt)} sur 10.
+          </p>
+        )}
       </div>
 
       {/* CTA */}
@@ -443,6 +468,10 @@ function ProgressBar({ current, status }: { current: ConventionStage; status: Co
       })}
     </div>
   );
+}
+
+function daysSince(d: Date): number {
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
 function cadenceLabel(c: PostSignatureObligation['cadence']): string {

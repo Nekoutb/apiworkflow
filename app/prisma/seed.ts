@@ -195,6 +195,7 @@ async function main() {
   console.log(`   ✓ ${cv1.reference} · TechCam SARL · DRAFT (3/6 docs)`);
 
   // ---- Sample convention 2: SUBMITTED · at DIR_COMPLIANCE ----
+  // Submitted 11 days ago, récépissé délivré 10 days ago (1-day verification window).
   const cv2Amount = 3_200_000_000n;
   const cv2 = await db.convention.create({
     data: {
@@ -209,6 +210,7 @@ async function main() {
       status: ConventionStatus.SUBMITTED,
       currentStage: ConventionStage.DIR_COMPLIANCE,
       submittedAt: daysAgo(11),
+      recepisseAt: daysAgo(10),
       recepisseNo: 'REC-2026-000002',
       financialSummary: {
         create: {
@@ -242,16 +244,17 @@ async function main() {
       verifiedAt: daysAgo(10),
     })),
   });
-  // Workflow trace: received & handed off twice, currently at DIR_COMPLIANCE awaiting signoff
+  // Workflow trace — note the explicit RECEIPT_ISSUED step at Secrétariat.
   await db.workflowEvent.createMany({
     data: [
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'RECEIVED',   createdAt: daysAgo(11) },
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'SIGNED_OFF', comment: 'Dossier complet · 6/6 documents conformes', createdAt: daysAgo(9) },
-      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'HANDED_OFF', createdAt: daysAgo(9) },
-      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',   createdAt: daysAgo(9) },
-      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'SIGNED_OFF', comment: 'Projet conforme à l\'article 7 · avis favorable', createdAt: daysAgo(5) },
-      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'HANDED_OFF', createdAt: daysAgo(5) },
-      { conventionId: cv2.id, stage: 'DIR_COMPLIANCE',  action: 'RECEIVED',   createdAt: daysAgo(5) },
+      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'RECEIVED',       createdAt: daysAgo(11), comment: 'Dossier soumis par l\'investisseur.' },
+      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'RECEIPT_ISSUED', createdAt: daysAgo(10), comment: 'Récépissé REC-2026-000002 délivré — 6/6 pièces conformes. Délai légal de 10 j ouvrés démarré.' },
+      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'SIGNED_OFF',     createdAt: daysAgo(9),  comment: 'Instruction Secrétariat clôturée.' },
+      { conventionId: cv2.id, stage: 'SECRETARY',       action: 'HANDED_OFF',     createdAt: daysAgo(9) },
+      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',       createdAt: daysAgo(9) },
+      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'SIGNED_OFF',     createdAt: daysAgo(5),  comment: 'Projet conforme à l\'article 7 · avis favorable' },
+      { conventionId: cv2.id, stage: 'DIR_INVESTMENTS', action: 'HANDED_OFF',     createdAt: daysAgo(5) },
+      { conventionId: cv2.id, stage: 'DIR_COMPLIANCE',  action: 'RECEIVED',       createdAt: daysAgo(5) },
     ],
   });
   console.log(`   ✓ ${cv2.reference} · AgroVert SA · SUBMITTED · stage DIR_COMPLIANCE (J+5)`);
@@ -272,6 +275,7 @@ async function main() {
       status: ConventionStatus.SIGNED,
       currentStage: ConventionStage.DG,
       submittedAt: daysAgo(45),
+      recepisseAt: daysAgo(44),
       signedAt: daysAgo(3),
       signerUserId: dg?.id,
       recepisseNo: 'REC-2026-000003',
@@ -280,9 +284,10 @@ async function main() {
   });
   await db.workflowEvent.createMany({
     data: [
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'RECEIVED',   createdAt: daysAgo(45) },
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'SIGNED_OFF', createdAt: daysAgo(40), comment: '6/6 documents conformes' },
-      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'HANDED_OFF', createdAt: daysAgo(40) },
+      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'RECEIVED',       createdAt: daysAgo(45), comment: 'Dossier soumis par l\'investisseur.' },
+      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'RECEIPT_ISSUED', createdAt: daysAgo(44), comment: 'Récépissé REC-2026-000003 délivré.' },
+      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'SIGNED_OFF',     createdAt: daysAgo(40), comment: 'Instruction Secrétariat clôturée.' },
+      { conventionId: cv3.id, stage: 'SECRETARY',       action: 'HANDED_OFF',     createdAt: daysAgo(40) },
       { conventionId: cv3.id, stage: 'DIR_INVESTMENTS', action: 'RECEIVED',   createdAt: daysAgo(40) },
       { conventionId: cv3.id, stage: 'DIR_INVESTMENTS', action: 'SIGNED_OFF', createdAt: daysAgo(32), comment: 'Conformité Art. 7 · favorable' },
       { conventionId: cv3.id, stage: 'DIR_INVESTMENTS', action: 'HANDED_OFF', createdAt: daysAgo(32) },

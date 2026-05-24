@@ -310,20 +310,28 @@ function submittedEmailHtml(args: {
         <div style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #6b6b6b; font-weight: 700;">
           Agence de Promotion des Investissements
         </div>
-        <h1 style="font-family: Georgia, serif; font-size: 22px; margin: 12px 0 6px;">Votre dossier a bien été reçu</h1>
+        <h1 style="font-family: Georgia, serif; font-size: 22px; margin: 12px 0 6px;">Votre dossier a bien été transmis</h1>
         <p style="font-size: 14px; color: #444; line-height: 1.6;">Bonjour ${esc(args.contactName)},</p>
         <p style="font-size: 14px; color: #444; line-height: 1.6;">
           Le dossier de demande d&#39;agrément de <strong>${esc(args.raisonSociale)}</strong> a bien été transmis
-          au Secrétariat de l&#39;API. L&#39;instruction démarre selon le délai légal de 10 jours ouvrés
-          (Art. 30.3 de l&#39;Ordonnance n° 2025/002).
+          au Secrétariat de l&#39;API.
         </p>
         <div style="border: 1px solid #d4d4d4; padding: 16px 18px; margin: 18px 0; background: #fafafa;">
-          <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b6b; font-weight: 700; margin-bottom: 6px;">Récépissé</div>
+          <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b6b; font-weight: 700; margin-bottom: 6px;">Référence du dossier</div>
           <div style="font-family: 'Courier New', monospace; font-size: 13px;">
             Référence&nbsp;: <strong>${esc(args.reference)}</strong><br>
             Projet&nbsp;: ${esc(args.projectName)}<br>
             Secteur&nbsp;: ${esc(args.sector)}<br>
             Montant&nbsp;: ${esc(args.amountLabel)}
+          </div>
+        </div>
+        <div style="border-left: 3px solid #c1973f; padding: 12px 16px; margin: 18px 0; background: #fbf5e6;">
+          <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #a47e2c; font-weight: 700; margin-bottom: 4px;">Prochaine étape</div>
+          <div style="font-size: 13px; color: #1f2937; line-height: 1.6;">
+            Le Secrétariat va maintenant vérifier la conformité des pièces produites. Si le dossier
+            est complet et conforme, vous recevrez un <strong>récépissé de dépôt par email</strong>.
+            Le délai légal d&#39;instruction de <strong>10 jours ouvrés</strong> court à compter de
+            la délivrance de ce récépissé (Art. 30.3 de l&#39;Ordonnance n° 2025/002).
           </div>
         </div>
         <p style="font-size: 13px; color: #6b6b6b; line-height: 1.6;">
