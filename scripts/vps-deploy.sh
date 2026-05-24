@@ -64,7 +64,27 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   err "Release directory not found: $RELEASE_DIR"; exit 1
 fi
 if [[ ! -f "$SHARED_ENV" ]]; then
-  err "Missing $SHARED_ENV — edit it on the server then re-deploy"; exit 1
+  err "════════════════════════════════════════════════════════════════════"
+  err " Missing $SHARED_ENV"
+  err "════════════════════════════════════════════════════════════════════"
+  err " The deploy script will NEVER create this file automatically — it"
+  err " contains your real production secrets. Create it on the server now:"
+  err ""
+  err "   sudo mkdir -p $(dirname "$SHARED_ENV")"
+  err "   sudo tee $SHARED_ENV > /dev/null <<'EOF'"
+  err "   DATABASE_URL=\"postgresql://USER:PASS@HOST/DB?sslmode=require\""
+  err "   AUTH_SECRET=\"\$(openssl rand -base64 32)\""
+  err "   AUTH_URL=\"https://cmipaportal.com\""
+  err "   NEXTAUTH_URL=\"https://cmipaportal.com\""
+  err "   NODE_ENV=\"production\""
+  err "   PORT=${APP_PORT}"
+  err "   EOF"
+  err "   sudo chmod 600 $SHARED_ENV"
+  err "   sudo chown ${USER}:${USER} $SHARED_ENV"
+  err ""
+  err " Then re-trigger the GitHub Actions deploy."
+  err "════════════════════════════════════════════════════════════════════"
+  exit 1
 fi
 
 PREVIOUS_RELEASE=""
