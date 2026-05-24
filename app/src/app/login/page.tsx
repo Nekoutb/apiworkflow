@@ -1,69 +1,114 @@
 import Link from 'next/link';
-import { Logo } from '@/components/brand/Logo';
+import { redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
 import { LoginForm } from './LoginForm';
 
 export const metadata = { title: 'Connexion · API Cameroun' };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await auth();
+  if (session?.user) redirect('/dashboard');
+
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
-      <aside className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-cmgreen-900 via-cmgreen-800 to-cmgreen-900 px-12 py-12 text-white lg:px-16 lg:py-16">
-        <div className="absolute inset-y-0 right-0 flex w-1.5 flex-col">
-          <div className="flex-1 bg-cmgreen-700" />
-          <div className="flex-1 bg-cmred" />
-          <div className="flex-1 bg-cmyellow" />
-        </div>
+    <main className="min-h-screen bg-bgsoft">
+      {/* gov bar */}
+      <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+        République du Cameroun <span className="mx-3 text-gold-500">⚜</span> Agence de Promotion des Investissements
+      </div>
 
-        <div className="flex items-center gap-4">
-          <Logo className="h-14 w-14 rounded-xl shadow-lift" />
-          <div className="leading-tight">
-            <div className="text-[11px] uppercase tracking-widest opacity-80">République du Cameroun</div>
-            <div className="text-base font-semibold">Agence de Promotion des Investissements</div>
-          </div>
-        </div>
+      <div className="grid min-h-[calc(100vh-26px)] lg:grid-cols-[1.05fr_0.95fr]">
+        {/* ====== LEFT: editorial brand panel ====== */}
+        <aside className="relative overflow-hidden bg-gradient-to-b from-white via-[#f3f8f5] to-[#e8f1ec] px-14 py-14">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                'radial-gradient(ellipse 60% 40% at 85% 0%, rgba(193, 151, 63, 0.10) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 0% 100%, rgba(0, 107, 58, 0.08) 0%, transparent 55%)',
+            }}
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: 'radial-gradient(rgba(12, 18, 32, 0.03) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          />
 
-        <div className="max-w-lg">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cmyellow/40 bg-cmyellow/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-cmyellow">
-            ★ Portail interne · Workflow d&apos;agrément
-          </div>
-          <h1 className="text-3xl font-bold leading-tight lg:text-4xl">
-            Promouvoir l&apos;investissement,{' '}
-            <span className="text-cmyellow">en toute transparence.</span>
-          </h1>
-          <p className="mt-5 max-w-md text-sm leading-relaxed opacity-90">
-            Plateforme officielle de gestion des conventions d&apos;investissement entre l&apos;État du
-            Cameroun et les investisseurs nationaux et étrangers.
-          </p>
-          <div className="mt-5 inline-block border-l-2 border-cmyellow/60 pl-3 text-xs italic opacity-80">
-            En application de l&apos;Ordonnance n° 2025/002 du 18 juillet 2025
-          </div>
-        </div>
-
-        <div className="text-[11px] opacity-60">
-          🔒 Connexion chiffrée TLS 1.3 · © 2026 Présidence de la République
-        </div>
-      </aside>
-
-      <section className="flex items-center justify-center bg-surface px-8 py-12">
-        <div className="w-full max-w-md">
-          <div className="text-xs font-semibold uppercase tracking-widest text-ink-muted">
-            Bienvenue
-          </div>
-          <h2 className="mt-1 text-3xl font-bold">Connexion au Portail</h2>
-          <p className="mt-2 text-sm text-ink-muted">
-            Identifiez-vous pour accéder au portail (investisseur ou personnel API).
-          </p>
-
-          <LoginForm />
-
-          <p className="mt-6 text-center text-xs text-ink-muted">
-            Pas encore de compte ?{' '}
-            <Link href="/signup" className="font-semibold text-cmgreen-700 hover:underline">
-              Créer un compte investisseur
+          <div className="relative flex h-full flex-col justify-between">
+            {/* crest */}
+            <Link href="/" className="flex items-center gap-3.5">
+              <div className="relative flex h-12 w-12 items-center justify-center border border-obsidian bg-obsidian font-display text-lg font-bold tracking-wide text-gold-500">
+                A
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-[3px] border border-gold-500/45"
+                />
+              </div>
+              <div className="leading-tight">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
+                  République du Cameroun
+                </div>
+                <div className="serif text-[17px] font-bold text-ink">
+                  Agence de Promotion des Investissements
+                </div>
+              </div>
             </Link>
-          </p>
-        </div>
-      </section>
-    </div>
+
+            {/* hero copy */}
+            <div className="max-w-[480px]">
+              <div className="mb-5 inline-flex items-center gap-3 text-[10.5px] font-bold uppercase tracking-[0.26em] text-gold-700">
+                Portail officiel
+                <span className="h-px w-11 bg-gold-600" />
+              </div>
+              <h1 className="serif mb-5 text-[clamp(36px,4vw,52px)] font-semibold leading-[1.06] tracking-[-0.022em] text-ink">
+                L&apos;investissement<br />au Cameroun,
+                <br />
+                <span className="italic text-cmgreen-800">une affaire de souveraineté.</span>
+              </h1>
+              <p className="max-w-[420px] text-[14.5px] leading-[1.65] text-ink-2">
+                Plateforme officielle de soumission, d&apos;instruction et de suivi des conventions
+                d&apos;investissement entre l&apos;État du Cameroun et les investisseurs nationaux
+                et internationaux.
+              </p>
+              <div className="serif mt-6 inline-flex items-center gap-2.5 border-l-2 border-gold-600 pl-3.5 text-[13px] italic text-gold-700">
+                « Promouvoir l&apos;investissement productif. »
+              </div>
+            </div>
+
+            <div className="text-[10px] uppercase tracking-[0.14em] text-ink-3">
+              © MMXXVI — Tous droits réservés
+            </div>
+          </div>
+        </aside>
+
+        {/* ====== RIGHT: sign-in card ====== */}
+        <section className="flex items-center justify-center bg-white px-8 py-16">
+          <div className="w-full max-w-[420px]">
+            <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
+              Bienvenue
+            </div>
+            <h2 className="serif mb-2 text-[28px] font-semibold tracking-[-0.4px] text-ink">
+              Connexion au Portail
+            </h2>
+            <p className="serif mb-7 text-[13.5px] italic text-ink-3">
+              Identifiez-vous pour accéder à votre espace.
+            </p>
+
+            <LoginForm />
+
+            <div className="mt-7 border-t border-line pt-5 text-center">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-ink-4">
+                Mode développement
+              </p>
+              <p className="serif mt-1.5 text-[13px] italic text-ink-3">
+                Compte de test : <strong className="font-mono not-italic text-ink">admin</strong> · <strong className="font-mono not-italic text-ink">admin</strong>
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }

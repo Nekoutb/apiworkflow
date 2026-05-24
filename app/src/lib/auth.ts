@@ -3,28 +3,21 @@ import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
+import { authConfig } from './auth.config';
 
 /**
- * Auth.js v5 configuration.
- *
- * Providers (Phase 0): Credentials (email + password) only.
- * Phase 1 will add: TOTP 2FA challenge, optional Google/Microsoft OAuth.
- *
- * Session strategy: JWT (stateless) — simpler ops, no session table reads
- * on each request. Switch to "database" only if we need session revocation
- * lists or impersonation features.
+ * Full Auth.js config — used by Server Components, Server Actions, route handlers.
+ * Imports bcryptjs + Prisma which are Node-only.
+ * Middleware uses `auth.config.ts` instead (Edge-safe).
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(db),
-  session: { strategy: 'jwt' },
-  pages: {
-    signIn: '/login',
-  },
   providers: [
     Credentials({
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Mot de passe', type: 'password' },
       },
       async authorize(credentials) {
         const email = String(credentials?.email ?? '').toLowerCase().trim();
@@ -42,26 +35,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
-          // Phase 1 will read these in middleware to gate /staff vs /investor
-          userType: user.userType,
-          staffRole: user.staffRole,
+          role: user.staffRole ?? 'INVESTOR',
         };
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.userType = user.userType;
-        token.staffRole = user.staffRole;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      // Surface custom fields on session.user
-      session.user.userType = token.userType;
-      session.user.staffRole = token.staffRole;
-      return session;
-    },
-  },
 });

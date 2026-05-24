@@ -1,8 +1,7 @@
 /**
- * Module augmentation for NextAuth (Auth.js v5)
- * Adds our custom fields (userType, staffRole) onto Session and JWT.
+ * Module augmentation for NextAuth (Auth.js v5).
+ * Adds our custom fields (id, role) onto Session, User, and JWT.
  */
-import type { UserType, StaffRole } from '@prisma/client';
 import 'next-auth';
 import 'next-auth/jwt';
 
@@ -13,22 +12,19 @@ declare module 'next-auth' {
       name?: string | null;
       email?: string | null;
       image?: string | null;
-      userType?: UserType;
-      staffRole?: StaffRole | null;
+      role?: string;
     };
   }
 
   interface User {
     id?: string;
-    userType?: UserType;
-    staffRole?: StaffRole | null;
+    role?: string;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
-    userType?: UserType;
-    staffRole?: StaffRole | null;
+    role?: string;
   }
 }
