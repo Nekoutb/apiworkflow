@@ -83,9 +83,16 @@ jobs:
       - name: 🏷️  Compute release id
         id: meta
         run: |
-          RELEASE_ID=$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}
+          # Use timestamp + run_number to build the release id.
+          # We DELIBERATELY avoid embedding the short commit SHA: GitHub
+          # Actions masks any output value that happens to contain a
+          # substring of any repo secret. With a 7-char SHA the probability
+          # of collision with secrets (DB passwords, AUTH_SECRET, etc.)
+          # is non-trivial, and a masked output breaks downstream jobs
+          # ("Artifact not found for name: release-").
+          RELEASE_ID="$(date -u +%Y%m%d-%H%M%S)-r${GITHUB_RUN_NUMBER}"
           echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
-          echo "Release: $RELEASE_ID"
+          echo "Release: $RELEASE_ID  (commit: ${GITHUB_SHA::7})"
 
       - name: 🟢 Setup Node ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
