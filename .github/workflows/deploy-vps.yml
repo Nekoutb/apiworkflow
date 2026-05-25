@@ -220,10 +220,20 @@ jobs:
           RELEASE_ID="${{ needs.build.outputs.release_id }}"
           REMOTE_DIR="${APP_REMOTE_ROOT}/releases/${RELEASE_ID}"
 
-          echo "→ Creating $REMOTE_DIR on VPS"
+          echo "→ Ensuring $APP_REMOTE_ROOT exists (sudo on first run) + creating $REMOTE_DIR"
+          # On a fresh VPS, /var/www/$APP_NAME doesn't exist and the user
+          # can't write to /var/www. We use sudo install once to create the
+          # root + chown to the SSH user. On subsequent deploys this is a
+          # no-op (dir exists). Requires NOPASSWD sudo for the SSH user.
           sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "mkdir -p $REMOTE_DIR && rm -rf /tmp/release-${RELEASE_ID}.tar.gz"
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "
+              if [ ! -d ${APP_REMOTE_ROOT} ]; then
+                sudo install -d -m 755 -o \$(whoami) -g \$(whoami) ${APP_REMOTE_ROOT}
+                sudo install -d -m 755 -o \$(whoami) -g \$(whoami) ${APP_REMOTE_ROOT}/releases ${APP_REMOTE_ROOT}/shared ${APP_REMOTE_ROOT}/shared/logs
+              fi
+              mkdir -p $REMOTE_DIR
+              rm -rf /tmp/release-${RELEASE_ID}.tar.gz
+            "
 
           echo "→ Uploading artifact (scp)"
           sshpass -e scp -P "$VPS_PORT" $SSH_OPTS \

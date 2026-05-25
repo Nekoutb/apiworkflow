@@ -63,10 +63,120 @@ err()   { echo "[$(ts)] ✗ $*" >&2; }
 # ---------- Pre-flight -------------------------------------------------------
 log "Deploy starting · release=${RELEASE}"
 log "Host: $(hostname)  ·  User: $(whoami)  ·  PWD: $(pwd)"
-log "Node: $(node -v)  ·  npm: $(npm -v)  ·  PM2: $(pm2 -v)"
 
 if [[ ! -d "$RELEASE_DIR" ]]; then
   err "Release directory not found: $RELEASE_DIR"; exit 1
+fi
+
+# ---------- -1. Sudo + infrastructure: bootstrap a bare VPS on first run ----
+# The deploy script self-bootstraps a fresh box: installs Node 20, PM2,
+# PostgreSQL, nginx, certbot, fail2ban, jq, openssl, curl if any are missing.
+# Idempotent — re-runs are fast no-ops once everything is in place.
+#
+# Requires NOPASSWD sudo for the SSH user. The bootstrap script's sudoers
+# rule grants that, but on a totally fresh box (no bootstrap ever) the
+# operator must do this manually first:
+#     echo '<user> ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/<user>
+#     sudo chmod 440 /etc/sudoers.d/<user>
+
+# Fail fast if we can't sudo without a password (would otherwise hang)
+if ! sudo -n true 2>/dev/null; then
+  err "═══════════════════════════════════════════════════════════════════════"
+  err " Cannot sudo without a password. The deploy script needs this to"
+  err " install apt packages (Node, PostgreSQL, nginx, etc.) on first run."
+  err ""
+  err " Fix once on the VPS, then re-deploy:"
+  err "   echo '$(whoami) ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/$(whoami)"
+  err "   sudo chmod 440 /etc/sudoers.d/$(whoami)"
+  err "═══════════════════════════════════════════════════════════════════════"
+  exit 1
+fi
+
+# Walk the list of binaries we need; collect what's missing
+NEED_INSTALL=()
+need() {
+  local bin="$1"
+  local apt_pkg="$2"
+  if ! command -v "$bin" >/dev/null 2>&1; then
+    NEED_INSTALL+=("$apt_pkg")
+  fi
+}
+
+need curl curl
+need openssl openssl
+need jq jq
+need ss iproute2
+need psql postgresql
+need nginx nginx
+need certbot certbot
+# fail2ban + python3-certbot-nginx don't ship a top-level binary on PATH,
+# always include them (apt skips if already installed)
+NEED_INSTALL+=("python3-certbot-nginx" "fail2ban")
+
+# Node 20 is special: NodeSource repo, not a stock apt package
+NEED_NODE=0
+if ! command -v node >/dev/null 2>&1; then
+  NEED_NODE=1
+elif ! node -v 2>/dev/null | grep -q '^v20\.'; then
+  log "  · Node $(node -v) detected, but we want v20 — will upgrade"
+  NEED_NODE=1
+fi
+
+# PM2 is global npm — install AFTER node
+NEED_PM2=0
+if ! command -v pm2 >/dev/null 2>&1; then
+  NEED_PM2=1
+fi
+
+# Anything to do?
+if [[ ${#NEED_INSTALL[@]} -gt 0 || $NEED_NODE -eq 1 || $NEED_PM2 -eq 1 ]]; then
+  log "Bootstrapping infrastructure (first deploy on this VPS)"
+  export DEBIAN_FRONTEND=noninteractive
+  sudo apt-get update -qq
+
+  if [[ $NEED_NODE -eq 1 ]]; then
+    log "  · Installing Node.js 20 (via NodeSource)"
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - >/dev/null
+    NEED_INSTALL+=("nodejs")
+  fi
+
+  if [[ ${#NEED_INSTALL[@]} -gt 0 ]]; then
+    # Dedupe
+    mapfile -t NEED_INSTALL < <(printf '%s\n' "${NEED_INSTALL[@]}" | sort -u)
+    log "  · apt-get install ${NEED_INSTALL[*]}"
+    sudo apt-get install -y -qq "${NEED_INSTALL[@]}"
+  fi
+
+  if [[ $NEED_PM2 -eq 1 ]]; then
+    log "  · npm install -g pm2"
+    sudo npm install -g pm2 >/dev/null
+  fi
+
+  # Ensure key services are enabled + running
+  for svc in postgresql nginx fail2ban; do
+    if ! systemctl is-active --quiet "$svc"; then
+      log "  · enabling + starting $svc"
+      sudo systemctl enable --now "$svc" >/dev/null 2>&1 || warn "could not start $svc"
+    fi
+  done
+
+  ok "Infrastructure ready"
+else
+  log "Infrastructure already in place — skipping apt install"
+fi
+
+# Now safe to print versions
+log "Node: $(node -v)  ·  npm: $(npm -v)  ·  PM2: $(pm2 -v)  ·  psql: $(psql --version | awk '{print $3}')  ·  nginx: $(nginx -v 2>&1 | awk -F/ '{print $2}')"
+
+# Ensure /var/www/$APP_NAME exists and is owned by the SSH user
+# (bootstrap normally does this; we do it here too in case bootstrap was never run)
+if [[ ! -d "$APP_ROOT" ]]; then
+  sudo install -d -m 755 -o "$(whoami)" -g "$(whoami)" "$APP_ROOT"
+  sudo install -d -m 755 -o "$(whoami)" -g "$(whoami)" "$APP_ROOT/releases" "$APP_ROOT/shared" "$APP_ROOT/shared/logs"
+  ok "Created $APP_ROOT layout (owned by $(whoami))"
+fi
+if [[ ! -d "$LOG_DIR" ]]; then
+  sudo install -d -m 755 -o "$(whoami)" -g "$(whoami)" "$LOG_DIR"
 fi
 
 # ---------- 0. Pre-flight: inspect server for co-tenants -------------------
