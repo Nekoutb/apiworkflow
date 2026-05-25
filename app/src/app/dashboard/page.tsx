@@ -94,7 +94,7 @@ export default async function DashboardPage() {
           <h3 className="serif text-[19px] font-bold text-ink">v2 · Document Workflow</h3>
           <ul className="serif mt-3 space-y-1.5 text-[13.5px] italic text-ink-2">
             <li>✓ <strong className="not-italic">B0</strong> · Plan v2 adopté · 8 décisions cadrantes validées</li>
-            <li>✓ <strong className="not-italic">B1</strong> · Schéma document-centrique poussé sur Neon (en cours)</li>
+            <li>✓ <strong className="not-italic">B1</strong> · Schéma document-centrique · PostgreSQL local sur le VPS</li>
             <li>⬜ <strong className="not-italic">B2</strong> · Enum 37 rôles · UI gestion personnel</li>
             <li>⬜ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
             <li>⬜ <strong className="not-italic">B4-B6</strong> · Service du Courrier — Arrivée · Départ · Archives</li>

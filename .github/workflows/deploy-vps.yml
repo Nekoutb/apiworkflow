@@ -144,7 +144,8 @@ jobs:
               app/package.json \
               app/package-lock.json \
               app/next.config.ts \
-              scripts/vps-deploy.sh
+              scripts/vps-deploy.sh \
+              scripts/initial-seed.sql
           ls -lh /tmp/release.tar.gz
 
       - name: ⬆️  Upload artifact

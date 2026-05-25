@@ -124,9 +124,45 @@ else
 fi
 ok "Dependencies ready"
 
-# ---------- 3. Prisma db push (idempotent, no data loss) --------------------
-log "Running prisma generate + db push"
+# ---------- 3. Database: seed-if-empty, then prisma sync --------------------
+log "Loading runtime env for DB connection"
 set -a; . "$SHARED_ENV"; set +a
+
+# 3a. Detect whether the public schema is already populated. We count user
+#     tables — if zero, this is a fresh DB and we import the initial seed
+#     (which includes schema + reference data + admin users). On subsequent
+#     deploys, this check returns >0 and the seed is skipped.
+log "Checking database state (DATABASE_URL=postgresql://***@$(echo "$DATABASE_URL" | sed -E 's|.*@([^/]+)/.*|\1|'))"
+
+TABLE_COUNT="$(psql "$DATABASE_URL" -tAc \
+  "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'" \
+  2>/dev/null | tr -d '[:space:]')"
+
+if [[ -z "$TABLE_COUNT" ]]; then
+  err "Cannot connect to database — check DATABASE_URL in $SHARED_ENV"
+  exit 1
+fi
+
+SEED_FILE="$RELEASE_DIR/scripts/initial-seed.sql"
+if [[ "$TABLE_COUNT" -eq 0 ]]; then
+  if [[ -f "$SEED_FILE" ]]; then
+    log "Database is empty — importing initial seed from scripts/initial-seed.sql"
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$SEED_FILE" >/dev/null
+    SEEDED_COUNT="$(psql "$DATABASE_URL" -tAc \
+      "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'" \
+      | tr -d '[:space:]')"
+    ok "Initial seed imported · $SEEDED_COUNT tables created"
+  else
+    log "Database is empty and no seed file shipped — prisma db push will create the schema"
+  fi
+else
+  log "Database already has $TABLE_COUNT tables — skipping initial seed"
+fi
+
+# 3b. Run prisma generate + db push.
+#     - On a fresh seed import, db push is a no-op (schema already matches).
+#     - On schema migrations, db push applies the diff (no data loss).
+log "Running prisma generate + db push"
 npx prisma generate
 npx prisma db push --skip-generate --accept-data-loss=false
 ok "Database schema in sync"

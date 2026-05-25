@@ -57,7 +57,7 @@ export default async function AdminDataPage() {
       </div>
       <h1 className="serif text-4xl font-semibold tracking-[-0.5px] text-ink">Aperçu base de données</h1>
       <p className="serif mt-2 text-[14px] italic text-ink-3">
-        Schéma v2 document-centrique poussé sur Neon le 24 mai 2026 (re-baseline).
+        Schéma v2 document-centrique · PostgreSQL local sur le VPS (re-baseline du 24 mai 2026).
       </p>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
