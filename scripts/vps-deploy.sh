@@ -198,6 +198,94 @@ if command -v iptables >/dev/null 2>&1; then
 fi
 ok "Firewall: ports 22, 80, 443 open"
 
+# ---------- -1c. Confirm port 80 is reachable from the INTERNET -------------
+# Hard gate. We test through an external HTTP-fetch proxy so the result
+# reflects what Let's Encrypt and real users will see. If the OS firewall is
+# open but the cloud provider firewall (Vultr / DigitalOcean / AWS SG / etc.)
+# is still blocking, this fails the deploy with clear remediation steps.
+#
+# Returns:
+#   0  = reachable
+#   1  = definitively unreachable (proxy responded with failure)
+#   2  = inconclusive (proxies themselves down) — treated as a warning
+verify_external_port() {
+  local target_url="$1"
+  # URL-encode the target (only the special chars we expect)
+  local enc="$target_url"
+  enc="${enc//:/%3A}"
+  enc="${enc//\//%2F}"
+  local got_any_response=0
+
+  for proxy_name in allorigins corsproxy; do
+    local probe
+    case "$proxy_name" in
+      allorigins) probe="https://api.allorigins.win/raw?url=${enc}" ;;
+      corsproxy)  probe="https://corsproxy.io/?url=${enc}" ;;
+    esac
+    local code
+    code=$(curl -s -o /dev/null -w "%{http_code}" -m 15 "$probe" 2>/dev/null || echo "000")
+    log "  · ${proxy_name} → HTTP ${code}"
+    if [[ "$code" =~ ^[0-9]{3}$ && "$code" != "000" && "$code" != "502" && "$code" != "503" ]]; then
+      got_any_response=1
+      [[ "$code" =~ ^2 ]] && return 0
+    fi
+  done
+
+  [[ $got_any_response -eq 0 ]] && return 2
+  return 1
+}
+
+# Make sure nginx is responding on :80 (default page is fine for the probe)
+if ! systemctl is-active --quiet nginx; then
+  sudo systemctl start nginx
+  sleep 2
+fi
+
+# Pick the probe target: domain if DNS points here, else our public IP
+PUBLIC_IP=$(curl -fsS -m 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
+PROBE_DOMAIN="${APP_DOMAIN:-cmipaportal.com}"
+RESOLVED_IP=$(getent hosts "$PROBE_DOMAIN" 2>/dev/null | awk '{print $1; exit}')
+if [[ "$RESOLVED_IP" == "$PUBLIC_IP" ]]; then
+  PROBE_TARGET="$PROBE_DOMAIN"
+else
+  PROBE_TARGET="$PUBLIC_IP"
+  warn "DNS for $PROBE_DOMAIN doesn't resolve to ${PUBLIC_IP} yet (got: ${RESOLVED_IP:-none})"
+  warn "  Falling back to direct IP probe — SSL will be skipped until DNS is fixed."
+fi
+
+log "Verifying port 80 is reachable from the internet (target: http://${PROBE_TARGET}/)"
+verify_external_port "http://${PROBE_TARGET}/"
+case $? in
+  0)
+    ok "Port 80 confirmed reachable from the public internet"
+    ;;
+  1)
+    err "═══════════════════════════════════════════════════════════════════════"
+    err " Port 80 is NOT reachable from the internet"
+    err "═══════════════════════════════════════════════════════════════════════"
+    err " OS firewall (UFW + iptables) was just opened by this script. So the"
+    err " block is at the CLOUD PROVIDER layer. Fix in your dashboard:"
+    err ""
+    err "   Vultr        → Firewall → your firewall group → add inbound rule:"
+    err "                    Action=Accept  Protocol=TCP  Port=80    Source=0.0.0.0/0"
+    err "                    Action=Accept  Protocol=TCP  Port=443   Source=0.0.0.0/0"
+    err "   DigitalOcean → Networking → Firewalls → Inbound rules"
+    err "   AWS          → EC2 → Security Groups → Inbound rules"
+    err "   Hetzner      → Cloud Console → Firewalls → Inbound rules"
+    err ""
+    err " Verify from your laptop (NOT from the VPS):"
+    err "   curl -v -m 5 http://${PUBLIC_IP}/"
+    err ""
+    err " Then re-trigger this workflow."
+    err "═══════════════════════════════════════════════════════════════════════"
+    exit 1
+    ;;
+  2)
+    warn "Could not verify port 80 externally (both reachability proxies are down)."
+    warn "Continuing optimistically — certbot will be the real test."
+    ;;
+esac
+
 # Now safe to print versions
 log "Node: $(node -v)  ·  npm: $(npm -v)  ·  PM2: $(pm2 -v)  ·  psql: $(psql --version | awk '{print $3}')  ·  nginx: $(nginx -v 2>&1 | awk -F/ '{print $2}')"
 
@@ -629,57 +717,50 @@ if [[ ! -d "$SSL_LIVE" ]]; then
     warn "DNS for ${APP_DOMAIN_VAL} resolves to ${RESOLVED_IP}, but this server is ${EXPECTED_IP}."
     warn "→ Update the A record at your registrar, then re-trigger the deploy."
   else
-    log "DNS OK (${APP_DOMAIN_VAL} → ${EXPECTED_IP})."
-
-    # Reachability probe BEFORE certbot — Let's Encrypt needs port 80
-    # reachable from THE INTERNET (not just localhost). We use an external
-    # echo service to fetch our own public IP from the outside.
-    log "Probing public reachability of http://${APP_DOMAIN_VAL}/"
-    REACHABLE=0
-    # Try via an external HTTP-fetch service that hits us from outside our network
-    PROBE_RESULT=$(curl -fsS -m 10 "https://check-host.net/check-http?host=http%3A%2F%2F${APP_DOMAIN_VAL}%2F&max_nodes=1" 2>/dev/null || echo "")
-    # Simpler self-check: ask Hetzner's public HTTP echo
-    if curl -fsS -m 8 -o /dev/null -H "Host: ${APP_DOMAIN_VAL}" "http://${EXPECTED_IP}/" 2>/dev/null; then
-      # Loopback from our own IP — usually works even if external is blocked
-      # Real test: try fetching the actual domain from a public source
-      REMOTE_PROBE=$(curl -fsS -m 10 "https://api.allorigins.win/get?url=http%3A%2F%2F${APP_DOMAIN_VAL}%2F" 2>/dev/null | head -c 200 || echo "")
-      if [[ -n "$REMOTE_PROBE" ]] && ! echo "$REMOTE_PROBE" | grep -qiE 'timeout|connection|refused|unreachable'; then
-        REACHABLE=1
-      fi
-    fi
-
-    if [[ $REACHABLE -eq 0 ]]; then
-      warn "Port 80 is NOT reachable from the internet (Let's Encrypt will fail)."
-      warn ""
-      warn "  Most likely cause: cloud provider firewall blocking inbound 80/443."
-      warn "  The OS firewall (UFW + iptables) was already opened by this script."
-      warn ""
-      warn "  Fix by provider:"
-      warn "    Vultr   → Firewall → your firewall group → add inbound TCP 80, 443 from 0.0.0.0/0"
-      warn "    DigitalOcean → Networking → Firewalls → inbound rules"
-      warn "    AWS     → EC2 → Security Groups → Inbound rules"
-      warn "    Hetzner → Cloud Console → Firewalls → inbound TCP 80, 443"
-      warn ""
-      warn "  Verify with (from your laptop, not the VPS):"
-      warn "    curl -v http://${EXPECTED_IP}/   # should not timeout"
-      warn ""
-      warn "  Then re-trigger the deploy and certbot will run successfully."
-      warn "  (Skipping certbot call to avoid hitting the rate limit: 5 failures/hour.)"
+    log "DNS OK (${APP_DOMAIN_VAL} → ${EXPECTED_IP}). Port 80 was already verified"
+    log "reachable from the internet (step -1c). Running certbot."
+    CERTBOT_EMAIL="admin@${APP_DOMAIN_VAL}"
+    if sudo certbot --nginx \
+         -d "${APP_DOMAIN_VAL}" -d "www.${APP_DOMAIN_VAL}" \
+         --non-interactive --agree-tos -m "$CERTBOT_EMAIL" --redirect; then
+      ok "Let's Encrypt SSL issued · auto-renew via certbot.timer"
     else
-      log "Reachability OK — running certbot"
-      CERTBOT_EMAIL="admin@${APP_DOMAIN_VAL}"
-      if sudo certbot --nginx \
-           -d "${APP_DOMAIN_VAL}" -d "www.${APP_DOMAIN_VAL}" \
-           --non-interactive --agree-tos -m "$CERTBOT_EMAIL" --redirect; then
-        ok "Let's Encrypt SSL issued · auto-renew via certbot.timer"
-      else
-        warn "certbot failed despite reachability check passing"
-        warn "Check /var/log/letsencrypt/letsencrypt.log on the VPS"
-      fi
+      warn "certbot failed despite reachability check passing"
+      warn "Check /var/log/letsencrypt/letsencrypt.log on the VPS"
     fi
   fi
 else
   log "SSL cert present at $SSL_LIVE"
+fi
+
+# ---------- 6c. Confirm port 443 is reachable from the INTERNET -------------
+# Hard gate (matching the port-80 gate). Only runs if a cert exists for our
+# domain. Without one, port 443 isn't expected to be reachable yet.
+if [[ -d "$SSL_LIVE" ]]; then
+  log "Verifying port 443 is reachable from the internet (target: https://${APP_DOMAIN_VAL}/)"
+  verify_external_port "https://${APP_DOMAIN_VAL}/"
+  case $? in
+    0)
+      ok "Port 443 confirmed reachable with valid SSL"
+      ;;
+    1)
+      err "═══════════════════════════════════════════════════════════════════════"
+      err " Port 443 is NOT reachable from the internet"
+      err "═══════════════════════════════════════════════════════════════════════"
+      err " SSL cert was issued successfully but external clients can't reach HTTPS."
+      err " Open inbound TCP 443 in your cloud provider's firewall:"
+      err "   Vultr → Firewall → add: Accept TCP 443 from 0.0.0.0/0"
+      err ""
+      err " Verify from your laptop:  curl -v -m 5 https://${APP_DOMAIN_VAL}/"
+      err " Then re-trigger this workflow."
+      err "═══════════════════════════════════════════════════════════════════════"
+      exit 1
+      ;;
+    2)
+      warn "Could not verify port 443 externally (proxy services unavailable)."
+      warn "Workflow smoke test (next step) will probe it directly."
+      ;;
+  esac
 fi
 
 # Re-arm strict error handling for the rest of the script
