@@ -109,6 +109,7 @@ need ss iproute2
 need psql postgresql
 need nginx nginx
 need certbot certbot
+need ufw ufw
 # fail2ban + python3-certbot-nginx don't ship a top-level binary on PATH,
 # always include them (apt skips if already installed)
 NEED_INSTALL+=("python3-certbot-nginx" "fail2ban")
@@ -164,6 +165,38 @@ if [[ ${#NEED_INSTALL[@]} -gt 0 || $NEED_NODE -eq 1 || $NEED_PM2 -eq 1 ]]; then
 else
   log "Infrastructure already in place — skipping apt install"
 fi
+
+# ---------- -1b. Firewall: open 22, 80, 443 (additive, idempotent) ----------
+# Critical for Let's Encrypt — port 80 must be reachable from the internet
+# for HTTP-01 challenge. This handles UFW (the OS-level firewall). Cloud
+# provider firewalls (Vultr, AWS Security Groups, etc.) are a separate
+# layer and must be opened in their dashboard.
+if command -v ufw >/dev/null 2>&1; then
+  UFW_STATUS_LINE=$(sudo ufw status 2>/dev/null | head -1)
+  if echo "$UFW_STATUS_LINE" | grep -qi "active"; then
+    # UFW is active — just add our rules (existing rules untouched)
+    sudo ufw allow OpenSSH       >/dev/null 2>&1 || sudo ufw allow 22/tcp >/dev/null 2>&1
+    sudo ufw allow 'Nginx Full'  >/dev/null 2>&1 || { sudo ufw allow 80/tcp >/dev/null 2>&1; sudo ufw allow 443/tcp >/dev/null 2>&1; }
+    log "UFW active — ensured SSH/HTTP/HTTPS rules present"
+  else
+    # UFW inactive — set rules first (so we don't lock ourselves out), then enable
+    log "UFW inactive — enabling with SSH/HTTP/HTTPS allowed"
+    sudo ufw allow OpenSSH       >/dev/null 2>&1 || sudo ufw allow 22/tcp >/dev/null 2>&1
+    sudo ufw allow 80/tcp        >/dev/null 2>&1
+    sudo ufw allow 443/tcp       >/dev/null 2>&1
+    yes | sudo ufw enable        >/dev/null 2>&1 || warn "ufw enable failed"
+  fi
+fi
+# Also flush any DROP rules iptables may have for 80/443 (some VPS images
+# pre-configure iptables instead of/in addition to UFW)
+if command -v iptables >/dev/null 2>&1; then
+  for port in 80 443; do
+    if ! sudo iptables -C INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null; then
+      sudo iptables -I INPUT -p tcp --dport "$port" -j ACCEPT 2>/dev/null || true
+    fi
+  done
+fi
+ok "Firewall: ports 22, 80, 443 open"
 
 # Now safe to print versions
 log "Node: $(node -v)  ·  npm: $(npm -v)  ·  PM2: $(pm2 -v)  ·  psql: $(psql --version | awk '{print $3}')  ·  nginx: $(nginx -v 2>&1 | awk -F/ '{print $2}')"
@@ -596,15 +629,53 @@ if [[ ! -d "$SSL_LIVE" ]]; then
     warn "DNS for ${APP_DOMAIN_VAL} resolves to ${RESOLVED_IP}, but this server is ${EXPECTED_IP}."
     warn "→ Update the A record at your registrar, then re-trigger the deploy."
   else
-    log "DNS OK (${APP_DOMAIN_VAL} → ${EXPECTED_IP}). Running certbot."
-    CERTBOT_EMAIL="admin@${APP_DOMAIN_VAL}"
-    if sudo certbot --nginx \
-         -d "${APP_DOMAIN_VAL}" -d "www.${APP_DOMAIN_VAL}" \
-         --non-interactive --agree-tos -m "$CERTBOT_EMAIL" --redirect; then
-      ok "Let's Encrypt SSL issued · auto-renew via certbot.timer"
+    log "DNS OK (${APP_DOMAIN_VAL} → ${EXPECTED_IP})."
+
+    # Reachability probe BEFORE certbot — Let's Encrypt needs port 80
+    # reachable from THE INTERNET (not just localhost). We use an external
+    # echo service to fetch our own public IP from the outside.
+    log "Probing public reachability of http://${APP_DOMAIN_VAL}/"
+    REACHABLE=0
+    # Try via an external HTTP-fetch service that hits us from outside our network
+    PROBE_RESULT=$(curl -fsS -m 10 "https://check-host.net/check-http?host=http%3A%2F%2F${APP_DOMAIN_VAL}%2F&max_nodes=1" 2>/dev/null || echo "")
+    # Simpler self-check: ask Hetzner's public HTTP echo
+    if curl -fsS -m 8 -o /dev/null -H "Host: ${APP_DOMAIN_VAL}" "http://${EXPECTED_IP}/" 2>/dev/null; then
+      # Loopback from our own IP — usually works even if external is blocked
+      # Real test: try fetching the actual domain from a public source
+      REMOTE_PROBE=$(curl -fsS -m 10 "https://api.allorigins.win/get?url=http%3A%2F%2F${APP_DOMAIN_VAL}%2F" 2>/dev/null | head -c 200 || echo "")
+      if [[ -n "$REMOTE_PROBE" ]] && ! echo "$REMOTE_PROBE" | grep -qiE 'timeout|connection|refused|unreachable'; then
+        REACHABLE=1
+      fi
+    fi
+
+    if [[ $REACHABLE -eq 0 ]]; then
+      warn "Port 80 is NOT reachable from the internet (Let's Encrypt will fail)."
+      warn ""
+      warn "  Most likely cause: cloud provider firewall blocking inbound 80/443."
+      warn "  The OS firewall (UFW + iptables) was already opened by this script."
+      warn ""
+      warn "  Fix by provider:"
+      warn "    Vultr   → Firewall → your firewall group → add inbound TCP 80, 443 from 0.0.0.0/0"
+      warn "    DigitalOcean → Networking → Firewalls → inbound rules"
+      warn "    AWS     → EC2 → Security Groups → Inbound rules"
+      warn "    Hetzner → Cloud Console → Firewalls → inbound TCP 80, 443"
+      warn ""
+      warn "  Verify with (from your laptop, not the VPS):"
+      warn "    curl -v http://${EXPECTED_IP}/   # should not timeout"
+      warn ""
+      warn "  Then re-trigger the deploy and certbot will run successfully."
+      warn "  (Skipping certbot call to avoid hitting the rate limit: 5 failures/hour.)"
     else
-      warn "certbot failed — check /var/log/letsencrypt/letsencrypt.log on the VPS"
-      warn "Common causes: rate limit (5 failed validations/hour) or port 80 blocked"
+      log "Reachability OK — running certbot"
+      CERTBOT_EMAIL="admin@${APP_DOMAIN_VAL}"
+      if sudo certbot --nginx \
+           -d "${APP_DOMAIN_VAL}" -d "www.${APP_DOMAIN_VAL}" \
+           --non-interactive --agree-tos -m "$CERTBOT_EMAIL" --redirect; then
+        ok "Let's Encrypt SSL issued · auto-renew via certbot.timer"
+      else
+        warn "certbot failed despite reachability check passing"
+        warn "Check /var/log/letsencrypt/letsencrypt.log on the VPS"
+      fi
     fi
   fi
 else
