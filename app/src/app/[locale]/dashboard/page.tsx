@@ -1,13 +1,22 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { isStaffRole, roleLabel } from '@/lib/roles';
 
 export const metadata = { title: 'Tableau de bord · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const session = await auth();
   if (!session?.user) redirect('/login');
 

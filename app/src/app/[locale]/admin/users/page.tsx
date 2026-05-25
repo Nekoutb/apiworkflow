@@ -1,5 +1,6 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { ROLES, ROLE_GROUP_LABEL_FR, type RoleGroup } from '@/lib/roles';
@@ -11,7 +12,14 @@ import { UserRow, type UserRowData } from './UserRow';
 export const metadata = { title: 'Personnel · Administration · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
-export default async function AdminUsersPage() {
+export default async function AdminUsersPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const session = await auth();
   // The middleware whitelists /admin/users for authenticated users;
   // we add an explicit ADMIN check here so non-admins get redirected.

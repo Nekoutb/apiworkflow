@@ -1,19 +1,18 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// Point next-intl at our request config (server-side message loader)
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Server actions are enabled by default in Next 15.
   experimental: {
-    // Allow up to 10 MB so investor PDF uploads (10 Mo per spec) succeed.
-    // Default is 1 MB.  Vercel Functions accept ~4.5 MB on Hobby/Pro free
-    // tier; for larger PDFs we'll switch to @vercel/blob client-side
-    // direct upload in a later activity.
+    // Allow up to 10 MB so document uploads (10 Mo per spec) succeed.
     serverActions: {
       bodySizeLimit: '10mb',
     },
   },
-  // Headers for security baseline
   async headers() {
     return [
       {
@@ -29,4 +28,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

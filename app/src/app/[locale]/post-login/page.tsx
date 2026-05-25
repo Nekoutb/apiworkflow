@@ -23,6 +23,6 @@ export default async function PostLoginPage() {
   }
 
   // For now everyone lands on /dashboard — it surfaces the v2 status.
-  // Role-specific routing returns once the dedicated dashboards exist.
+  // The next-intl middleware adds the locale prefix on the redirect.
   redirect('/dashboard');
 }

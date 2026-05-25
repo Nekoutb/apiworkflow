@@ -1,20 +1,33 @@
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const session = await auth();
+  // Bare paths — the next-intl middleware adds the locale prefix on redirect
   if (!session?.user) redirect('/login');
   if (session.user.role !== 'ADMIN') redirect('/dashboard');
+
+  const t = await getTranslations('Admin');
 
   return (
     <div className="min-h-screen bg-bgsoft">
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        Portail interne <span className="mx-3 text-gold-500">⚜</span> Administration{' '}
-        <span className="mx-3 text-gold-500">⚜</span> Gestion du personnel
+        {t('barLabel')}
       </div>
 
       <header className="border-b border-line bg-white">
@@ -22,44 +35,45 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link
             href="/dashboard"
             className="relative flex h-11 w-11 items-center justify-center border border-obsidian bg-obsidian font-display text-lg font-bold tracking-wide text-gold-500"
-            aria-label="Retour au tableau de bord"
+            aria-label={t('navDashboard')}
           >
             A
             <span aria-hidden className="pointer-events-none absolute inset-[3px] border border-gold-500/45" />
           </Link>
           <div className="leading-tight">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              Portail interne · Administration
+              {t('headerKicker')}
             </div>
-            <div className="serif text-[17px] font-bold text-ink">Personnel &amp; Rôles</div>
+            <div className="serif text-[17px] font-bold text-ink">{t('headerSubtitle')}</div>
           </div>
           <nav className="ml-8 hidden gap-6 md:flex">
             <Link
               href="/dashboard"
               className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
             >
-              Tableau de bord
+              {t('navDashboard')}
             </Link>
             <Link
               href="/admin/users"
               className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
             >
-              Personnel
+              {t('navUsers')}
             </Link>
             <Link
               href="/admin/data"
               className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
             >
-              Données
+              {t('navData')}
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-4">
+            <LanguageSwitcher variant="compact" />
             <div className="text-right leading-tight">
               <div className="text-[13px] font-semibold text-ink">
                 {session.user.name ?? session.user.email}
               </div>
               <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
-                Administrateur
+                {t('roleAdmin')}
               </div>
             </div>
             <LogoutButton />

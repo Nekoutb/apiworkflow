@@ -5,6 +5,13 @@ import type { NextAuthConfig } from 'next-auth';
  * Must NOT import Node-only modules (bcryptjs, Prisma, etc.).
  * The actual Credentials provider with bcrypt lives in `auth.ts`.
  */
+
+// Strip an optional leading locale segment so authorized() can match
+// public paths whether the URL is /login, /fr/login, or /en/login.
+function stripLocale(pathname: string): string {
+  return pathname.replace(/^\/(fr|en)(?=\/|$)/, '') || '/';
+}
+
 export const authConfig = {
   pages: {
     signIn: '/login',
@@ -14,14 +21,15 @@ export const authConfig = {
   providers: [], // populated in auth.ts for the Node side
   callbacks: {
     authorized({ auth, request }) {
-      const { pathname } = request.nextUrl;
+      const pathname = stripLocale(request.nextUrl.pathname);
       const isLoggedIn = !!auth?.user;
 
       // Public routes — always allowed
       // (/submit + /track land in B4 + B22; whitelisted now to avoid churn)
       const publicPaths = ['/', '/login', '/submit', '/track', '/api/auth', '/_health'];
-      const isPublic =
-        publicPaths.some((p) => pathname === p || pathname.startsWith(p + '/'));
+      const isPublic = publicPaths.some(
+        (p) => pathname === p || pathname.startsWith(p + '/'),
+      );
       if (isPublic) return true;
 
       // Everything else requires authentication

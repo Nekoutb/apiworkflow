@@ -1,8 +1,28 @@
-import Link from 'next/link';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
+import { Link } from '@/i18n/navigation';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
-export const metadata = { title: 'API Cameroun · Portail officiel' };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('homeTitle'), description: t('homeDescription') };
+}
 
-export default function LandingPage() {
+export default async function LandingPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations('Home');
+  const tCommon = await getTranslations('Common');
+
   return (
     <main>
       {/* ====== STAGE — editorial hero ====== */}
@@ -32,58 +52,47 @@ export default function LandingPage() {
             </div>
             <div className="leading-tight">
               <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-                République du Cameroun · Présidence de la République
+                {tCommon('republic')}
               </div>
               <div className="serif text-[18px] font-bold text-ink">
-                Agence de Promotion des Investissements
+                {tCommon('appNameLong')}
               </div>
             </div>
           </div>
           <nav className="flex items-center gap-7 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-ink-3">
-            <a className="hover:text-cmgreen-800" href="#">À propos</a>
-            <a className="hover:text-cmgreen-800" href="#">Organigramme</a>
-            <a className="hover:text-cmgreen-800" href="#">Contact</a>
-            <div className="inline-flex border border-line-2">
-              <button className="bg-obsidian px-2.5 py-1 text-[10.5px] font-bold tracking-wide text-gold-500">FR</button>
-              <button className="border-l border-line-2 bg-white px-2.5 py-1 text-[10.5px] tracking-wide text-ink-3">EN</button>
-            </div>
+            <LanguageSwitcher variant="editorial" />
           </nav>
         </header>
 
         <div className="relative z-10 grid grid-cols-[1.45fr_0.55fr]">
           <div className="border-r border-line px-14 py-24">
             <div className="mb-6 inline-flex items-center gap-3 text-[10.5px] font-bold uppercase tracking-[0.26em] text-gold-700">
-              Portail officiel
+              {tCommon('officialPortal')}
               <span className="h-px w-11 bg-gold-600" />
             </div>
             <h1 className="serif mb-7 max-w-[640px] text-[clamp(44px,5vw,64px)] font-semibold leading-[1.06] tracking-[-0.022em] text-ink">
-              Soumettez votre dossier<br />
-              <span className="italic text-cmgreen-800">au Cameroun, en ligne.</span>
+              {t('tagline')}
             </h1>
             <p className="mb-8 max-w-[560px] text-[16px] leading-[1.65] text-ink-2">
-              Toute personne, entreprise, administration ou institution peut adresser un document à l'API
-              par cette plateforme. Le Service du Courrier en accuse réception, le Directeur Général
-              l'oriente vers l'unité compétente, et vous recevez la réponse officielle par retour.
+              {t('subtitle')}
             </p>
             <div className="serif inline-flex items-center gap-2.5 border-l-2 border-gold-600 pl-4 text-[14.5px] italic text-gold-700">
-              « Conformité, traçabilité, célérité — au service du développement. »
+              « {t('quote')} »
             </div>
           </div>
 
           <aside className="flex flex-col bg-white px-12 py-24">
-            <Stat num="5" label="Phases du circuit · Réception → Clôture" />
-            <Stat num="37" label="Rôles dans l'organigramme · Art. 1-46" />
-            <Stat num="II" unit="langues" label="Français · English" last />
+            <Stat num="7" label={locale === 'en' ? 'Workflow phases · Reception → Closure' : 'Phases du circuit · Réception → Clôture'} />
+            <Stat num="37" label={locale === 'en' ? 'Org chart roles · Art. 1-46' : 'Rôles dans l\'organigramme · Art. 1-46'} />
+            <Stat num="II" unit={locale === 'en' ? 'languages' : 'langues'} label="Français · English" last />
           </aside>
         </div>
 
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 border-t border-line bg-white px-14 py-5 text-[10.5px] uppercase tracking-[0.14em] text-ink-3">
           <div className="flex flex-wrap items-center gap-5">
-            <Seal icon="⚜">République du Cameroun</Seal>
-            <Seal icon="§">Loi 2010/012 protégée</Seal>
-            <Seal icon="▲">TLS 1.3 chiffrement</Seal>
+            <Seal icon="⚜">{tCommon('republic')}</Seal>
           </div>
-          <div>© MMXXVI — Tous droits réservés</div>
+          <div>© MMXXVI</div>
         </div>
       </section>
 
@@ -92,28 +101,36 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-8">
           <div className="mb-12 text-center">
             <div className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.26em] text-gold-700">
-              Accès au portail
+              {locale === 'en' ? 'Portal access' : 'Accès au portail'}
             </div>
             <h2 className="serif text-4xl font-semibold tracking-tight text-ink">
-              Que souhaitez-vous faire ?
+              {locale === 'en' ? 'What would you like to do?' : 'Que souhaitez-vous faire ?'}
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <DoorCard
               href="/submit"
-              eyebrow="Tout émetteur · sans inscription"
-              title="Soumettre un document"
-              body="Adressez un dossier ou un courrier à l'API. Vous recevrez un accusé de réception automatique et un numéro de suivi pour consulter l'avancement."
-              cta="Soumettre un document →"
+              eyebrow={locale === 'en' ? 'Any sender · no registration' : 'Tout émetteur · sans inscription'}
+              title={t('submitDocument')}
+              body={
+                locale === 'en'
+                  ? 'Send a dossier or letter to the IPA. You will receive an automatic acknowledgement and a tracking number to follow progress.'
+                  : "Adressez un dossier ou un courrier à l'API. Vous recevrez un accusé de réception automatique et un numéro de suivi pour consulter l'avancement."
+              }
+              cta={`${t('submitDocument')} →`}
               disabled
-              disabledNote="Disponible à l'activité B4"
+              disabledNote={t('submitDocumentSoon')}
             />
             <DoorCard
               href="/login"
-              eyebrow="Pour le personnel API"
-              title="Connexion Personnel"
-              body="Accédez à votre tableau de bord, à votre corbeille et aux dossiers en cours dans votre périmètre selon l'organigramme."
-              cta="Connexion Personnel →"
+              eyebrow={t('staffLoginHint')}
+              title={t('staffLogin')}
+              body={
+                locale === 'en'
+                  ? 'Access your dashboard, inbox and active dossiers within your scope per the organisation chart.'
+                  : 'Accédez à votre tableau de bord, à votre corbeille et aux dossiers en cours dans votre périmètre selon l\'organigramme.'
+              }
+              cta={`${t('staffLogin')} →`}
               accent
             />
           </div>
@@ -121,11 +138,8 @@ export default function LandingPage() {
       </section>
 
       <footer className="border-t border-line bg-obsidian py-12 text-center text-[11px] uppercase tracking-[0.14em] text-white/55">
-        <div className="font-bold text-gold-500">⚜ API Cameroun ⚜</div>
-        <div className="mt-2">République du Cameroun · Présidence de la République</div>
-        <div className="mt-1 normal-case tracking-normal text-white/40">
-          Connexion chiffrée TLS 1.3 · Loi 2010/012 sur la protection des données personnelles
-        </div>
+        <div className="font-bold text-gold-500">⚜ {tCommon('appName')} ⚜</div>
+        <div className="mt-2">{tCommon('republic')}</div>
       </footer>
     </main>
   );

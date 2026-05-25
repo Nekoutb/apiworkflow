@@ -1,20 +1,43 @@
-import Link from 'next/link';
+import type { Metadata } from 'next';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { redirect } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { LoginForm } from './LoginForm';
 
-export const metadata = { title: 'Connexion personnel · API Cameroun' };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('loginTitle') };
+}
+
 export const dynamic = 'force-dynamic';
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const session = await auth();
   if (session?.user) redirect('/post-login');
+
+  const t = await getTranslations('Login');
+  const tCommon = await getTranslations('Common');
+  const tHome = await getTranslations('Home');
 
   return (
     <main className="min-h-screen bg-bgsoft">
       {/* gov bar */}
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        République du Cameroun <span className="mx-3 text-gold-500">⚜</span> Agence de Promotion des Investissements
+        {tCommon('republic')} <span className="mx-3 text-gold-500">⚜</span> {tCommon('appNameLong')}
       </div>
 
       <div className="grid min-h-[calc(100vh-26px)] lg:grid-cols-[1.05fr_0.95fr]">
@@ -46,10 +69,10 @@ export default async function LoginPage() {
               </div>
               <div className="leading-tight">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-                  République du Cameroun
+                  {tCommon('republic')}
                 </div>
                 <div className="serif text-[17px] font-bold text-ink">
-                  Agence de Promotion des Investissements
+                  {tCommon('appNameLong')}
                 </div>
               </div>
             </Link>
@@ -57,26 +80,20 @@ export default async function LoginPage() {
             {/* hero copy */}
             <div className="max-w-[480px]">
               <div className="mb-5 inline-flex items-center gap-3 text-[10.5px] font-bold uppercase tracking-[0.26em] text-gold-700">
-                Portail officiel
+                {tCommon('officialPortal')}
                 <span className="h-px w-11 bg-gold-600" />
               </div>
               <h1 className="serif mb-5 text-[clamp(36px,4vw,52px)] font-semibold leading-[1.06] tracking-[-0.022em] text-ink">
-                L&apos;investissement<br />au Cameroun,
-                <br />
-                <span className="italic text-cmgreen-800">une affaire de souveraineté.</span>
+                {t('officialCircuit')}
               </h1>
               <p className="max-w-[420px] text-[14.5px] leading-[1.65] text-ink-2">
-                Plateforme officielle de soumission, d&apos;instruction et de suivi des conventions
-                d&apos;investissement entre l&apos;État du Cameroun et les investisseurs nationaux
-                et internationaux.
+                {tHome('subtitle')}
               </p>
-              <div className="serif mt-6 inline-flex items-center gap-2.5 border-l-2 border-gold-600 pl-3.5 text-[13px] italic text-gold-700">
-                « Promouvoir l&apos;investissement productif. »
-              </div>
             </div>
 
-            <div className="text-[10px] uppercase tracking-[0.14em] text-ink-3">
-              © MMXXVI — Tous droits réservés
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-ink-3">
+              <span>{t('copyright')}</span>
+              <LanguageSwitcher variant="editorial" />
             </div>
           </div>
         </aside>
@@ -85,35 +102,44 @@ export default async function LoginPage() {
         <section className="flex items-center justify-center bg-white px-8 py-16">
           <div className="w-full max-w-[420px]">
             <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-              Portail interne
+              {t('panelHeading')}
             </div>
             <h2 className="serif mb-2 text-[28px] font-semibold tracking-[-0.4px] text-ink">
-              Connexion personnel
+              {t('title')}
             </h2>
             <p className="serif mb-7 text-[13.5px] italic text-ink-3">
-              Identifiez-vous pour accéder à votre espace de travail.
+              {t('subtitle')}
             </p>
 
             <LoginForm />
 
             <div className="mt-7 border-t border-line pt-5 text-center">
               <p className="text-[11px] uppercase tracking-[0.2em] text-ink-4">
-                Mode développement
+                {t('devModeHeading')}
               </p>
-              <p className="serif mt-1.5 text-[13px] italic text-ink-3">
-                Comptes&nbsp;: <strong className="font-mono not-italic text-ink">admin</strong>,{' '}
-                <strong className="font-mono not-italic text-ink">dg</strong>,{' '}
-                <strong className="font-mono not-italic text-ink">arrivee</strong>,{' '}
-                <strong className="font-mono not-italic text-ink">depart</strong>,{' '}
-                <strong className="font-mono not-italic text-ink">antenne.littoral</strong>
-                <br />
-                Mot de passe&nbsp;: <strong className="font-mono not-italic text-ink">admin</strong>
-              </p>
+              <p
+                className="serif mt-1.5 text-[13px] italic text-ink-3"
+                dangerouslySetInnerHTML={{
+                  __html: t
+                    .raw('devModeAccounts')
+                    .replace(/<bold>/g, '<strong class="font-mono not-italic text-ink">')
+                    .replace(/<\/bold>/g, '</strong>'),
+                }}
+              />
+              <p
+                className="serif mt-1 text-[13px] italic text-ink-3"
+                dangerouslySetInnerHTML={{
+                  __html: t
+                    .raw('devModePassword')
+                    .replace(/<bold>/g, '<strong class="font-mono not-italic text-ink">')
+                    .replace(/<\/bold>/g, '</strong>'),
+                }}
+              />
             </div>
 
             <div className="mt-4 text-center">
               <Link href="/" className="text-[11px] uppercase tracking-[0.14em] text-ink-3 hover:text-ink">
-                ← Retour à l&apos;accueil
+                ← {t('backToHome')}
               </Link>
             </div>
           </div>
