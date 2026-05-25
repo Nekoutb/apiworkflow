@@ -63,23 +63,98 @@ log "Node: $(node -v)  ·  npm: $(npm -v)  ·  PM2: $(pm2 -v)"
 if [[ ! -d "$RELEASE_DIR" ]]; then
   err "Release directory not found: $RELEASE_DIR"; exit 1
 fi
-if [[ ! -f "$SHARED_ENV" ]]; then
-  err "════════════════════════════════════════════════════════════════════"
-  err " Missing $SHARED_ENV"
-  err "════════════════════════════════════════════════════════════════════"
-  err " This file is normally synced automatically by GitHub Actions from"
-  err " the APP_* repository secrets. If you're seeing this error, the"
-  err " '🔑 Sync .env.production from GitHub Secrets' step in the workflow"
-  err " was skipped or failed."
-  err ""
-  err " Check that the following GitHub Secrets are set:"
-  err "   APP_DATABASE_URL  (required — Postgres connection string)"
-  err "   APP_AUTH_SECRET   (required — openssl rand -base64 32)"
-  err ""
-  err " Settings → Secrets and variables → Actions"
-  err "════════════════════════════════════════════════════════════════════"
-  exit 1
+
+# ---------- 1. Self-heal: ensure AUTH_SECRET + DATABASE_URL exist -----------
+# All app secrets live on the VPS only — no GitHub APP_* secrets used.
+# This block makes the deploy idempotent and self-bootstrapping: it generates
+# what's missing once, persists it under shared/, and reuses it on every
+# subsequent deploy. Never rotates anything that already exists.
+mkdir -p "$APP_ROOT/shared"
+
+log "Resolving runtime configuration (no GitHub APP_* secrets used)"
+
+# 1a. AUTH_SECRET — generate once, persist forever, never rotate
+AUTH_FILE="$APP_ROOT/shared/.auth-secret"
+if [[ ! -s "$AUTH_FILE" ]]; then
+  log "  · Generating AUTH_SECRET (first deploy)"
+  openssl rand -base64 32 > "$AUTH_FILE"
+  chmod 600 "$AUTH_FILE"
 fi
+AUTH_SECRET="$(cat "$AUTH_FILE")"
+
+# 1b. DB password — prefer existing .db-password, then runtime.env, then create
+DB_NAME="$APP_NAME"
+DB_USER="$APP_NAME"
+DB_PASS_FILE="$APP_ROOT/shared/.db-password"
+
+if [[ ! -s "$DB_PASS_FILE" && -f "$APP_ROOT/shared/runtime.env" ]]; then
+  # Recover password from bootstrap-written runtime.env LOCAL_DATABASE_URL
+  RUNTIME_URL=$(grep -E '^LOCAL_DATABASE_URL=' "$APP_ROOT/shared/runtime.env" | cut -d= -f2-)
+  if [[ -n "$RUNTIME_URL" ]]; then
+    EXTRACTED_PASS=$(echo "$RUNTIME_URL" | sed -nE 's|^postgres(ql)?://[^:]+:([^@]+)@.*|\2|p')
+    if [[ -n "$EXTRACTED_PASS" ]]; then
+      echo -n "$EXTRACTED_PASS" > "$DB_PASS_FILE"
+      chmod 600 "$DB_PASS_FILE"
+      log "  · Recovered DB password from runtime.env"
+    fi
+  fi
+fi
+
+# True first-run path: PostgreSQL exists, but the DB/user/password don't
+if [[ ! -s "$DB_PASS_FILE" ]]; then
+  if ! command -v psql >/dev/null; then
+    err "PostgreSQL is not installed. Run vps-bootstrap.sh on the VPS first"
+    err "(it installs PostgreSQL 16 with apt — needs root)."
+    exit 1
+  fi
+  log "  · Provisioning PostgreSQL role + database (first ever deploy)"
+  DB_PASSWORD="$(openssl rand -base64 30 | tr -d '/+=' | cut -c1-28)"
+  echo -n "$DB_PASSWORD" > "$DB_PASS_FILE"
+  chmod 600 "$DB_PASS_FILE"
+
+  # Idempotent: CREATE if missing, ALTER otherwise (always sync the password)
+  if sudo -n -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'" 2>/dev/null | grep -q 1; then
+    sudo -n -u postgres psql -c "ALTER USER \"${DB_USER}\" WITH ENCRYPTED PASSWORD '${DB_PASSWORD}';" >/dev/null
+  else
+    sudo -n -u postgres psql -c "CREATE USER \"${DB_USER}\" WITH ENCRYPTED PASSWORD '${DB_PASSWORD}';" >/dev/null
+  fi
+  if ! sudo -n -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'" 2>/dev/null | grep -q 1; then
+    sudo -n -u postgres psql -c "CREATE DATABASE \"${DB_NAME}\" OWNER \"${DB_USER}\" ENCODING 'UTF8';" >/dev/null
+  fi
+  sudo -n -u postgres psql -d "${DB_NAME}" -c "GRANT ALL ON SCHEMA public TO \"${DB_USER}\";" >/dev/null
+  ok "  · PostgreSQL role + database ready"
+fi
+
+DB_PASSWORD="$(cat "$DB_PASS_FILE")"
+DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@127.0.0.1:5432/${DB_NAME}"
+
+# Read domain from runtime.env (set by bootstrap) — default to cmipaportal.com
+APP_DOMAIN_VAL="${APP_DOMAIN:-cmipaportal.com}"
+if [[ -f "$APP_ROOT/shared/runtime.env" ]]; then
+  RT_DOMAIN=$(grep -E '^APP_DOMAIN=' "$APP_ROOT/shared/runtime.env" | cut -d= -f2-)
+  [[ -n "$RT_DOMAIN" ]] && APP_DOMAIN_VAL="$RT_DOMAIN"
+fi
+
+# 1c. Compose .env.production (always overwritten — single source of truth)
+cat > "$SHARED_ENV" <<EOF
+# Auto-written by vps-deploy.sh on $(date -u '+%Y-%m-%dT%H:%M:%SZ')
+# DO NOT EDIT MANUALLY — values are regenerated from shared/.auth-secret,
+# shared/.db-password, and shared/runtime.env on every deploy.
+DATABASE_URL="${DATABASE_URL}"
+AUTH_SECRET="${AUTH_SECRET}"
+AUTH_URL="https://${APP_DOMAIN_VAL}"
+NEXTAUTH_URL="https://${APP_DOMAIN_VAL}"
+NODE_ENV="production"
+PORT=${APP_PORT}
+AUTH_TRUST_HOST="true"
+
+# Optional integrations — edit this file directly if/when you obtain keys
+ANTHROPIC_API_KEY=""
+BLOB_READ_WRITE_TOKEN=""
+RESEND_API_KEY=""
+EOF
+chmod 600 "$SHARED_ENV"
+ok ".env.production composed locally (PORT=$APP_PORT)"
 
 PREVIOUS_RELEASE=""
 if [[ -L "$CURRENT_LINK" ]]; then

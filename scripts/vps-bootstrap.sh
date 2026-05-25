@@ -166,16 +166,20 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
   exit 1
 fi
 
-# Install a scoped sudoers rule (idempotent) so the SSH user can reload nginx
-# without a password — needed by vps-deploy.sh for the nginx symlink swap.
+# Scoped sudoers rules (re-written every run — kept in sync with deploy needs):
+#   1. nginx reload  — for the deploy script's symlink swap
+#   2. sudo -u postgres ALL — so the deploy script can create the cmipaportal
+#      DB role + database on its first run without a password prompt
 SUDOERS_FILE="/etc/sudoers.d/${APP_USER}-${APP_NAME}"
-if [[ ! -f "$SUDOERS_FILE" ]]; then
-  log "    · Granting $APP_USER limited sudo (nginx reload only)"
-  cat >"$SUDOERS_FILE" <<EOF
+log "    · Granting $APP_USER scoped sudo (nginx reload + psql-as-postgres)"
+cat >"$SUDOERS_FILE" <<EOF
+# Managed by ${APP_NAME} bootstrap — DO NOT EDIT
 ${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl reload nginx, /bin/systemctl restart nginx
+${APP_USER} ALL=(postgres) NOPASSWD: ALL
 EOF
-  chmod 440 "$SUDOERS_FILE"
-fi
+chmod 440 "$SUDOERS_FILE"
+# Validate before nginx/sshd reload would lock you out
+visudo -cf "$SUDOERS_FILE" >/dev/null || { err "Invalid sudoers file — removed"; rm -f "$SUDOERS_FILE"; exit 1; }
 
 # Detect whether the user currently has a usable password (informational only)
 PW_STATUS="$(passwd -S "$APP_USER" 2>/dev/null | awk '{print $2}')"
