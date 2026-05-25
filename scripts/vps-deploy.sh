@@ -285,15 +285,34 @@ if [[ $HEALTHY -ne 1 ]]; then
   pm2 logs "$APP_NAME" --lines 80 --nostream || true
   rollback
 fi
-ok "Application is healthy"
-
 # ---------- 6b. Ensure nginx vhost + SSL are in place (self-healing) --------
-# Re-installs the nginx vhost if missing and (re-)attempts certbot if no SSL
-# cert exists yet for our domain. Both are idempotent — re-runs are no-ops
-# once everything is set up. Both require sudo.
+# The app is already healthy locally at this point. Everything below is about
+# making it reachable over the public domain. Any failure here is a WARNING,
+# not a deploy failure — we disarm the rollback trap so partial public-facing
+# setup (e.g. DNS not pointing yet) doesn't trash a successful release.
+trap - ERR
+set +e
+
+ensure_nginx_running() {
+  if ! systemctl is-active --quiet nginx; then
+    log "nginx is not active — enabling and starting"
+    sudo systemctl enable --now nginx || warn "failed to start nginx"
+  fi
+}
+
+reload_or_start_nginx() {
+  sudo nginx -t >/dev/null 2>&1 || { warn "nginx config invalid — skipping reload"; return 1; }
+  if systemctl is-active --quiet nginx; then
+    sudo systemctl reload nginx || sudo systemctl restart nginx
+  else
+    sudo systemctl enable --now nginx
+  fi
+}
 
 NGINX_AVAIL="/etc/nginx/sites-available/${APP_NAME}"
 NGINX_LINK="/etc/nginx/sites-enabled/${APP_NAME}"
+
+ensure_nginx_running
 
 if [[ ! -f "$NGINX_AVAIL" ]]; then
   log "Installing nginx vhost for ${APP_DOMAIN_VAL} (port ${APP_PORT})"
@@ -334,8 +353,11 @@ NGINXEOF
   sudo install -m 644 -o root -g root "$TMP_VHOST" "$NGINX_AVAIL"
   rm -f "$TMP_VHOST"
   sudo ln -sf "$NGINX_AVAIL" "$NGINX_LINK"
-  sudo nginx -t && sudo systemctl reload nginx
-  ok "nginx vhost installed"
+  if reload_or_start_nginx; then
+    ok "nginx vhost installed"
+  else
+    warn "nginx vhost written but service couldn't be started — investigate manually"
+  fi
 else
   log "nginx vhost already present at $NGINX_AVAIL"
 fi
@@ -346,8 +368,7 @@ EXISTING_PORT=$(grep -m1 -oE 'proxy_pass http://127\.0\.0\.1:[0-9]+' "$NGINX_AVA
 if [[ -n "$EXISTING_PORT" && "$EXISTING_PORT" != "$APP_PORT" ]]; then
   log "nginx upstream port drift: vhost has $EXISTING_PORT, app is on $APP_PORT — patching"
   sudo sed -i "s|proxy_pass http://127\.0\.0\.1:${EXISTING_PORT}|proxy_pass http://127.0.0.1:${APP_PORT}|g" "$NGINX_AVAIL"
-  sudo nginx -t && sudo systemctl reload nginx
-  ok "nginx vhost re-pointed to port $APP_PORT"
+  reload_or_start_nginx && ok "nginx vhost re-pointed to port $APP_PORT"
 fi
 
 # Let's Encrypt — issue cert if not present (requires DNS to point here)
@@ -381,6 +402,9 @@ if [[ ! -d "$SSL_LIVE" ]]; then
 else
   log "SSL cert present at $SSL_LIVE"
 fi
+
+# Re-arm strict error handling for the rest of the script
+set -e
 
 # ---------- 7. Prune old releases -------------------------------------------
 log "Pruning old releases (keeping last ${KEEP_RELEASES})"
