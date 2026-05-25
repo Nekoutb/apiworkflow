@@ -136,6 +136,7 @@ jobs:
               app/package.json \
               app/package-lock.json \
               app/next.config.ts \
+              app/server.js \
               scripts/vps-deploy.sh \
               scripts/initial-seed.sql
           ls -lh /tmp/release.tar.gz

@@ -31,12 +31,16 @@ set -Eeuo pipefail
 APP_NAME="${APP_NAME:-cmipaportal}"
 APP_ROOT="/var/www/${APP_NAME}"
 
-# Prefer the port chosen by bootstrap (may differ from 3000 if 3000 was busy)
+# Unix domain socket — no TCP port, no collision risk, no number to manage.
+# nginx connects via:  proxy_pass http://unix:${SOCKET_PATH}:
+SOCKET_PATH="${SOCKET_PATH:-/run/${APP_NAME}.sock}"
+
+# Optional runtime.env (carries APP_DOMAIN set by bootstrap; PORT is gone)
 if [[ -f "$APP_ROOT/shared/runtime.env" ]]; then
   # shellcheck disable=SC1091
   source "$APP_ROOT/shared/runtime.env"
 fi
-APP_PORT="${APP_PORT:-3000}"
+
 RELEASE="${1:?usage: vps-deploy.sh <release-folder-name>}"
 RELEASE_DIR="${APP_ROOT}/releases/${RELEASE}"
 CURRENT_LINK="${APP_ROOT}/current"
@@ -113,17 +117,15 @@ if [[ -d /etc/nginx/sites-enabled ]]; then
   fi
 fi
 
-# 0c. Port collision — WARN if the port is held by something other than us
-if command -v ss >/dev/null; then
-  PORT_HOLDER=$(ss -ltnp "( sport = :$APP_PORT )" 2>/dev/null | awk 'NR>1 {print}' || true)
-  if [[ -n "$PORT_HOLDER" ]]; then
-    if echo "$PORT_HOLDER" | grep -qiE '(node|pm2|next)'; then
-      log "  · Port $APP_PORT held by node/PM2 (our own process — fine)"
-    else
-      log "  · ⚠ Port $APP_PORT is held by something else:"
-      echo "$PORT_HOLDER" | sed 's/^/      /'
-      log "  · PM2 reload may fail. Consider freeing the port or letting bootstrap pick a new one."
-    fi
+# 0c. Stale socket check — remove leftover socket from a crashed previous run
+#     (the new server.js does this too, but doing it here makes pre-flight clean)
+if [[ -S "$SOCKET_PATH" ]]; then
+  # Check if anything is actually listening on it
+  if ! ss -lx "src = $SOCKET_PATH" 2>/dev/null | grep -q "$SOCKET_PATH"; then
+    log "  · Removing stale socket: $SOCKET_PATH (no listener)"
+    sudo rm -f "$SOCKET_PATH"
+  else
+    log "  · Existing socket has a live listener (our own PM2 process — fine)"
   fi
 fi
 
@@ -227,7 +229,7 @@ AUTH_SECRET="${AUTH_SECRET}"
 AUTH_URL="https://${APP_DOMAIN_VAL}"
 NEXTAUTH_URL="https://${APP_DOMAIN_VAL}"
 NODE_ENV="production"
-PORT=${APP_PORT}
+SOCKET_PATH="${SOCKET_PATH}"
 AUTH_TRUST_HOST="true"
 
 # Optional integrations — edit this file directly if/when you obtain keys
@@ -236,7 +238,7 @@ BLOB_READ_WRITE_TOKEN=""
 RESEND_API_KEY=""
 EOF
 chmod 600 "$SHARED_ENV"
-ok ".env.production composed locally (PORT=$APP_PORT)"
+ok ".env.production composed locally (SOCKET=$SOCKET_PATH)"
 
 PREVIOUS_RELEASE=""
 if [[ -L "$CURRENT_LINK" ]]; then
@@ -330,11 +332,18 @@ ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 ok "Symlink swapped"
 
 # ---------- 5. PM2 restart (zero-downtime reload) ---------------------------
-log "Restarting PM2 process (binding to port ${APP_PORT})"
+log "Restarting PM2 process (socket: ${SOCKET_PATH})"
 cd "$CURRENT_LINK/app"
 
-# Export PORT so `npm start` ──▶ `next start --port ${PORT:-3000}` honours it
-export PORT="$APP_PORT"
+# Ensure the directory for the socket exists and is writable by us.
+# /run is tmpfs on most distros — recreated on reboot.
+SOCKET_DIR="$(dirname "$SOCKET_PATH")"
+if [[ ! -d "$SOCKET_DIR" ]]; then
+  sudo install -d -m 755 -o "$(whoami)" -g "$(whoami)" "$SOCKET_DIR"
+fi
+
+# Export SOCKET_PATH so `npm start` → `node server.js` knows where to listen
+export SOCKET_PATH
 
 # ecosystem on the fly so PM2 always points at $CURRENT_LINK/app
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
@@ -347,14 +356,14 @@ else
     -- start
   pm2 save
 fi
-ok "PM2 restarted on port ${APP_PORT}"
+ok "PM2 restarted (listening on unix:${SOCKET_PATH})"
 
 # ---------- 6. Health check -------------------------------------------------
-log "Waiting for app to respond on http://127.0.0.1:${APP_PORT}"
+log "Waiting for app to respond on unix:${SOCKET_PATH}"
 HEALTHY=0
 for i in {1..30}; do
-  if curl -sf -o /dev/null -m 3 "http://127.0.0.1:${APP_PORT}/_health" 2>/dev/null \
-     || curl -sf -o /dev/null -m 3 "http://127.0.0.1:${APP_PORT}/" 2>/dev/null; then
+  if curl -sf -o /dev/null -m 3 --unix-socket "$SOCKET_PATH" "http://localhost/_health" 2>/dev/null \
+     || curl -sf -o /dev/null -m 3 --unix-socket "$SOCKET_PATH" "http://localhost/" 2>/dev/null; then
     HEALTHY=1
     log "Health OK after ${i} attempt(s)"
     break
@@ -396,8 +405,22 @@ NGINX_LINK="/etc/nginx/sites-enabled/${APP_NAME}"
 
 ensure_nginx_running
 
+# Define an upstream block once — keeps the vhost clean and makes future
+# socket-path changes a one-line edit.
+NGINX_UPSTREAM="/etc/nginx/conf.d/${APP_NAME}-upstream.conf"
+TMP_UPSTREAM="$(mktemp)"
+cat > "$TMP_UPSTREAM" <<UPSTREAMEOF
+# ${APP_NAME} — managed by vps-deploy.sh
+upstream ${APP_NAME}_upstream {
+    server unix:${SOCKET_PATH};
+    keepalive 32;
+}
+UPSTREAMEOF
+sudo install -m 644 -o root -g root "$TMP_UPSTREAM" "$NGINX_UPSTREAM"
+rm -f "$TMP_UPSTREAM"
+
 if [[ ! -f "$NGINX_AVAIL" ]]; then
-  log "Installing nginx vhost for ${APP_DOMAIN_VAL} (port ${APP_PORT})"
+  log "Installing nginx vhost for ${APP_DOMAIN_VAL} (unix socket)"
   TMP_VHOST="$(mktemp)"
   cat > "$TMP_VHOST" <<NGINXEOF
 # ${APP_NAME} — managed by vps-deploy.sh
@@ -409,11 +432,11 @@ server {
 
     location = /_health {
         access_log off;
-        proxy_pass http://127.0.0.1:${APP_PORT}/_health;
+        proxy_pass http://${APP_NAME}_upstream/_health;
     }
 
     location / {
-        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_pass http://${APP_NAME}_upstream;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -426,7 +449,7 @@ server {
     }
 
     location /_next/static/ {
-        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_pass http://${APP_NAME}_upstream;
         proxy_cache_valid 200 365d;
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
@@ -436,21 +459,14 @@ NGINXEOF
   rm -f "$TMP_VHOST"
   sudo ln -sf "$NGINX_AVAIL" "$NGINX_LINK"
   if reload_or_start_nginx; then
-    ok "nginx vhost installed"
+    ok "nginx vhost installed (upstream: unix:${SOCKET_PATH})"
   else
     warn "nginx vhost written but service couldn't be started — investigate manually"
   fi
 else
-  log "nginx vhost already present at $NGINX_AVAIL"
-fi
-
-# Verify the upstream port in the vhost matches the current APP_PORT.
-# (Port can drift if bootstrap auto-picked a non-3000 port post-install.)
-EXISTING_PORT=$(grep -m1 -oE 'proxy_pass http://127\.0\.0\.1:[0-9]+' "$NGINX_AVAIL" 2>/dev/null | grep -oE '[0-9]+' | head -1)
-if [[ -n "$EXISTING_PORT" && "$EXISTING_PORT" != "$APP_PORT" ]]; then
-  log "nginx upstream port drift: vhost has $EXISTING_PORT, app is on $APP_PORT — patching"
-  sudo sed -i "s|proxy_pass http://127\.0\.0\.1:${EXISTING_PORT}|proxy_pass http://127.0.0.1:${APP_PORT}|g" "$NGINX_AVAIL"
-  reload_or_start_nginx && ok "nginx vhost re-pointed to port $APP_PORT"
+  # Reload anyway in case the upstream socket path changed
+  reload_or_start_nginx >/dev/null 2>&1 || true
+  log "nginx vhost already present at $NGINX_AVAIL (upstream conf refreshed)"
 fi
 
 # Let's Encrypt — issue cert if not present (requires DNS to point here)

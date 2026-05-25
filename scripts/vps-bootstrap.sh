@@ -22,8 +22,10 @@ set -Eeuo pipefail
 APP_NAME="${APP_NAME:-cmipaportal}"
 APP_DOMAIN="${APP_DOMAIN:-cmipaportal.com}"
 APP_DOMAIN_WWW="${APP_DOMAIN_WWW:-www.cmipaportal.com}"
-APP_PORT="${APP_PORT:-3000}"
 APP_ROOT="/var/www/${APP_NAME}"
+# Unix domain socket — replaces TCP port management entirely.
+# Lives under /run (tmpfs, recreated on reboot; the deploy script remakes it).
+SOCKET_PATH="${SOCKET_PATH:-/run/${APP_NAME}.sock}"
 LE_EMAIL="${LE_EMAIL:-admin@cmipaportal.com}"
 NODE_MAJOR="${NODE_MAJOR:-20}"
 
@@ -78,21 +80,10 @@ if [[ -d /etc/nginx/sites-enabled ]]; then
   fi
 fi
 
-# 0c. Pick a free port if APP_PORT is taken by another app
-detect_free_port() {
-  local p="$1"
-  while ss -ltn "( sport = :$p )" 2>/dev/null | grep -q LISTEN; do
-    p=$((p+1))
-  done
-  echo "$p"
-}
-ORIGINAL_PORT="$APP_PORT"
-APP_PORT="$(detect_free_port "$APP_PORT")"
-if [[ "$APP_PORT" != "$ORIGINAL_PORT" ]]; then
-  warn "Port $ORIGINAL_PORT is already in use — falling back to $APP_PORT"
-else
-  ok "Port $APP_PORT is free"
-fi
+# 0c. Socket path — no TCP port to manage. nginx talks to the app over
+#     /run/cmipaportal.sock (or wherever SOCKET_PATH points). No conflicts
+#     with other apps on shared boxes, ever.
+log "  · Using Unix socket: $SOCKET_PATH (no TCP port allocation)"
 
 # 0d. Detect existing PM2 procs (informational, no action)
 if command -v pm2 >/dev/null; then
@@ -303,30 +294,23 @@ chown -R "$APP_USER:$APP_USER" "$APP_ROOT"
 mkdir -p /var/log/${APP_NAME}
 chown -R "$APP_USER:$APP_USER" /var/log/${APP_NAME}
 
-# Persist runtime config so vps-deploy.sh and PM2 use the auto-picked port.
-# DATABASE_URL and AUTH_SECRET are included so GitHub Actions can fall back
-# to local values when the APP_* secrets are not set — making zero-touch
-# installs possible (no GitHub secrets required for the app runtime).
+# Persist runtime config so vps-deploy.sh knows the domain + socket path.
+# No PORT entry — we use a Unix socket so there's no port to track.
+# DATABASE_URL and AUTH_SECRET are included as fallbacks for the deploy
+# script's self-heal pass (it generates them if missing anyway).
 cat > "$APP_ROOT/shared/runtime.env" <<EOF
 # Auto-written by vps-bootstrap.sh — DO NOT EDIT MANUALLY (re-run bootstrap)
 APP_NAME=${APP_NAME}
-APP_PORT=${APP_PORT}
 APP_USER=${APP_USER}
 APP_DOMAIN=${APP_DOMAIN}
-# Fallbacks for APP_* GitHub secrets when those are not set
+SOCKET_PATH=${SOCKET_PATH}
+# Fallbacks for the deploy script (self-heal cascade)
 LOCAL_DATABASE_URL=${DATABASE_URL}
 LOCAL_AUTH_SECRET=${AUTH_SECRET}
 EOF
 chown "$APP_USER:$APP_USER" "$APP_ROOT/shared/runtime.env"
 chmod 600 "$APP_ROOT/shared/runtime.env"
-
-# Also append PORT to .env.production so Next.js binds to the right port
-if ! grep -q "^PORT=" "$APP_ROOT/shared/.env.production" 2>/dev/null; then
-  echo "PORT=${APP_PORT}" >> "$APP_ROOT/shared/.env.production"
-else
-  sed -i "s/^PORT=.*/PORT=${APP_PORT}/" "$APP_ROOT/shared/.env.production"
-fi
-ok "Release layout ready (PORT=${APP_PORT} persisted)"
+ok "Release layout ready"
 
 # ---------- 8. Prepare home/.ssh skeleton (no key needed for password auth) -
 USER_HOME="$(getent passwd "$APP_USER" | cut -d: -f6)"
@@ -341,11 +325,23 @@ else
 fi
 
 # ---------- 9. nginx site (HTTP only — certbot will add HTTPS later) --------
+# Both the upstream and the vhost are written here, but the deploy script
+# overwrites them on every run too — bootstrap just gets us a working
+# initial state so the operator can hit the domain right away.
+NGINX_UPSTREAM="/etc/nginx/conf.d/${APP_NAME}-upstream.conf"
+cat > "$NGINX_UPSTREAM" <<UPSTREAMEOF
+# ${APP_NAME} — managed by vps-bootstrap.sh / vps-deploy.sh
+upstream ${APP_NAME}_upstream {
+    server unix:${SOCKET_PATH};
+    keepalive 32;
+}
+UPSTREAMEOF
+
 NGINX_CONF="/etc/nginx/sites-available/${APP_NAME}"
 if [[ ! -f "$NGINX_CONF" ]]; then
-  log "9/9 · Installing nginx site for ${APP_DOMAIN}"
+  log "9/9 · Installing nginx site for ${APP_DOMAIN} (unix socket upstream)"
   cat > "$NGINX_CONF" <<NGINXEOF
-# ${APP_NAME} — reverse proxy to Node on 127.0.0.1:${APP_PORT}
+# ${APP_NAME} — reverse proxy to Node via unix:${SOCKET_PATH}
 server {
     listen 80;
     listen [::]:80;
@@ -354,14 +350,14 @@ server {
     # Larger uploads for document attachments
     client_max_body_size 50M;
 
-    # Health endpoint short-circuit (faster than going through Node)
+    # Health endpoint short-circuit (faster than going through Node logic)
     location = /_health {
         access_log off;
-        proxy_pass http://127.0.0.1:${APP_PORT}/_health;
+        proxy_pass http://${APP_NAME}_upstream/_health;
     }
 
     location / {
-        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_pass http://${APP_NAME}_upstream;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -375,7 +371,7 @@ server {
 
     # Cache Next.js static assets aggressively
     location /_next/static/ {
-        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_pass http://${APP_NAME}_upstream;
         proxy_cache_valid 200 365d;
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
@@ -387,7 +383,7 @@ NGINXEOF
   # alone is safe; our ${APP_DOMAIN} vhost wins for our domain.
   nginx -t && systemctl reload nginx
 fi
-ok "nginx site installed"
+ok "nginx site installed (upstream: unix:${SOCKET_PATH})"
 
 # ---------- SSL (Let's Encrypt) ---------------------------------------------
 if ! [ -d "/etc/letsencrypt/live/${APP_DOMAIN}" ]; then
@@ -416,7 +412,7 @@ echo "  Env file    : $APP_ROOT/shared/.env.production  (auto-synced from GitHub
 echo "  Runtime cfg : $APP_ROOT/shared/runtime.env  (auto-managed)"
 echo "  Logs        : /var/log/${APP_NAME}/"
 echo "  Domain      : https://${APP_DOMAIN}"
-echo "  App port    : ${APP_PORT}  $( [[ "$APP_PORT" != "$ORIGINAL_PORT" ]] && echo "(auto-picked — $ORIGINAL_PORT was in use)" || echo "" )"
+echo "  Upstream    : unix:${SOCKET_PATH}  (no TCP port)"
 echo "  Database    : postgresql://${DB_USER}:***@127.0.0.1:5432/${DB_NAME}  (local, auto-provisioned)"
 echo "  DB password : stored at $DB_PASS_FILE (root-only, never rotated)"
 echo "  DB backups  : ${BACKUP_DIR}/  (nightly at 02:30 UTC, 7-day retention)"
