@@ -53,6 +53,7 @@ exec > >(tee -a "$LOG_FILE") 2>&1
 ts()    { date -u '+%Y-%m-%dT%H:%M:%SZ'; }
 log()   { echo "[$(ts)] ▶ $*"; }
 ok()    { echo "[$(ts)] ✓ $*"; }
+warn()  { echo "[$(ts)] ⚠ $*" >&2; }
 err()   { echo "[$(ts)] ✗ $*" >&2; }
 
 # ---------- Pre-flight -------------------------------------------------------
@@ -63,6 +64,87 @@ log "Node: $(node -v)  ·  npm: $(npm -v)  ·  PM2: $(pm2 -v)"
 if [[ ! -d "$RELEASE_DIR" ]]; then
   err "Release directory not found: $RELEASE_DIR"; exit 1
 fi
+
+# ---------- 0. Pre-flight: inspect server for co-tenants -------------------
+# Mirrors the inspection step in vps-bootstrap.sh but runs on EVERY deploy.
+# Adapts to whatever else is running on this shared box:
+#   - Refuses to overwrite an nginx vhost that already claims our domain
+#   - Lists other /var/www apps so the operator knows we're co-tenants
+#   - Warns if our port is held by something OTHER than our own PM2 process
+#   - Lists other PM2 processes + SSL certs (informational)
+#
+# Hard failures: another vhost serving cmipaportal.com (would clobber it)
+# Soft warnings: everything else
+log "Pre-flight: inspecting server for co-tenants"
+
+APP_DOMAIN_PEEK="${APP_DOMAIN:-cmipaportal.com}"
+
+# 0a. Other apps under /var/www (informational)
+OTHER_APPS=()
+if [[ -d /var/www ]]; then
+  while IFS= read -r dir; do
+    name="$(basename "$dir")"
+    [[ "$name" == "$APP_NAME" || "$name" == "html" ]] && continue
+    OTHER_APPS+=("$name")
+  done < <(find /var/www -mindepth 1 -maxdepth 1 -type d 2>/dev/null)
+fi
+if [[ ${#OTHER_APPS[@]} -gt 0 ]]; then
+  log "  · Other apps under /var/www (untouched): ${OTHER_APPS[*]}"
+fi
+
+# 0b. nginx vhost conflict — HARD FAIL if someone else claims our domain
+if [[ -d /etc/nginx/sites-enabled ]]; then
+  CONFLICTING_VHOST=$(grep -rlE "server_name[^;]*[[:space:]]${APP_DOMAIN_PEEK}([[:space:];]|$)" \
+    /etc/nginx/sites-enabled/ 2>/dev/null \
+    | grep -v "/${APP_NAME}\$" \
+    | head -1 || true)
+  if [[ -n "$CONFLICTING_VHOST" ]]; then
+    err "════════════════════════════════════════════════════════════════════"
+    err " nginx vhost CONFLICT — another vhost already claims ${APP_DOMAIN_PEEK}"
+    err "════════════════════════════════════════════════════════════════════"
+    err "  Conflicting file: $CONFLICTING_VHOST"
+    err ""
+    err "  Refusing to overwrite. To proceed, on the VPS:"
+    err "    sudo nano $CONFLICTING_VHOST   # remove or rename"
+    err "    sudo nginx -t && sudo systemctl reload nginx"
+    err "    # then re-trigger this deploy"
+    err "════════════════════════════════════════════════════════════════════"
+    exit 1
+  fi
+fi
+
+# 0c. Port collision — WARN if the port is held by something other than us
+if command -v ss >/dev/null; then
+  PORT_HOLDER=$(ss -ltnp "( sport = :$APP_PORT )" 2>/dev/null | awk 'NR>1 {print}' || true)
+  if [[ -n "$PORT_HOLDER" ]]; then
+    if echo "$PORT_HOLDER" | grep -qiE '(node|pm2|next)'; then
+      log "  · Port $APP_PORT held by node/PM2 (our own process — fine)"
+    else
+      log "  · ⚠ Port $APP_PORT is held by something else:"
+      echo "$PORT_HOLDER" | sed 's/^/      /'
+      log "  · PM2 reload may fail. Consider freeing the port or letting bootstrap pick a new one."
+    fi
+  fi
+fi
+
+# 0d. Other PM2 processes (informational)
+if command -v pm2 >/dev/null; then
+  PM2_OTHERS=$(pm2 jlist 2>/dev/null | jq -r '.[].name' 2>/dev/null | grep -v "^${APP_NAME}\$" || true)
+  if [[ -n "$PM2_OTHERS" ]]; then
+    log "  · Other PM2 processes (untouched): $(echo $PM2_OTHERS | tr '\n' ' ')"
+  fi
+fi
+
+# 0e. Other Let's Encrypt certs (informational — confirms we won't trample)
+if [[ -d /etc/letsencrypt/live ]]; then
+  OTHER_CERTS=$(ls /etc/letsencrypt/live/ 2>/dev/null \
+    | grep -vE "^(README|${APP_DOMAIN_PEEK})\$" || true)
+  if [[ -n "$OTHER_CERTS" ]]; then
+    log "  · Other SSL certs (untouched): $(echo $OTHER_CERTS | tr '\n' ' ')"
+  fi
+fi
+
+ok "Pre-flight clear — proceeding with deploy"
 
 # ---------- 1. Self-heal: ensure AUTH_SECRET + DATABASE_URL exist -----------
 # All app secrets live on the VPS only — no GitHub APP_* secrets used.
