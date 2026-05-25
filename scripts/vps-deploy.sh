@@ -287,6 +287,101 @@ if [[ $HEALTHY -ne 1 ]]; then
 fi
 ok "Application is healthy"
 
+# ---------- 6b. Ensure nginx vhost + SSL are in place (self-healing) --------
+# Re-installs the nginx vhost if missing and (re-)attempts certbot if no SSL
+# cert exists yet for our domain. Both are idempotent — re-runs are no-ops
+# once everything is set up. Both require sudo.
+
+NGINX_AVAIL="/etc/nginx/sites-available/${APP_NAME}"
+NGINX_LINK="/etc/nginx/sites-enabled/${APP_NAME}"
+
+if [[ ! -f "$NGINX_AVAIL" ]]; then
+  log "Installing nginx vhost for ${APP_DOMAIN_VAL} (port ${APP_PORT})"
+  TMP_VHOST="$(mktemp)"
+  cat > "$TMP_VHOST" <<NGINXEOF
+# ${APP_NAME} — managed by vps-deploy.sh
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${APP_DOMAIN_VAL} www.${APP_DOMAIN_VAL};
+    client_max_body_size 50M;
+
+    location = /_health {
+        access_log off;
+        proxy_pass http://127.0.0.1:${APP_PORT}/_health;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_read_timeout 60s;
+    }
+
+    location /_next/static/ {
+        proxy_pass http://127.0.0.1:${APP_PORT};
+        proxy_cache_valid 200 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+}
+NGINXEOF
+  sudo install -m 644 -o root -g root "$TMP_VHOST" "$NGINX_AVAIL"
+  rm -f "$TMP_VHOST"
+  sudo ln -sf "$NGINX_AVAIL" "$NGINX_LINK"
+  sudo nginx -t && sudo systemctl reload nginx
+  ok "nginx vhost installed"
+else
+  log "nginx vhost already present at $NGINX_AVAIL"
+fi
+
+# Verify the upstream port in the vhost matches the current APP_PORT.
+# (Port can drift if bootstrap auto-picked a non-3000 port post-install.)
+EXISTING_PORT=$(grep -m1 -oE 'proxy_pass http://127\.0\.0\.1:[0-9]+' "$NGINX_AVAIL" 2>/dev/null | grep -oE '[0-9]+' | head -1)
+if [[ -n "$EXISTING_PORT" && "$EXISTING_PORT" != "$APP_PORT" ]]; then
+  log "nginx upstream port drift: vhost has $EXISTING_PORT, app is on $APP_PORT — patching"
+  sudo sed -i "s|proxy_pass http://127\.0\.0\.1:${EXISTING_PORT}|proxy_pass http://127.0.0.1:${APP_PORT}|g" "$NGINX_AVAIL"
+  sudo nginx -t && sudo systemctl reload nginx
+  ok "nginx vhost re-pointed to port $APP_PORT"
+fi
+
+# Let's Encrypt — issue cert if not present (requires DNS to point here)
+SSL_LIVE="/etc/letsencrypt/live/${APP_DOMAIN_VAL}"
+if [[ ! -d "$SSL_LIVE" ]]; then
+  log "No SSL cert for ${APP_DOMAIN_VAL} yet — attempting Let's Encrypt"
+
+  # DNS sanity: compare resolved IP vs this server's public IP
+  EXPECTED_IP="$(curl -fsS -m 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')"
+  RESOLVED_IP="$(getent hosts "$APP_DOMAIN_VAL" | awk '{print $1; exit}')"
+  if [[ -z "$RESOLVED_IP" ]]; then
+    warn "DNS for ${APP_DOMAIN_VAL} doesn't resolve to anything yet."
+    warn "→ At your registrar, add an A record: ${APP_DOMAIN_VAL} → ${EXPECTED_IP}"
+    warn "→ Also: www.${APP_DOMAIN_VAL} → ${EXPECTED_IP}"
+    warn "→ Wait for propagation (often <5 min), then re-trigger the deploy."
+  elif [[ "$RESOLVED_IP" != "$EXPECTED_IP" ]]; then
+    warn "DNS for ${APP_DOMAIN_VAL} resolves to ${RESOLVED_IP}, but this server is ${EXPECTED_IP}."
+    warn "→ Update the A record at your registrar, then re-trigger the deploy."
+  else
+    log "DNS OK (${APP_DOMAIN_VAL} → ${EXPECTED_IP}). Running certbot."
+    CERTBOT_EMAIL="admin@${APP_DOMAIN_VAL}"
+    if sudo certbot --nginx \
+         -d "${APP_DOMAIN_VAL}" -d "www.${APP_DOMAIN_VAL}" \
+         --non-interactive --agree-tos -m "$CERTBOT_EMAIL" --redirect; then
+      ok "Let's Encrypt SSL issued · auto-renew via certbot.timer"
+    else
+      warn "certbot failed — check /var/log/letsencrypt/letsencrypt.log on the VPS"
+      warn "Common causes: rate limit (5 failed validations/hour) or port 80 blocked"
+    fi
+  fi
+else
+  log "SSL cert present at $SSL_LIVE"
+fi
+
 # ---------- 7. Prune old releases -------------------------------------------
 log "Pruning old releases (keeping last ${KEEP_RELEASES})"
 cd "${APP_ROOT}/releases"

@@ -166,16 +166,16 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
   exit 1
 fi
 
-# Scoped sudoers rules (re-written every run — kept in sync with deploy needs):
-#   1. nginx reload  — for the deploy script's symlink swap
-#   2. sudo -u postgres ALL — so the deploy script can create the cmipaportal
-#      DB role + database on its first run without a password prompt
+# Sudoers — dedicated-deploy-box model. The SSH user IS the operator of this
+# app; the deploy script needs to install nginx vhosts, run certbot, write
+# files under /etc/, create Postgres roles, etc. Granting full NOPASSWD sudo
+# matches what most CI/CD setups do (Capistrano, Ansible, etc.). Security
+# boundary is the SSH password + fail2ban.
 SUDOERS_FILE="/etc/sudoers.d/${APP_USER}-${APP_NAME}"
-log "    · Granting $APP_USER scoped sudo (nginx reload + psql-as-postgres)"
+log "    · Granting $APP_USER NOPASSWD sudo (deploy script needs this)"
 cat >"$SUDOERS_FILE" <<EOF
 # Managed by ${APP_NAME} bootstrap — DO NOT EDIT
-${APP_USER} ALL=(root) NOPASSWD: /bin/systemctl reload nginx, /bin/systemctl restart nginx
-${APP_USER} ALL=(postgres) NOPASSWD: ALL
+${APP_USER} ALL=(ALL) NOPASSWD: ALL
 EOF
 chmod 440 "$SUDOERS_FILE"
 # Validate before nginx/sshd reload would lock you out

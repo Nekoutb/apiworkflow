@@ -251,19 +251,61 @@ jobs:
 
       - name: 🩺 Post-deploy smoke test (public URL)
         run: |
-          set -e
-          URL="https://cmipaportal.com"
-          echo "→ Checking $URL"
-          for i in {1..10}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L -m 10 "$URL" || echo "000")
-            echo "  attempt $i → HTTP $STATUS"
-            if [[ "$STATUS" =~ ^(200|301|302|307|308)$ ]]; then
-              echo "✅ Site reachable"
+          DOMAIN="cmipaportal.com"
+          echo "═══════════════════════════════════════════════════════════"
+          echo "  Smoke test for https://${DOMAIN}"
+          echo "═══════════════════════════════════════════════════════════"
+
+          # Resolve DNS first — most "000" failures are DNS not pointing
+          echo "→ Resolving DNS..."
+          RESOLVED=$(getent hosts "$DOMAIN" | awk '{print $1; exit}')
+          if [ -z "$RESOLVED" ]; then
+            echo "::warning::DNS does NOT resolve for ${DOMAIN}"
+            echo ""
+            echo "  Fix: at your registrar (where you bought ${DOMAIN}), add:"
+            echo "    Type=A  Name=@    Value=${{ secrets.VPS_HOST }}"
+            echo "    Type=A  Name=www  Value=${{ secrets.VPS_HOST }}"
+            echo "  Wait 5-30 min for propagation, then re-deploy."
+            exit 0
+          fi
+          echo "  ${DOMAIN} → ${RESOLVED}"
+          if [ "$RESOLVED" != "${{ secrets.VPS_HOST }}" ]; then
+            echo "::warning::DNS resolves to ${RESOLVED}, expected ${{ secrets.VPS_HOST }}"
+            echo "  Update the A record then re-deploy."
+            exit 0
+          fi
+          echo "  ✓ DNS matches VPS IP"
+
+          # Try HTTP first (always works once nginx is up — even without SSL)
+          echo "→ HTTP (port 80)..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -m 10 "http://${DOMAIN}" || echo "000")
+          echo "  HTTP → $HTTP_STATUS"
+          if [ "$HTTP_STATUS" = "000" ]; then
+            echo "::warning::Cannot connect to port 80 — nginx not serving or firewall blocking"
+            exit 0
+          fi
+
+          # Then HTTPS (only works after Let's Encrypt issued the cert)
+          echo "→ HTTPS (port 443)..."
+          for i in {1..5}; do
+            HTTPS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -L -m 10 "https://${DOMAIN}" || echo "000")
+            echo "  attempt $i → HTTPS $HTTPS_STATUS"
+            if [[ "$HTTPS_STATUS" =~ ^(200|301|302|307|308)$ ]]; then
+              echo "✅ Site fully reachable on HTTPS"
               exit 0
             fi
             sleep 3
           done
-          echo "::warning::Site did not return 2xx/3xx — check nginx/DNS/SSL"
+
+          # HTTP works but HTTPS doesn't → SSL not yet issued (DNS was probably
+          # only recently fixed; certbot needs another deploy to retry)
+          if [[ "$HTTP_STATUS" =~ ^(200|301|302|307|308)$ ]]; then
+            echo "::warning::HTTP works ($HTTP_STATUS) but HTTPS doesn't — SSL cert not yet issued."
+            echo "  The deploy script attempted certbot. Re-trigger the deploy and watch the"
+            echo "  '6b. Ensure nginx + SSL' step in the deploy log on the VPS."
+          else
+            echo "::warning::Site reachable on neither HTTP nor HTTPS — see nginx logs on VPS"
+          fi
 
       - name: 📋 Deploy summary
         if: always()
