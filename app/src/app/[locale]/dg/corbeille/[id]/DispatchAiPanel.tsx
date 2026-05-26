@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useActionState } from 'react';
 import {
   getOrComputeDispatchSuggestion,
   reanalyzeDispatch,
   type AnalyzeResult,
 } from '@/lib/actions/dg-analyze';
-import { roleLabel, roleMeta } from '@/lib/roles';
+import { dispatchToUnit, type DispatchResult } from '@/lib/actions/dg-dispatch';
+import { roleLabel, roleMeta, rolesGrouped } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 
 type Cached = {
@@ -82,7 +83,14 @@ export function DispatchAiPanel({
 
   return (
     <div className="lg:sticky lg:top-6 lg:self-start">
-      <Inner state={state} aiEnabled={aiEnabled} onAnalyze={() => runAnalysis(false)} onReanalyze={() => runAnalysis(true)} pending={pending} />
+      <Inner
+        state={state}
+        documentId={documentId}
+        aiEnabled={aiEnabled}
+        onAnalyze={() => runAnalysis(false)}
+        onReanalyze={() => runAnalysis(true)}
+        pending={pending}
+      />
     </div>
   );
 }
@@ -90,9 +98,10 @@ export function DispatchAiPanel({
 // ----------------------------------------------------------------------------
 
 function Inner({
-  state, aiEnabled, onAnalyze, onReanalyze, pending,
+  state, documentId, aiEnabled, onAnalyze, onReanalyze, pending,
 }: {
   state: State;
+  documentId: string;
   aiEnabled: boolean;
   onAnalyze: () => void;
   onReanalyze: () => void;
@@ -269,25 +278,202 @@ function Inner({
         </div>
       </div>
 
-      {/* Dispatch action — locked, points to B8 */}
-      <div className="border border-line bg-white p-5">
-        <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-3">
-          Dispatcher vers cette unité
-        </div>
-        <p className="serif mt-2 text-[12.5px] italic text-ink-3">
-          L&apos;envoi effectif vers le Service du Courrier puis vers l&apos;unité cible
-          arrive en <strong>B8</strong>. Pour l&apos;instant, vous pouvez consulter
-          l&apos;analyse, mais le bouton est désactivé.
-        </p>
-        <button
-          type="button"
-          disabled
-          className="mt-4 w-full bg-cmgreen-800/40 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.14em] text-white opacity-50"
-          title="Activé en B8 · DG dispatcher"
-        >
-          Dispatcher vers {roleLabel(s.suggestedRole)} → (B8)
-        </button>
-      </div>
+      {/* Dispatch form — B8 */}
+      <DispatchForm
+        documentId={documentId}
+        suggestedRole={s.suggestedRole}
+        alternatives={s.alternatives ?? []}
+      />
     </div>
+  );
+}
+
+// ----------------------------------------------------------------------------
+//  DispatchForm — the live B8 action
+// ----------------------------------------------------------------------------
+
+const initialDispatch: DispatchResult = {};
+
+function DispatchForm({
+  documentId,
+  suggestedRole,
+  alternatives,
+}: {
+  documentId: string;
+  suggestedRole: StaffRole;
+  alternatives: StaffRole[];
+}) {
+  const [state, formAction, pending] = useActionState(dispatchToUnit, initialDispatch);
+  const [overrideMode, setOverrideMode] = useState(false);
+  const [picked, setPicked] = useState<StaffRole>(suggestedRole);
+  const groups = rolesGrouped();
+
+  const effectiveRole = overrideMode ? picked : suggestedRole;
+  const effectiveLabel = roleLabel(effectiveRole);
+  const accepted = !overrideMode || picked === suggestedRole;
+
+  if (state.ok) {
+    return (
+      <div className="border-2 border-cmgreen-800 bg-cmgreen-50 p-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmgreen-900">
+          ✓ Document dispatché
+        </div>
+        <h3 className="serif mt-2 text-[16px] font-bold text-ink">
+          Transmis à {state.targetLabel ?? effectiveLabel}
+        </h3>
+        <p className="serif mt-2 text-[12.5px] italic text-cmgreen-900/80">
+          Le document a été transféré via le Service du Courrier vers l&apos;unité cible.
+          Il apparaîtra dans la corbeille de cette unité (livré en B11).
+        </p>
+        <a
+          href="/dg/corbeille"
+          className="mt-4 inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white"
+        >
+          ← Retour à la corbeille DG
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <form action={formAction} className="border border-line bg-white">
+      <div className="border-b border-line bg-bgsoft px-4 py-3">
+        <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+          ⬇ Dispatcher
+        </div>
+        <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+          Transmettre vers l&apos;unité responsable
+        </h3>
+      </div>
+
+      <div className="space-y-4 p-5">
+        {state.error && (
+          <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+            {state.error}
+          </div>
+        )}
+
+        <input type="hidden" name="documentId" value={documentId} />
+        <input type="hidden" name="targetRole" value={effectiveRole} />
+        <input type="hidden" name="acceptedSuggestion" value={accepted ? 'true' : 'false'} />
+
+        {/* Mode selector */}
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => { setOverrideMode(false); setPicked(suggestedRole); }}
+            className={
+              'flex-1 border px-3 py-2 text-[10.5px] font-bold uppercase tracking-[0.14em] transition ' +
+              (!overrideMode
+                ? 'border-cmgreen-800 bg-cmgreen-50 text-cmgreen-900'
+                : 'border-line-2 bg-white text-ink-3 hover:border-ink-3')
+            }
+          >
+            ✓ Accepter la suggestion IA
+          </button>
+          <button
+            type="button"
+            onClick={() => setOverrideMode(true)}
+            className={
+              'flex-1 border px-3 py-2 text-[10.5px] font-bold uppercase tracking-[0.14em] transition ' +
+              (overrideMode
+                ? 'border-gold-700 bg-gold-50 text-gold-700'
+                : 'border-line-2 bg-white text-ink-3 hover:border-ink-3')
+            }
+          >
+            ✎ Choisir une autre unité
+          </button>
+        </div>
+
+        {/* Override picker — only when overrideMode is on */}
+        {overrideMode && (
+          <div>
+            <label
+              htmlFor="role-override"
+              className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+            >
+              Unité cible (organigramme · 37 rôles)
+            </label>
+            <select
+              id="role-override"
+              value={picked}
+              onChange={(e) => setPicked(e.target.value as StaffRole)}
+              className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink focus:border-cmgreen-800 focus:outline-none focus:ring-1 focus:ring-cmgreen-800"
+            >
+              {groups.map((g) => (
+                <optgroup key={g.group} label={g.label}>
+                  {g.roles
+                    .filter((r) => r.role !== 'DG' && r.role !== 'DGA' && r.role !== 'ADMIN')
+                    .map((r) => (
+                      <option key={r.role} value={r.role}>
+                        {r.shortFr} · {r.fr}
+                        {r.article !== '—' ? ` (${r.article})` : ''}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+            {alternatives.length > 0 && (
+              <div className="mt-2 text-[10.5px] text-ink-3">
+                Alternatives proposées par l&apos;IA&nbsp;:{' '}
+                {alternatives.map((r, i) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setPicked(r)}
+                    className="text-cmgreen-800 hover:underline"
+                  >
+                    {roleLabel(r)}{i < alternatives.length - 1 ? ', ' : ''}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Instructions */}
+        <div>
+          <label
+            htmlFor="instructions"
+            className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+          >
+            Instructions du DG (optionnel)
+          </label>
+          <textarea
+            id="instructions"
+            name="instructions"
+            rows={3}
+            maxLength={2000}
+            placeholder="ex. À traiter en priorité · délai légal 10 jours."
+            className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:border-cmgreen-800 focus:outline-none focus:ring-1 focus:ring-cmgreen-800"
+          />
+          <p className="mt-1 text-[10.5px] italic text-ink-4">
+            Affichées comme note interne pour le chef d&apos;unité destinataire.
+          </p>
+        </div>
+
+        {/* Confirmation pill */}
+        <div className="border border-cmgreen-800/40 bg-cmgreen-50/50 px-3 py-2 text-[12px]">
+          <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-cmgreen-900/70">
+            Cible
+          </div>
+          <div className="mt-0.5 font-bold text-cmgreen-900">{effectiveLabel}</div>
+          <div className="mt-0.5 font-mono text-[10.5px] text-cmgreen-900/70">{effectiveRole}</div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="w-full bg-cmgreen-800 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+        >
+          {pending ? 'Dispatch en cours…' : `Dispatcher vers ${effectiveLabel} →`}
+        </button>
+
+        <p className="text-[10.5px] italic text-ink-4">
+          Transit via le Service du Courrier (règle B14.5). Statut du document&nbsp;:
+          AWAITING_DG_ANALYSIS → ASSIGNED.
+        </p>
+      </div>
+    </form>
   );
 }

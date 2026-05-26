@@ -167,7 +167,8 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B5</strong> · Service du Courrier — Départ (composition + expédition)</li>
             <li>✓ <strong className="not-italic">B6</strong> · Service du Courrier — Archives (clôture + recherche)</li>
             <li>✓ <strong className="not-italic">B7</strong> · Corbeille DG — analyse IA + suggestion d&apos;unité</li>
-            <li>⬜ <strong className="not-italic">B8-B9</strong> · DG dispatcher — envoi vers l&apos;unité (Courrier transit)</li>
+            <li>✓ <strong className="not-italic">B8</strong> · DG dispatcher — envoi vers l&apos;unité (Courrier transit)</li>
+            <li>⬜ <strong className="not-italic">B9-B11</strong> · Corbeille universelle des unités · traitement</li>
             <li>⬜ <strong className="not-italic">B7-B9</strong> · DG dashboard + dispatcher IA</li>
             <li>⬜ <strong className="not-italic">B10-B15</strong> · Workspace traitement universel</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
