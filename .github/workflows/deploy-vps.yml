@@ -71,28 +71,22 @@ jobs:
       run:
         working-directory: app
 
-    outputs:
-      release_id: ${{ steps.meta.outputs.release_id }}
+    # No `outputs:` block. We DELIBERATELY avoid passing a generated
+    # release_id between jobs — GitHub Actions does substring-matching of
+    # output values against ALL repo secrets. Even tiny fragments like "22"
+    # (which is in our VPS_HOST IP 185.92.222.217) trigger masking, and a
+    # masked output becomes empty in the downstream job. That breaks
+    # `name: release-${{ ... }}` → `name: release-` → artifact-not-found.
+    # See: https://docs.github.com/en/actions/security-guides/...secrets
+    #
+    # Instead the artifact gets a fixed name (`release`) and the deploy
+    # job generates its own unique release id locally on the VPS.
 
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: 🏷️  Compute release id
-        id: meta
-        run: |
-          # Use timestamp + run_number to build the release id.
-          # We DELIBERATELY avoid embedding the short commit SHA: GitHub
-          # Actions masks any output value that happens to contain a
-          # substring of any repo secret. With a 7-char SHA the probability
-          # of collision with secrets (DB passwords, AUTH_SECRET, etc.)
-          # is non-trivial, and a masked output breaks downstream jobs
-          # ("Artifact not found for name: release-").
-          RELEASE_ID="$(date -u +%Y%m%d-%H%M%S)-r${GITHUB_RUN_NUMBER}"
-          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
-          echo "Release: $RELEASE_ID  (commit: ${GITHUB_SHA::7})"
 
       - name: 🟢 Setup Node ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -125,7 +119,6 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Item | Value |" >> "$GITHUB_STEP_SUMMARY"
           echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Release | \`${{ steps.meta.outputs.release_id }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Commit  | \`${GITHUB_SHA::7}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| .next size | $(du -sh .next | cut -f1) |" >> "$GITHUB_STEP_SUMMARY"
 
@@ -151,10 +144,13 @@ jobs:
       - name: ⬆️  Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ steps.meta.outputs.release_id }}
+          # Fixed name. Per-run uniqueness is guaranteed by the workflow run.
+          # Cannot embed a generated id here — see comment at top of `outputs:`.
+          name: release
           path: /tmp/release.tar.gz
           retention-days: 14
           if-no-files-found: error
+          overwrite: true
 
   # ===========================================================================
   #  2. DEPLOY  —  ship artifact to VPS, run vps-deploy.sh
@@ -172,8 +168,19 @@ jobs:
       - name: ⬇️  Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: release-${{ needs.build.outputs.release_id }}
+          name: release
           path: /tmp
+
+      - name: 🏷️  Compute release id (local, no cross-job output)
+        id: meta
+        run: |
+          # Generated inside the deploy job so the value never crosses a job
+          # boundary as a step output (which would trigger secret-substring
+          # masking — see comment in the build job). Used for the per-release
+          # folder name on the VPS only.
+          RELEASE_ID="$(date -u +%Y%m%d-%H%M%S)-r${GITHUB_RUN_NUMBER}"
+          echo "RELEASE_ID=$RELEASE_ID" >> "$GITHUB_ENV"
+          echo "Release: $RELEASE_ID  (commit: ${GITHUB_SHA::7})"
 
       - name: ✅ Validate required secrets
         env:
@@ -224,7 +231,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          RELEASE_ID="${{ needs.build.outputs.release_id }}"
+          # RELEASE_ID was set into $GITHUB_ENV by the "Compute release id" step
           REMOTE_DIR="${APP_REMOTE_ROOT}/releases/${RELEASE_ID}"
 
           echo "→ Ensuring $APP_REMOTE_ROOT exists (sudo on first run) + creating $REMOTE_DIR"
@@ -259,7 +266,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          RELEASE_ID="${{ needs.build.outputs.release_id }}"
+          # RELEASE_ID from $GITHUB_ENV (set by the "Compute release id" step)
           REMOTE_SCRIPT="${APP_REMOTE_ROOT}/releases/${RELEASE_ID}/scripts/vps-deploy.sh"
 
           # The artifact contains scripts/vps-deploy.sh — make it executable & run it
@@ -333,19 +340,19 @@ jobs:
             echo ""
             echo "| Item | Value |"
             echo "|------|-------|"
-            echo "| Release | \`${{ needs.build.outputs.release_id }}\` |"
+            echo "| Release | \`${{ env.RELEASE_ID }}\` |"
             echo "| Commit  | [\`${GITHUB_SHA::7}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}) |"
             echo "| URL     | https://cmipaportal.com |"
             echo "| Status  | ${{ steps.remote_deploy.outcome }} |"
             echo ""
-            echo "Server-side log: \`/var/log/cmipaportal/deploy-${{ needs.build.outputs.release_id }}.log\`"
+            echo "Server-side log: \`/var/log/cmipaportal/deploy-${{ env.RELEASE_ID }}.log\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 🔥 Notify on failure
         if: failure()
         run: |
           echo "::error::Deploy failed — VPS rolled back to previous release automatically."
-          echo "Inspect server log: ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'tail -200 /var/log/cmipaportal/deploy-${{ needs.build.outputs.release_id }}.log'"
+          echo "Inspect server log: ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} 'tail -200 /var/log/cmipaportal/deploy-${{ env.RELEASE_ID }}.log'"
 
       - name: 🧹 Cleanup
         if: always()
