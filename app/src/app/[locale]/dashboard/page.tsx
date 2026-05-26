@@ -24,6 +24,10 @@ export default async function DashboardPage({
   if (!isStaffRole(role)) redirect('/login');
 
   const isAdmin = role === 'ADMIN';
+  const isCourrier =
+    role === 'CHEF_BUREAU_ARRIVEE' ||
+    role === 'CHEF_SERVICE_COURRIER' ||
+    role === 'ADMIN';
   const roleFr = roleLabel(role);
 
   return (
@@ -72,6 +76,29 @@ export default async function DashboardPage({
         </p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {isCourrier && (
+            <Link href="/courrier/arrivee" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B4 · Disponible</div>
+              <h3 className="serif text-[19px] font-bold text-ink">Bureau Arrivée — Enregistrement</h3>
+              <p className="serif mt-2 text-[13px] italic text-ink-3">
+                Enregistrement des courriers entrants (en ligne, physique scanné, antenne),
+                génération automatique de la référence COURRIER-YYYY-NNNNNN et envoi de
+                l&apos;accusé de réception.
+              </p>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
+            </Link>
+          )}
+          {isAdmin && (
+            <Link href="/admin/users" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B2 · Disponible</div>
+              <h3 className="serif text-[19px] font-bold text-ink">Personnel — 37 rôles · Antennes</h3>
+              <p className="serif mt-2 text-[13px] italic text-ink-3">
+                Créer, éditer et désactiver les comptes du personnel API. Picker hiérarchique
+                groupé par sous-direction et gestion des antennes régionales.
+              </p>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
+            </Link>
+          )}
           {isAdmin && (
             <Link href="/admin/data" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B1 · Disponible</div>
@@ -79,17 +106,6 @@ export default async function DashboardPage({
               <p className="serif mt-2 text-[13px] italic text-ink-3">
                 Compteurs des entités du nouveau schéma document-centrique : Documents, Submissions,
                 Assignments, Handoffs, Antennes, ExternalTransmissions, etc.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
-            </Link>
-          )}
-          {isAdmin && (
-            <Link href="/admin/users" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">B2 · À venir</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Gestion du personnel — 37 rôles</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Page existante (héritée de A2). Sera modernisée en B2 avec le picker hiérarchique groupé
-                par sous-direction.
               </p>
               <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
             </Link>
@@ -104,9 +120,10 @@ export default async function DashboardPage({
           <ul className="serif mt-3 space-y-1.5 text-[13.5px] italic text-ink-2">
             <li>✓ <strong className="not-italic">B0</strong> · Plan v2 adopté · 8 décisions cadrantes validées</li>
             <li>✓ <strong className="not-italic">B1</strong> · Schéma document-centrique · PostgreSQL local sur le VPS</li>
-            <li>⬜ <strong className="not-italic">B2</strong> · Enum 37 rôles · UI gestion personnel</li>
-            <li>⬜ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
-            <li>⬜ <strong className="not-italic">B4-B6</strong> · Service du Courrier — Arrivée · Départ · Archives</li>
+            <li>✓ <strong className="not-italic">B2</strong> · Enum 37 rôles · UI gestion personnel + antennes</li>
+            <li>✓ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
+            <li>✓ <strong className="not-italic">B4</strong> · Service du Courrier — Arrivée (enregistrement)</li>
+            <li>⬜ <strong className="not-italic">B5-B6</strong> · Service du Courrier — Départ · Archives</li>
             <li>⬜ <strong className="not-italic">B7-B9</strong> · DG dashboard + dispatcher IA</li>
             <li>⬜ <strong className="not-italic">B10-B15</strong> · Workspace traitement universel</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>

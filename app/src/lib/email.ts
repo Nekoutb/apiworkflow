@@ -110,3 +110,61 @@ function escapeHtml(s: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+/**
+ * Acknowledgement of receipt — sent the moment Bureau Arrivée registers
+ * an incoming document (per the law: récépissé must precede the 10-day
+ * countdown for AGREMENT_REQUEST decisions).
+ */
+export function acknowledgementEmail(args: {
+  recipientName: string;
+  reference: string;
+  subject: string;
+  registeredAt: Date;
+  trackingUrl?: string;
+}) {
+  const { recipientName, reference, subject, registeredAt, trackingUrl } = args;
+  const trackUrl = trackingUrl ?? `https://cmipaportal.com/track?ref=${encodeURIComponent(reference)}`;
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0a0a0a; max-width: 560px; margin: 0 auto;">
+      <div style="border-top: 4px solid #006b3a; padding: 32px 28px 8px;">
+        <div style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #6b6b6b; font-weight: 700;">Accusé de réception · API Cameroun</div>
+        <h1 style="font-family: Georgia, serif; font-size: 22px; margin: 12px 0 6px; color: #0a0a0a;">Votre dossier a été enregistré</h1>
+        <p style="font-size: 14px; color: #444; line-height: 1.6;">Bonjour ${escapeHtml(recipientName)},</p>
+        <p style="font-size: 14px; color: #444; line-height: 1.6;">
+          Le Service du Courrier de l'Agence de Promotion des Investissements
+          confirme la réception de votre dossier intitulé&nbsp;:
+        </p>
+        <div style="font-family: Georgia, serif; font-style: italic; font-size: 15px; padding: 12px 16px; border-left: 3px solid #c1973f; background: #fbf8f1; margin: 14px 0; color: #0a0a0a;">
+          « ${escapeHtml(subject)} »
+        </div>
+        <div style="border: 1px solid #d4d4d4; padding: 16px 18px; margin: 18px 0; background: #fafafa;">
+          <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b6b; font-weight: 700; margin-bottom: 8px;">Référence officielle</div>
+          <div style="font-family: 'Courier New', monospace; font-size: 18px; color: #006b3a; font-weight: 700;">${escapeHtml(reference)}</div>
+          <div style="font-size: 12px; color: #6b6b6b; margin-top: 8px;">
+            Enregistré le ${registeredAt.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}
+          </div>
+        </div>
+        <p style="font-size: 14px; color: #444; line-height: 1.6;">
+          Le Directeur Général prendra connaissance de votre dossier et l'orientera
+          vers l'unité compétente. Vous recevrez la réponse officielle de l'Agence
+          par retour à cette adresse.
+        </p>
+        <div style="margin: 18px 0;">
+          <a href="${trackUrl}" style="display: inline-block; background: #0a1820; color: #ffffff; text-decoration: none; padding: 11px 18px; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;">
+            Suivre mon dossier →
+          </a>
+        </div>
+        <p style="font-size: 12px; color: #6b6b6b; line-height: 1.6;">
+          Conservez la référence <strong style="font-family: 'Courier New', monospace;">${escapeHtml(reference)}</strong>
+          pour toute correspondance ultérieure avec nos services.
+        </p>
+      </div>
+      <div style="border-top: 1px solid #e5e5e5; padding: 18px 28px; font-size: 11px; color: #8a8a8a;">
+        ⚜ API Cameroun · Agence de Promotion des Investissements<br>
+        Connexion chiffrée TLS 1.3 · Loi 2010/012 sur la protection des données personnelles
+      </div>
+    </div>
+  `;
+  return { subject: `Accusé de réception · ${reference}`, html };
+}
