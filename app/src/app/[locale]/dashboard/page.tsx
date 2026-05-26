@@ -24,8 +24,12 @@ export default async function DashboardPage({
   if (!isStaffRole(role)) redirect('/login');
 
   const isAdmin = role === 'ADMIN';
-  const isCourrier =
+  const isCourrierArrivee =
     role === 'CHEF_BUREAU_ARRIVEE' ||
+    role === 'CHEF_SERVICE_COURRIER' ||
+    role === 'ADMIN';
+  const isCourrierDepart =
+    role === 'CHEF_BUREAU_DEPART' ||
     role === 'CHEF_SERVICE_COURRIER' ||
     role === 'ADMIN';
   const roleFr = roleLabel(role);
@@ -76,14 +80,24 @@ export default async function DashboardPage({
         </p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
-          {isCourrier && (
+          {isCourrierArrivee && (
             <Link href="/courrier/arrivee" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B4 · Disponible</div>
               <h3 className="serif text-[19px] font-bold text-ink">Bureau Arrivée — Enregistrement</h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Enregistrement des courriers entrants (en ligne, physique scanné, antenne),
-                génération automatique de la référence COURRIER-YYYY-NNNNNN et envoi de
-                l&apos;accusé de réception.
+                Enregistrement des courriers entrants avec IA (OCR + synopsis automatique),
+                génération de la référence COURRIER-YYYY-NNNNNN et envoi de l&apos;accusé de réception.
+              </p>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
+            </Link>
+          )}
+          {isCourrierDepart && (
+            <Link href="/courrier/depart" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B5 · Disponible</div>
+              <h3 className="serif text-[19px] font-bold text-ink">Bureau Départ — Expédition</h3>
+              <p className="serif mt-2 text-[13px] italic text-ink-3">
+                Composition et expédition des réponses officielles aux émetteurs après
+                décision du DG : upload du PDF signé, lettre d&apos;accompagnement, envoi par email.
               </p>
               <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
             </Link>
@@ -122,8 +136,9 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B1</strong> · Schéma document-centrique · PostgreSQL local sur le VPS</li>
             <li>✓ <strong className="not-italic">B2</strong> · Enum 37 rôles · UI gestion personnel + antennes</li>
             <li>✓ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
-            <li>✓ <strong className="not-italic">B4</strong> · Service du Courrier — Arrivée (enregistrement)</li>
-            <li>⬜ <strong className="not-italic">B5-B6</strong> · Service du Courrier — Départ · Archives</li>
+            <li>✓ <strong className="not-italic">B4</strong> · Service du Courrier — Arrivée (enregistrement + OCR IA)</li>
+            <li>✓ <strong className="not-italic">B5</strong> · Service du Courrier — Départ (composition + expédition)</li>
+            <li>⬜ <strong className="not-italic">B6</strong> · Service du Courrier — Archives</li>
             <li>⬜ <strong className="not-italic">B7-B9</strong> · DG dashboard + dispatcher IA</li>
             <li>⬜ <strong className="not-italic">B10-B15</strong> · Workspace traitement universel</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>

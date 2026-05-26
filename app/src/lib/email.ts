@@ -102,6 +102,66 @@ export function welcomeStaffEmail(args: { name: string; email: string; roleLabel
   return { subject: 'Votre compte API Cameroun a été créé', html };
 }
 
+/**
+ * Outbound response email — sent by Bureau Départ after a DG decision.
+ * Wraps the cover-letter body the agent typed in our editorial template,
+ * cites the reference, and links to the signed PDF (when Vercel Blob is
+ * configured; otherwise the operator transmits the file manually).
+ */
+export function responseEmail(args: {
+  recipientName: string;
+  reference: string;
+  originalSubject: string;
+  coverLetterBody: string;
+  attachmentUrl?: string;
+}) {
+  const { recipientName, reference, originalSubject, coverLetterBody, attachmentUrl } = args;
+  const bodyHtml = coverLetterBody
+    .split(/\n{2,}/)
+    .map((para) => `<p style="font-size: 14px; color: #444; line-height: 1.6; margin: 0 0 12px;">${escapeHtml(para).replace(/\n/g, '<br>')}</p>`)
+    .join('');
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0a0a0a; max-width: 560px; margin: 0 auto;">
+      <div style="border-top: 4px solid #006b3a; padding: 32px 28px 8px;">
+        <div style="font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #6b6b6b; font-weight: 700;">Réponse officielle · API Cameroun</div>
+        <h1 style="font-family: Georgia, serif; font-size: 22px; margin: 12px 0 6px; color: #0a0a0a;">Réponse à votre dossier</h1>
+        <p style="font-size: 14px; color: #444; line-height: 1.6;">Bonjour ${escapeHtml(recipientName)},</p>
+        <div style="border: 1px solid #d4d4d4; padding: 14px 16px; margin: 16px 0; background: #fafafa;">
+          <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b6b; font-weight: 700; margin-bottom: 6px;">Référence du dossier</div>
+          <div style="font-family: 'Courier New', monospace; font-size: 16px; color: #006b3a; font-weight: 700;">${escapeHtml(reference)}</div>
+          <div style="font-family: Georgia, serif; font-style: italic; font-size: 13px; color: #5a5a5a; margin-top: 6px;">« ${escapeHtml(originalSubject)} »</div>
+        </div>
+
+        <div style="margin: 18px 0;">
+          ${bodyHtml}
+        </div>
+
+        ${attachmentUrl ? `
+        <div style="border-left: 3px solid #c1973f; background: #fbf8f1; padding: 12px 14px; margin: 18px 0;">
+          <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #6b6b6b; font-weight: 700; margin-bottom: 6px;">Pièce jointe officielle</div>
+          <a href="${attachmentUrl}" style="font-family: 'Courier New', monospace; font-size: 13px; color: #006b3a; word-break: break-all; text-decoration: underline;">
+            Réponse signée (PDF)
+          </a>
+        </div>` : `
+        <div style="border-left: 3px solid #c1973f; background: #fbf8f1; padding: 12px 14px; margin: 18px 0; font-size: 12px; color: #5a5a5a;">
+          La réponse officielle signée vous parviendra par voie séparée (la pièce jointe sera intégrée au email une fois Vercel Blob configuré sur la plateforme).
+        </div>`}
+
+        <p style="font-size: 12px; color: #6b6b6b; line-height: 1.6; margin-top: 18px;">
+          Pour toute question relative à ce dossier, citez la référence
+          <strong style="font-family: 'Courier New', monospace;">${escapeHtml(reference)}</strong>
+          dans votre réponse.
+        </p>
+      </div>
+      <div style="border-top: 1px solid #e5e5e5; padding: 18px 28px; font-size: 11px; color: #8a8a8a;">
+        ⚜ API Cameroun · Agence de Promotion des Investissements<br>
+        Service du Courrier · Bureau Départ
+      </div>
+    </div>
+  `;
+  return { subject: `Réponse · ${reference}`, html };
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')

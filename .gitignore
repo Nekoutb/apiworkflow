@@ -6,8 +6,9 @@ pages/
 *_clean.pdf
 *_repaired.pdf
 
-# …but DO ship the sample PDF served at /sample-courrier.pdf (for B4 test uploads)
+# …but DO ship the sample PDFs served at /sample-*.pdf (test uploads)
 !app/public/sample-courrier.pdf
+!app/public/sample-response.pdf
 
 # OS / editor
 .DS_Store
