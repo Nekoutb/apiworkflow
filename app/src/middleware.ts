@@ -35,6 +35,13 @@ export default function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
+    // Exclude:
+    //   - Next.js internals
+    //   - favicon (any variant)
+    //   - any path ending in a known static file extension
+    // Without this, next-intl would rewrite e.g. /sample-courrier.pdf to
+    // /fr/sample-courrier.pdf and Next.js would return 404 (the public/
+    // file is at the root, not under a [locale] segment).
+    '/((?!_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|pdf|txt|json|xml|zip|csv|woff2?|ttf|otf|map|mp3|mp4|webm)$).*)',
   ],
 };
