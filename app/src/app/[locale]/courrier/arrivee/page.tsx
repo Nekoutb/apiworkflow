@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
+import { isClaudeConfigured } from '@/lib/claude';
 import type { StaffRole } from '@prisma/client';
 import { RegisterForm } from './RegisterForm';
 
@@ -122,7 +123,7 @@ export default async function CourrierArriveePage() {
             et envoyez. La référence officielle est générée automatiquement et l&apos;accusé
             de réception est expédié immédiatement.
           </p>
-          <RegisterForm />
+          <RegisterForm aiEnabled={isClaudeConfigured()} />
         </div>
 
         {/* Recent documents */}

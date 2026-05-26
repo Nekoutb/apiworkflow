@@ -77,6 +77,94 @@ export async function generateJson<T>(args: {
   }
 }
 
+/**
+ * Send a PDF (or image) + a JSON-shaped prompt to Claude and parse the
+ * structured response. Used by B4 to OCR an incoming courrier and extract
+ * sender / subject / nature fields + a 50-word synopsis.
+ *
+ * `file` is the raw bytes; `mimeType` should be the file's reported mime
+ * type (application/pdf, image/png, image/jpeg, image/webp).
+ *
+ * Returns ClaudeJsonResult<T>. In stub mode (no API key) returns the
+ * stub factory result so the rest of the UI flow keeps working.
+ */
+export async function analyzeDocument<T>(args: {
+  system: string;
+  user: string;
+  file: Buffer;
+  mimeType: string;
+  maxTokens?: number;
+  stubFactory: () => T;
+}): Promise<ClaudeJsonResult<T>> {
+  if (!isClaudeConfigured()) {
+    return { ok: true, data: args.stubFactory(), mode: 'stub' };
+  }
+
+  // Claude vision/document API accepts base64-encoded files inline
+  const base64 = args.file.toString('base64');
+  const isPdf = args.mimeType === 'application/pdf';
+
+  try {
+    const msg = await client().messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: args.maxTokens ?? 2048,
+      system:
+        args.system +
+        '\n\nRESPONSE FORMAT: return only a valid JSON object, no prose, no markdown fences.',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            isPdf
+              ? {
+                  type: 'document',
+                  source: {
+                    type: 'base64',
+                    media_type: 'application/pdf',
+                    data: base64,
+                  },
+                }
+              : {
+                  type: 'image',
+                  source: {
+                    type: 'base64',
+                    media_type: args.mimeType as
+                      | 'image/jpeg'
+                      | 'image/png'
+                      | 'image/gif'
+                      | 'image/webp',
+                    data: base64,
+                  },
+                },
+            { type: 'text', text: args.user },
+          ],
+        },
+      ],
+    });
+
+    const text = msg.content
+      .filter((c) => c.type === 'text')
+      .map((c) => (c.type === 'text' ? c.text : ''))
+      .join('\n');
+
+    const data = parseJsonBlob<T>(text);
+    if (!data) {
+      return { ok: false, error: 'Réponse Claude non parsable', mode: 'live' };
+    }
+
+    return {
+      ok: true,
+      data,
+      mode: 'live',
+      tokensIn: msg.usage.input_tokens,
+      tokensOut: msg.usage.output_tokens,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown';
+    return { ok: false, error: msg, mode: 'live' };
+  }
+}
+
 function parseJsonBlob<T>(text: string): T | null {
   const trimmed = text.trim();
   // Try direct parse first

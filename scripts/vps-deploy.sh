@@ -402,11 +402,25 @@ if [[ -f "$APP_ROOT/shared/runtime.env" ]]; then
   [[ -n "$RT_DOMAIN" ]] && APP_DOMAIN_VAL="$RT_DOMAIN"
 fi
 
-# 1c. Compose .env.production (always overwritten — single source of truth)
+# 1c. Compose .env.production — PRESERVE any operator-set API keys
+# The first 8 vars are regenerated from VPS state on every deploy. The
+# optional integration keys (Anthropic/Blob/Resend) are READ from the
+# existing file if present so the operator's manual edits survive across
+# deploys. To set them: `nano shared/.env.production` once, then redeploys
+# preserve those values.
+EXISTING_ANTHROPIC=""; EXISTING_BLOB=""; EXISTING_RESEND=""
+if [[ -f "$SHARED_ENV" ]]; then
+  # Match `KEY="value"` or `KEY=value`, strip surrounding quotes
+  EXISTING_ANTHROPIC=$(grep -E '^ANTHROPIC_API_KEY=' "$SHARED_ENV" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/')
+  EXISTING_BLOB=$(grep -E '^BLOB_READ_WRITE_TOKEN=' "$SHARED_ENV" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/')
+  EXISTING_RESEND=$(grep -E '^RESEND_API_KEY=' "$SHARED_ENV" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/')
+fi
+
 cat > "$SHARED_ENV" <<EOF
 # Auto-written by vps-deploy.sh on $(date -u '+%Y-%m-%dT%H:%M:%SZ')
-# DO NOT EDIT MANUALLY — values are regenerated from shared/.auth-secret,
-# shared/.db-password, and shared/runtime.env on every deploy.
+# DATABASE_URL, AUTH_SECRET, etc. are regenerated from VPS state every deploy.
+# The OPTIONAL INTEGRATION KEYS at the bottom are preserved across deploys —
+# edit this file once (sudo nano $SHARED_ENV), then `pm2 reload cmipaportal`.
 DATABASE_URL="${DATABASE_URL}"
 AUTH_SECRET="${AUTH_SECRET}"
 AUTH_URL="https://${APP_DOMAIN_VAL}"
@@ -415,13 +429,22 @@ NODE_ENV="production"
 SOCKET_PATH="${SOCKET_PATH}"
 AUTH_TRUST_HOST="true"
 
-# Optional integrations — edit this file directly if/when you obtain keys
-ANTHROPIC_API_KEY=""
-BLOB_READ_WRITE_TOKEN=""
-RESEND_API_KEY=""
+# Optional integrations — preserved across deploys. Edit the value directly
+# (do NOT remove the line). Examples:
+#   ANTHROPIC_API_KEY="sk-ant-api03-..."    (B4 OCR + 50-word synopsis)
+#   BLOB_READ_WRITE_TOKEN="vercel_blob_..." (file storage)
+#   RESEND_API_KEY="re_..."                  (real acknowledgement emails)
+ANTHROPIC_API_KEY="${EXISTING_ANTHROPIC}"
+BLOB_READ_WRITE_TOKEN="${EXISTING_BLOB}"
+RESEND_API_KEY="${EXISTING_RESEND}"
 EOF
 chmod 600 "$SHARED_ENV"
-ok ".env.production composed locally (SOCKET=$SOCKET_PATH)"
+KEYS_SET=""
+[[ -n "$EXISTING_ANTHROPIC" ]] && KEYS_SET="$KEYS_SET ANTHROPIC"
+[[ -n "$EXISTING_BLOB"      ]] && KEYS_SET="$KEYS_SET BLOB"
+[[ -n "$EXISTING_RESEND"    ]] && KEYS_SET="$KEYS_SET RESEND"
+[[ -z "$KEYS_SET"           ]] && KEYS_SET=" (none — graceful stubs)"
+ok ".env.production composed locally · optional keys preserved:${KEYS_SET}"
 
 PREVIOUS_RELEASE=""
 if [[ -L "$CURRENT_LINK" ]]; then
