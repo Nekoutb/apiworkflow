@@ -416,11 +416,17 @@ if [[ -f "$SHARED_ENV" ]]; then
   EXISTING_RESEND=$(grep -E '^RESEND_API_KEY=' "$SHARED_ENV" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/')
 fi
 
+# NOTE: heredoc body is parsed by the SHELL during write — backticks inside
+# the body would trigger command substitution and inject the result into the
+# file (which then breaks `set -a; . file; set +a` parsing). Avoid backticks
+# and unbalanced parens in comments. Variables in ${...} form are intended
+# expansions and stay; everything else stays plain text.
+WRITTEN_AT=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 cat > "$SHARED_ENV" <<EOF
-# Auto-written by vps-deploy.sh on $(date -u '+%Y-%m-%dT%H:%M:%SZ')
+# Auto-written by vps-deploy.sh on ${WRITTEN_AT}
 # DATABASE_URL, AUTH_SECRET, etc. are regenerated from VPS state every deploy.
-# The OPTIONAL INTEGRATION KEYS at the bottom are preserved across deploys —
-# edit this file once (sudo nano $SHARED_ENV), then `pm2 reload cmipaportal`.
+# The OPTIONAL INTEGRATION KEYS at the bottom are preserved across deploys.
+# To add an API key: sudo nano this file, then pm2 reload cmipaportal.
 DATABASE_URL="${DATABASE_URL}"
 AUTH_SECRET="${AUTH_SECRET}"
 AUTH_URL="https://${APP_DOMAIN_VAL}"
@@ -429,11 +435,8 @@ NODE_ENV="production"
 SOCKET_PATH="${SOCKET_PATH}"
 AUTH_TRUST_HOST="true"
 
-# Optional integrations — preserved across deploys. Edit the value directly
-# (do NOT remove the line). Examples:
-#   ANTHROPIC_API_KEY="sk-ant-api03-..."    (B4 OCR + 50-word synopsis)
-#   BLOB_READ_WRITE_TOKEN="vercel_blob_..." (file storage)
-#   RESEND_API_KEY="re_..."                  (real acknowledgement emails)
+# Optional integrations - preserved across deploys.
+# Examples:  sk-ant-api03-...    vercel_blob_...    re_...
 ANTHROPIC_API_KEY="${EXISTING_ANTHROPIC}"
 BLOB_READ_WRITE_TOKEN="${EXISTING_BLOB}"
 RESEND_API_KEY="${EXISTING_RESEND}"
