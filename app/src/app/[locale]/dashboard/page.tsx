@@ -32,6 +32,10 @@ export default async function DashboardPage({
     role === 'CHEF_BUREAU_DEPART' ||
     role === 'CHEF_SERVICE_COURRIER' ||
     role === 'ADMIN';
+  const isCourrierArchives =
+    role === 'CHEF_BUREAU_ARCHIVES' ||
+    role === 'CHEF_SERVICE_COURRIER' ||
+    role === 'ADMIN';
   const roleFr = roleLabel(role);
 
   return (
@@ -102,6 +106,17 @@ export default async function DashboardPage({
               <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
             </Link>
           )}
+          {isCourrierArchives && (
+            <Link href="/courrier/archives" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B6 · Disponible</div>
+              <h3 className="serif text-[19px] font-bold text-ink">Bureau Archives — Clôture & Recherche</h3>
+              <p className="serif mt-2 text-[13px] italic text-ink-3">
+                Clôture des dossiers expédiés et consultation des archives :
+                recherche par référence/émetteur/objet, filtres par nature et année.
+              </p>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
+            </Link>
+          )}
           {isAdmin && (
             <Link href="/admin/users" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B2 · Disponible</div>
@@ -138,7 +153,7 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
             <li>✓ <strong className="not-italic">B4</strong> · Service du Courrier — Arrivée (enregistrement + OCR IA)</li>
             <li>✓ <strong className="not-italic">B5</strong> · Service du Courrier — Départ (composition + expédition)</li>
-            <li>⬜ <strong className="not-italic">B6</strong> · Service du Courrier — Archives</li>
+            <li>✓ <strong className="not-italic">B6</strong> · Service du Courrier — Archives (clôture + recherche)</li>
             <li>⬜ <strong className="not-italic">B7-B9</strong> · DG dashboard + dispatcher IA</li>
             <li>⬜ <strong className="not-italic">B10-B15</strong> · Workspace traitement universel</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
