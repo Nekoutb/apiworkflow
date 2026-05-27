@@ -2,9 +2,12 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { roleLabel, roleMeta, roleChildren, roleParent } from '@/lib/roles';
+import { roleLabel, roleMeta, roleChildren, roleParent, ROLES } from '@/lib/roles';
+import { coAvisReturnTarget, directorPeers, isDirectorPeer } from '@/lib/co-avis';
 import type { StaffRole } from '@prisma/client';
 import { UnitActions } from './UnitActions';
+
+const ALL_STAFF_ROLES: StaffRole[] = ROLES.map((r) => r.role);
 
 export const metadata = { title: 'Document · Corbeille de l\'unité · API Cameroun' };
 export const dynamic = 'force-dynamic';
@@ -295,6 +298,9 @@ export default async function UnitDocumentDetailPage({
                   if (!p || p === 'DG' || p === 'DGA') return null;
                   return p;
                 })()}
+                isDirectorLevel={isDirectorPeer(effectiveRoleForActions)}
+                peerRoles={directorPeers(effectiveRoleForActions, ALL_STAFF_ROLES)}
+                coAvisReturnTarget={coAvisReturnTarget(doc.handoffs, effectiveRoleForActions)}
               />
             ) : (
               <div className="lg:sticky lg:top-6 lg:self-start">

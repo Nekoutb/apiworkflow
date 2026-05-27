@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel, roleChildren, roleParent, isStaffRole } from '@/lib/roles';
+import { coAvisReturnTarget, isDirectorPeer } from '@/lib/co-avis';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -576,6 +577,350 @@ export async function returnUp(
       return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
     }
     console.error('[returnUp]', e);
+    return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
+  }
+}
+
+// ============================================================================
+//  B13 — Horizontal co-avis between Directeur peers
+//
+//  Two actions, both using the HORIZONTAL HandoffType:
+//
+//    requestCoAvis  → A Directeur-level role asks a peer (also Directeur-level)
+//                     for an opinion. Document changes hands but stays IN
+//                     the broader workflow — the receiving Directeur can
+//                     delegate down within their own department, then
+//                     ultimately use returnCoAvis to send it back with
+//                     their compiled avis.
+//
+//    returnCoAvis   → The peer Directeur (who has finished forming their
+//                     opinion) sends the document BACK to the original
+//                     requester. Target is derived from the doc's handoff
+//                     history via coAvisReturnTarget (stack-paired). Refuses
+//                     to fire if the caller isn't actually the target of an
+//                     open co-avis request.
+//
+//  Both keep the document at IN_TREATMENT — co-avis is intra-workflow, not
+//  a DG-level state transition.
+// ============================================================================
+
+const DIRECTOR_PEER_NOT_ALLOWED_AS_TARGET: StaffRole[] = ['DG', 'DGA', 'ADMIN'];
+
+// ----------------------------------------------------------------------------
+//  requestCoAvis
+// ----------------------------------------------------------------------------
+
+export type RequestCoAvisResult = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  targetRole?: StaffRole;
+  targetLabel?: string;
+};
+
+const RequestCoAvisSchema = z.object({
+  documentId: z.string().min(1),
+  targetRole: z.string().refine(isStaffRole, 'Pair invalide.'),
+  message:    z.string().max(2000).optional().nullable(),
+});
+
+export async function requestCoAvis(
+  _prev: RequestCoAvisResult,
+  formData: FormData,
+): Promise<RequestCoAvisResult> {
+  try {
+    const { id: userId, role } = await assertUnitMember();
+
+    const parsed = RequestCoAvisSchema.safeParse({
+      documentId: formData.get('documentId'),
+      targetRole: formData.get('targetRole'),
+      message:    formData.get('message') || null,
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path.join('.');
+        if (!fieldErrors[k]) fieldErrors[k] = issue.message;
+      }
+      return { fieldErrors };
+    }
+
+    const targetRole = parsed.data.targetRole as StaffRole;
+    if (DIRECTOR_PEER_NOT_ALLOWED_AS_TARGET.includes(targetRole)) {
+      return {
+        fieldErrors: {
+          targetRole: 'Cible non autorisée pour un co-avis (DG, DGA, ADMIN exclus).',
+        },
+      };
+    }
+    if (!isDirectorPeer(targetRole)) {
+      return {
+        fieldErrors: {
+          targetRole:
+            `${roleLabel(targetRole)} n'est pas au niveau Directeur (parent direct du DG). ` +
+            `Le co-avis horizontal n'est valable qu'entre rôles rattachés au DG.`,
+        },
+      };
+    }
+
+    const doc = await db.document.findUnique({
+      where: { id: parsed.data.documentId },
+      select: { id: true, status: true, reference: true },
+    });
+    if (!doc) return { error: 'Document introuvable.' };
+
+    const assignment = await findActiveAssignment(doc.id, role);
+    if (!assignment) {
+      return { error: 'Aucune affectation active pour votre rôle sur ce document.' };
+    }
+
+    if (doc.status !== 'ASSIGNED' && doc.status !== 'IN_TREATMENT') {
+      return {
+        error:
+          `Statut inattendu : ${doc.status}. Une demande de co-avis n'est possible ` +
+          `que sur les documents ASSIGNED ou IN_TREATMENT.`,
+      };
+    }
+
+    const effectiveRole = role === 'ADMIN' ? assignment.assignedToRole : role;
+    if (!isDirectorPeer(effectiveRole)) {
+      return {
+        error:
+          `${roleLabel(effectiveRole)} n'est pas au niveau Directeur. ` +
+          `Seuls les rôles rattachés directement au DG peuvent demander un co-avis.`,
+      };
+    }
+    if (targetRole === effectiveRole) {
+      return {
+        fieldErrors: { targetRole: 'Vous ne pouvez pas vous demander un co-avis à vous-même.' },
+      };
+    }
+
+    const now = new Date();
+    const fromLabel = roleLabel(effectiveRole);
+    const targetLabel = roleLabel(targetRole);
+
+    await db.$transaction(async (tx) => {
+      // 1. Mark current Assignment as SUPERSEDED
+      await tx.assignment.update({
+        where: { id: assignment.id },
+        data: { status: 'SUPERSEDED', completedAt: now },
+      });
+
+      // 2. New ACTIVE Assignment on the peer Directeur — tagged so they
+      //    know it's a co-avis request and not a regular dispatch.
+      await tx.assignment.create({
+        data: {
+          documentId: doc.id,
+          assignedToRole: targetRole,
+          assignedByUserId: userId,
+          assignedAt: now,
+          instructions:
+            `[Co-avis demandé par ${fromLabel}] ` +
+            (parsed.data.message?.trim()
+              ? parsed.data.message.trim()
+              : 'Merci de produire votre avis sur ce dossier.'),
+          status: 'ACTIVE',
+        },
+      });
+
+      // 3. HORIZONTAL handoff
+      await tx.handoff.create({
+        data: {
+          documentId: doc.id,
+          type: 'HORIZONTAL',
+          fromRole: effectiveRole,
+          fromUserId: userId,
+          toRole: targetRole,
+          reason:
+            `${fromLabel} demande un co-avis à ${targetLabel} ` +
+            `(transfert horizontal entre pairs Directeurs).`,
+        },
+      });
+
+      // 4. Optional message → standalone Comment too (visible to the receiver)
+      if (parsed.data.message && parsed.data.message.trim().length > 0) {
+        await tx.comment.create({
+          data: {
+            documentId: doc.id,
+            authorUserId: userId,
+            authorRole: effectiveRole,
+            body: `[Demande de co-avis → ${targetLabel}]\n\n${parsed.data.message.trim()}`,
+          },
+        });
+      }
+
+      // 5. Document: stays IN_TREATMENT, holder = peer
+      await tx.document.update({
+        where: { id: doc.id },
+        data: {
+          status: 'IN_TREATMENT',
+          currentHolderRole: targetRole,
+          currentHolderUserId: null,
+        },
+      });
+    });
+
+    revalidatePath('/unit/corbeille');
+    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/admin/data');
+    return { ok: true, targetRole, targetLabel };
+  } catch (e) {
+    if (e instanceof Error && e.message === 'UNAUTHORIZED') {
+      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+    }
+    console.error('[requestCoAvis]', e);
+    return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
+  }
+}
+
+// ----------------------------------------------------------------------------
+//  returnCoAvis
+// ----------------------------------------------------------------------------
+
+export type ReturnCoAvisResult = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  targetRole?: StaffRole;
+  targetLabel?: string;
+};
+
+const ReturnCoAvisSchema = z.object({
+  documentId: z.string().min(1),
+  message:    z.string().max(2000).optional().nullable(),
+});
+
+export async function returnCoAvis(
+  _prev: ReturnCoAvisResult,
+  formData: FormData,
+): Promise<ReturnCoAvisResult> {
+  try {
+    const { id: userId, role } = await assertUnitMember();
+
+    const parsed = ReturnCoAvisSchema.safeParse({
+      documentId: formData.get('documentId'),
+      message:    formData.get('message') || null,
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path.join('.');
+        if (!fieldErrors[k]) fieldErrors[k] = issue.message;
+      }
+      return { fieldErrors };
+    }
+
+    const doc = await db.document.findUnique({
+      where: { id: parsed.data.documentId },
+      select: { id: true, status: true, reference: true },
+    });
+    if (!doc) return { error: 'Document introuvable.' };
+
+    const assignment = await findActiveAssignment(doc.id, role);
+    if (!assignment) {
+      return { error: 'Aucune affectation active pour votre rôle sur ce document.' };
+    }
+
+    if (doc.status !== 'ASSIGNED' && doc.status !== 'IN_TREATMENT') {
+      return {
+        error:
+          `Statut inattendu : ${doc.status}. Le retour d'un co-avis n'est possible ` +
+          `que sur les documents ASSIGNED ou IN_TREATMENT.`,
+      };
+    }
+
+    const effectiveRole = role === 'ADMIN' ? assignment.assignedToRole : role;
+
+    // Compute the return target from the doc's handoff history
+    const handoffs = await db.handoff.findMany({
+      where: { documentId: doc.id },
+      orderBy: { createdAt: 'asc' },
+      select: { type: true, fromRole: true, toRole: true, createdAt: true },
+    });
+    const target = coAvisReturnTarget(handoffs, effectiveRole);
+
+    if (!target) {
+      return {
+        error:
+          'Aucun co-avis ouvert ne vous est destiné sur ce document. ' +
+          'Utilisez plutôt « Renvoyer au DG » ou « Renvoyer au supérieur ».',
+      };
+    }
+
+    const now = new Date();
+    const fromLabel = roleLabel(effectiveRole);
+    const targetLabel = roleLabel(target);
+
+    await db.$transaction(async (tx) => {
+      // 1. Mark current Assignment as SUPERSEDED
+      await tx.assignment.update({
+        where: { id: assignment.id },
+        data: { status: 'SUPERSEDED', completedAt: now },
+      });
+
+      // 2. New ACTIVE Assignment on the original requester
+      await tx.assignment.create({
+        data: {
+          documentId: doc.id,
+          assignedToRole: target,
+          assignedByUserId: userId,
+          assignedAt: now,
+          instructions:
+            `[Co-avis reçu de ${fromLabel}] ` +
+            (parsed.data.message?.trim() || 'Avis transmis — voir notes du dossier.'),
+          status: 'ACTIVE',
+        },
+      });
+
+      // 3. HORIZONTAL handoff (return direction)
+      await tx.handoff.create({
+        data: {
+          documentId: doc.id,
+          type: 'HORIZONTAL',
+          fromRole: effectiveRole,
+          fromUserId: userId,
+          toRole: target,
+          reason:
+            `${fromLabel} retourne son co-avis à ${targetLabel} ` +
+            `(retour horizontal après formation de l'avis).`,
+        },
+      });
+
+      // 4. The co-avis itself — always recorded as a Comment, even when no
+      //    message was typed (since the avis IS the point of the action).
+      await tx.comment.create({
+        data: {
+          documentId: doc.id,
+          authorUserId: userId,
+          authorRole: effectiveRole,
+          body:
+            `[Co-avis de ${fromLabel} → ${targetLabel}]\n\n` +
+            (parsed.data.message?.trim() ||
+              '(Aucun texte joint — voir notes internes et pièces du dossier.)'),
+        },
+      });
+
+      // 5. Document: stays IN_TREATMENT, holder = original requester
+      await tx.document.update({
+        where: { id: doc.id },
+        data: {
+          status: 'IN_TREATMENT',
+          currentHolderRole: target,
+          currentHolderUserId: null,
+        },
+      });
+    });
+
+    revalidatePath('/unit/corbeille');
+    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/admin/data');
+    return { ok: true, targetRole: target, targetLabel };
+  } catch (e) {
+    if (e instanceof Error && e.message === 'UNAUTHORIZED') {
+      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+    }
+    console.error('[returnCoAvis]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
   }
 }

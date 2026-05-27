@@ -6,25 +6,35 @@ import {
   returnToDg,
   delegateDown,
   returnUp,
+  requestCoAvis,
+  returnCoAvis,
   type ReturnToDgResult,
   type DelegateDownResult,
   type ReturnUpResult,
+  type RequestCoAvisResult,
+  type ReturnCoAvisResult,
 } from '@/lib/actions/unit-corbeille';
 import { roleLabel, roleMeta } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 
 type View =
   | 'menu'
-  | 'returning'      // form: Renvoyer au DG (refusal)
-  | 'returned'       //   ↳ success
-  | 'delegating'     // form: Déléguer à une sous-unité (B12 · VERTICAL_DOWN)
-  | 'delegated'      //   ↳ success
-  | 'returning-up'   // form: Renvoyer à mon supérieur (B12 · RETURN_UP)
-  | 'returned-up';   //   ↳ success
+  | 'returning'        // form: Renvoyer au DG (refusal)
+  | 'returned'         //   ↳ success
+  | 'delegating'       // form: Déléguer à une sous-unité (B12 · VERTICAL_DOWN)
+  | 'delegated'        //   ↳ success
+  | 'returning-up'     // form: Renvoyer à mon supérieur (B12 · RETURN_UP)
+  | 'returned-up'      //   ↳ success
+  | 'requesting-coavis'  // form: Demander un co-avis à un pair (B13 · HORIZONTAL out)
+  | 'requested-coavis'   //   ↳ success
+  | 'returning-coavis'   // form: Renvoyer le co-avis (B13 · HORIZONTAL back)
+  | 'returned-coavis';   //   ↳ success
 
 const initialReturn: ReturnToDgResult = {};
 const initialDelegate: DelegateDownResult = {};
 const initialReturnUp: ReturnUpResult = {};
+const initialRequestCoAvis: RequestCoAvisResult = {};
+const initialReturnCoAvis: ReturnCoAvisResult = {};
 
 export function UnitActions({
   documentId,
@@ -34,6 +44,9 @@ export function UnitActions({
   effectiveRoleLabel,
   childrenRoles,
   parentRole,
+  isDirectorLevel,
+  peerRoles,
+  coAvisReturnTarget,
 }: {
   documentId: string;
   documentReference: string;
@@ -42,6 +55,9 @@ export function UnitActions({
   effectiveRoleLabel: string;
   childrenRoles: StaffRole[];
   parentRole: StaffRole | null;
+  isDirectorLevel: boolean;
+  peerRoles: StaffRole[];
+  coAvisReturnTarget: StaffRole | null;
 }) {
   const [view, setView] = useState<View>('menu');
   const [takeError, setTakeError] = useState<string | null>(null);
@@ -51,6 +67,8 @@ export function UnitActions({
   const [returnState, returnAction, returnPending] = useActionState(returnToDg, initialReturn);
   const [delegateState, delegateAction, delegatePending] = useActionState(delegateDown, initialDelegate);
   const [returnUpState, returnUpAction, returnUpPending] = useActionState(returnUp, initialReturnUp);
+  const [reqCoState, reqCoAction, reqCoPending] = useActionState(requestCoAvis, initialRequestCoAvis);
+  const [retCoState, retCoAction, retCoPending] = useActionState(returnCoAvis, initialReturnCoAvis);
 
   // Promote each form's success into the corresponding view via useEffect
   // (avoids setState-in-render warnings).
@@ -63,6 +81,12 @@ export function UnitActions({
   useEffect(() => {
     if (returnUpState.ok && view !== 'returned-up') setView('returned-up');
   }, [returnUpState.ok, view]);
+  useEffect(() => {
+    if (reqCoState.ok && view !== 'requested-coavis') setView('requested-coavis');
+  }, [reqCoState.ok, view]);
+  useEffect(() => {
+    if (retCoState.ok && view !== 'returned-coavis') setView('returned-coavis');
+  }, [retCoState.ok, view]);
 
   function handleTake() {
     setTakeError(null);
@@ -79,6 +103,10 @@ export function UnitActions({
   const canDelegate = childrenRoles.length > 0;
   const canReturnUp = !!parentRole;
   const parentMeta  = parentRole ? roleMeta(parentRole) : undefined;
+  // B13 — co-avis
+  const canRequestCoAvis = isDirectorLevel && peerRoles.length > 0;
+  const canReturnCoAvis  = !!coAvisReturnTarget;
+  const coAvisOriginMeta = coAvisReturnTarget ? roleMeta(coAvisReturnTarget) : undefined;
 
   // =========================================================================
   //  Success views (each form has its own)
@@ -110,6 +138,26 @@ export function UnitActions({
         documentReference={documentReference}
         backHref="/unit/corbeille"
         targetLabel={returnUpState.targetLabel ?? ''}
+      />
+    );
+  }
+  if (view === 'requested-coavis') {
+    return (
+      <SuccessCard
+        kind="requested-coavis"
+        documentReference={documentReference}
+        backHref="/unit/corbeille"
+        targetLabel={reqCoState.targetLabel ?? ''}
+      />
+    );
+  }
+  if (view === 'returned-coavis') {
+    return (
+      <SuccessCard
+        kind="returned-coavis"
+        documentReference={documentReference}
+        backHref="/unit/corbeille"
+        targetLabel={retCoState.targetLabel ?? ''}
       />
     );
   }
@@ -312,6 +360,196 @@ export function UnitActions({
     );
   }
 
+  if (view === 'requesting-coavis') {
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <form action={reqCoAction} className="border border-gold-700 bg-white">
+          <div className="border-b border-line bg-gold-50/50 px-4 py-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+              ↔ Demande de co-avis (HORIZONTAL)
+            </div>
+            <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+              Solliciter l&apos;avis d&apos;un Directeur pair
+            </h3>
+          </div>
+
+          <div className="space-y-4 p-5">
+            {reqCoState.error && (
+              <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+                {reqCoState.error}
+              </div>
+            )}
+
+            <input type="hidden" name="documentId" value={documentId} />
+
+            <div>
+              <label
+                htmlFor="targetRole-coavis"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Directeur pair (rattaché au DG) <span className="text-cmred">*</span>
+              </label>
+              <select
+                id="targetRole-coavis"
+                name="targetRole"
+                required
+                defaultValue={peerRoles[0]}
+                className={
+                  'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-1 ' +
+                  (reqCoState.fieldErrors?.targetRole
+                    ? 'border-cmred focus:border-cmred focus:ring-cmred'
+                    : 'border-line-2 focus:border-gold-700 focus:ring-gold-700')
+                }
+              >
+                {peerRoles.map((r) => {
+                  const meta = roleMeta(r);
+                  return (
+                    <option key={r} value={r}>
+                      {meta?.shortFr ?? r} · {meta?.fr ?? roleLabel(r)}
+                      {meta?.article && meta.article !== '—' ? ` (${meta.article})` : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              {reqCoState.fieldErrors?.targetRole && (
+                <p className="mt-1 text-[11px] text-cmred">{reqCoState.fieldErrors.targetRole}</p>
+              )}
+              <p className="mt-1 text-[10.5px] italic text-ink-4">
+                {peerRoles.length} pair{peerRoles.length > 1 ? 's' : ''} disponible
+                {peerRoles.length > 1 ? 's' : ''} — uniquement les rôles rattachés directement
+                au DG (Directeurs, Sous-directeurs rattachés, Chefs de Division).
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="message-coavis"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Objet du co-avis (recommandé)
+              </label>
+              <textarea
+                id="message-coavis"
+                name="message"
+                rows={4}
+                maxLength={2000}
+                placeholder="ex. Avis juridique requis sur la clause d'agrément · délai souhaité 5 jours."
+                className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:border-gold-700 focus:outline-none focus:ring-1 focus:ring-gold-700"
+              />
+              <p className="mt-1 text-[10.5px] italic text-ink-4">
+                Précisez ce que vous attendez du pair (avis juridique, technique, opérationnel,
+                délai souhaité, etc.).
+              </p>
+            </div>
+
+            <div className="border border-gold-700/40 bg-gold-50/40 px-3 py-2 text-[11.5px] italic text-gold-900">
+              ⓘ Le dossier passe en main au pair (statut <code className="font-mono not-italic">IN_TREATMENT</code>
+              maintenu). Il pourra le traiter dans sa propre chaîne hiérarchique puis vous
+              le renverra avec son co-avis attaché.
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setView('menu')}
+                disabled={reqCoPending}
+                className="flex-1 border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={reqCoPending}
+                className="flex-1 bg-gold-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-gold-800 disabled:opacity-50"
+              >
+                {reqCoPending ? 'Envoi…' : 'Demander le co-avis →'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (view === 'returning-coavis') {
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <form action={retCoAction} className="border border-gold-700 bg-white">
+          <div className="border-b border-line bg-gold-50/50 px-4 py-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+              ↔ Retour de co-avis (HORIZONTAL)
+            </div>
+            <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+              Renvoyer votre avis à {coAvisOriginMeta?.fr ?? roleLabel(coAvisReturnTarget!)}
+            </h3>
+          </div>
+
+          <div className="space-y-4 p-5">
+            {retCoState.error && (
+              <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+                {retCoState.error}
+              </div>
+            )}
+
+            <input type="hidden" name="documentId" value={documentId} />
+
+            <div>
+              <label
+                htmlFor="message-retco"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Votre co-avis (recommandé)
+              </label>
+              <textarea
+                id="message-retco"
+                name="message"
+                rows={6}
+                maxLength={2000}
+                placeholder="ex. Avis favorable du point de vue juridique. La clause d'agrément est conforme à l'art. 23 de l'Ordonnance. Réserve : vérifier la conformité fiscale auprès de la DGI."
+                className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:border-gold-700 focus:outline-none focus:ring-1 focus:ring-gold-700"
+              />
+              <p className="mt-1 text-[10.5px] italic text-ink-4">
+                Devient une note interne tagguée <code className="font-mono">[Co-avis]</code>,
+                visible par le Directeur qui vous a sollicité.
+              </p>
+            </div>
+
+            <div className="border border-gold-700/40 bg-gold-50/50 px-3 py-2 text-[11.5px]">
+              <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-gold-700">
+                Retour à
+              </div>
+              <div className="mt-0.5 font-bold text-gold-900">
+                {coAvisOriginMeta?.fr ?? roleLabel(coAvisReturnTarget!)}
+              </div>
+              <div className="mt-0.5 font-mono text-[10.5px] text-gold-900/70">
+                {coAvisReturnTarget}
+                {coAvisOriginMeta?.article && coAvisOriginMeta.article !== '—' ? ` · ${coAvisOriginMeta.article}` : ''}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setView('menu')}
+                disabled={retCoPending}
+                className="flex-1 border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={retCoPending}
+                className="flex-1 bg-gold-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-gold-800 disabled:opacity-50"
+              >
+                {retCoPending ? 'Envoi…' : `Renvoyer à ${coAvisOriginMeta?.shortFr ?? '…'} →`}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
   if (view === 'returning') {
     return (
       <div className="lg:sticky lg:top-6 lg:self-start">
@@ -400,6 +638,33 @@ export function UnitActions({
 
   return (
     <div className="lg:sticky lg:top-6 lg:self-start space-y-4">
+      {/* 0. Co-avis return (B13) — TOP priority when applicable.
+            Renders a strong call-to-action since this dossier is on loan
+            from a peer Directeur and they're waiting for our opinion. */}
+      {canReturnCoAvis && (
+        <div className="border-2 border-gold-700 bg-gold-50/50 p-5">
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+            ⚠ Co-avis en attente · à retourner
+          </div>
+          <h3 className="serif mt-1 text-[16px] font-bold text-ink">
+            Renvoyer votre co-avis à {coAvisOriginMeta?.shortFr ?? '…'}
+          </h3>
+          <p className="serif mt-2 text-[12.5px] italic text-ink-3">
+            Ce dossier vous a été transmis pour co-avis par{' '}
+            <strong>{coAvisOriginMeta?.fr ?? roleLabel(coAvisReturnTarget!)}</strong>. Une fois
+            votre avis formé (au besoin via délégation interne ↓ vers vos sous-unités),
+            renvoyez-le.
+          </p>
+          <button
+            type="button"
+            onClick={() => setView('returning-coavis')}
+            className="mt-4 w-full bg-gold-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-gold-800"
+          >
+            ↔ Renvoyer le co-avis…
+          </button>
+        </div>
+      )}
+
       {/* 1. Prise en charge — always visible */}
       <div
         className={
@@ -512,6 +777,48 @@ export function UnitActions({
         </div>
       )}
 
+      {/* 3.5 Demander un co-avis — B13 (only for Directeur-level peers with ≥1 peer) */}
+      {canRequestCoAvis && (
+        <div className="border border-gold-700 bg-white p-5">
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+            ↔ Co-avis horizontal
+          </div>
+          <h3 className="serif mt-1 text-[16px] font-bold text-ink">
+            Demander un avis à un Directeur pair
+          </h3>
+          <p className="serif mt-2 text-[12.5px] italic text-ink-3">
+            Solliciter l&apos;avis d&apos;un autre rôle rattaché au DG (sans repasser par le DG).
+            Le pair pourra produire son avis dans sa propre chaîne et vous le renverra ensuite.
+          </p>
+
+          {/* Quick preview of who can be picked */}
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {peerRoles.slice(0, 4).map((r) => (
+              <span
+                key={r}
+                className="border border-line bg-bgsoft px-2 py-0.5 text-[10.5px] text-ink-2"
+                title={roleMeta(r)?.fr}
+              >
+                {roleMeta(r)?.shortFr ?? r}
+              </span>
+            ))}
+            {peerRoles.length > 4 && (
+              <span className="px-2 py-0.5 text-[10.5px] italic text-ink-4">
+                +{peerRoles.length - 4} autres
+              </span>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setView('requesting-coavis')}
+            className="mt-4 w-full border border-gold-700 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-gold-700 transition hover:bg-gold-700 hover:text-white"
+          >
+            ↔ Choisir un pair Directeur…
+          </button>
+        </div>
+      )}
+
       {/* 4. Renvoyer au DG (refusal) — always visible */}
       <div className="border border-line bg-white p-5">
         <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-3">
@@ -553,7 +860,12 @@ function SuccessCard({
   backHref,
   targetLabel,
 }: {
-  kind: 'returned-dg' | 'delegated' | 'returned-up';
+  kind:
+    | 'returned-dg'
+    | 'delegated'
+    | 'returned-up'
+    | 'requested-coavis'
+    | 'returned-coavis';
   documentReference: string;
   backHref: string;
   targetLabel?: string;
@@ -577,12 +889,30 @@ function SuccessCard({
             'IN_TREATMENT — votre département en garde la responsabilité collective jusqu\'au ' +
             'retour final au DG (B15).',
         }
-      : {
+      : kind === 'returned-up'
+      ? {
           title: '✓ Dossier renvoyé au supérieur',
           headline: `${documentReference} transmis à ${targetLabel}`,
           body:
             'Votre supérieur le verra dans sa corbeille avec votre avis joint comme note interne. ' +
             'Le dossier reste au statut IN_TREATMENT.',
+        }
+      : kind === 'requested-coavis'
+      ? {
+          title: '✓ Co-avis demandé',
+          headline: `${documentReference} transmis à ${targetLabel} pour avis`,
+          body:
+            'Le pair Directeur a maintenant le dossier en main. Il pourra le traiter dans sa ' +
+            'propre chaîne hiérarchique puis vous le renverra avec son co-avis attaché. Vous ' +
+            'le verrez réapparaître dans votre corbeille dès le retour.',
+        }
+      : {
+          title: '✓ Co-avis retourné',
+          headline: `${documentReference} renvoyé à ${targetLabel}`,
+          body:
+            'Le Directeur qui vous avait sollicité retrouve le dossier dans sa corbeille avec ' +
+            'votre co-avis joint comme note interne taggée. Le dossier reste au statut ' +
+            'IN_TREATMENT — il poursuit son cycle dans le département d\'origine.',
         };
 
   return (
