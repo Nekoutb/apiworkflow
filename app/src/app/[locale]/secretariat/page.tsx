@@ -6,6 +6,7 @@ import { roleLabel, roleMeta } from '@/lib/roles';
 import type { StaffRole, DocumentStatus, HandoffType } from '@prisma/client';
 import { ReminderButton } from './ReminderButton';
 import { NotificationBell } from '@/components/NotificationBell';
+import { AppLogo } from '@/components/AppLogo';
 
 export const metadata = { title: 'Secrétariat DG · API Cameroun' };
 export const dynamic = 'force-dynamic';
@@ -142,14 +143,7 @@ export default async function SecretariatDashboardPage() {
 
       <header className="border-b border-line bg-white">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-7 py-4">
-          <Link
-            href="/dashboard"
-            className="relative flex h-11 w-11 items-center justify-center border border-obsidian bg-obsidian font-display text-lg font-bold tracking-wide text-gold-500"
-            aria-label="Tableau de bord"
-          >
-            A
-            <span aria-hidden className="pointer-events-none absolute inset-[3px] border border-gold-500/45" />
-          </Link>
+          <AppLogo />
           <div className="leading-tight">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
               Portail interne · Secrétariat DG

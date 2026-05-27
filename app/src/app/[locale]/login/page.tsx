@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { LoginForm } from './LoginForm';
+import { AppLogo } from '@/components/AppLogo';
 
 export async function generateMetadata({
   params,
@@ -63,10 +64,7 @@ export default async function LoginPage({
           <div className="relative flex h-full flex-col justify-between">
             {/* crest */}
             <Link href="/" className="flex items-center gap-3.5">
-              <div className="relative flex h-12 w-12 items-center justify-center border border-obsidian bg-obsidian font-display text-lg font-bold tracking-wide text-gold-500">
-                A
-                <span aria-hidden className="pointer-events-none absolute inset-[3px] border border-gold-500/45" />
-              </div>
+              <AppLogo size="lg" asLink={false} />
               <div className="leading-tight">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
                   {tCommon('republic')}
