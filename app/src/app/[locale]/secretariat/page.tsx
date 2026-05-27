@@ -7,12 +7,20 @@ import type { StaffRole, DocumentStatus, HandoffType } from '@prisma/client';
 import { ReminderButton } from './ReminderButton';
 import { NotificationBell } from '@/components/NotificationBell';
 
-export const metadata = { title: 'Secrétariat DG · Monitoring · API Cameroun' };
+export const metadata = { title: 'Secrétariat DG · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 // SECRETARIAT_DG monitors flows in/out of the DG.
-// CHEF_SERVICE_COURRIER + ADMIN get the same view (per spec).
-const ALLOWED: StaffRole[] = ['SECRETARIAT_DG', 'CHEF_SERVICE_COURRIER', 'ADMIN'];
+// DG + DGA + CHEF_SERVICE_COURRIER + ADMIN get the same view: the DG sees
+// what their secretariat sees (oversight), and the Service du Courrier
+// shares the same monitoring + reminder powers per spec.
+const ALLOWED: StaffRole[] = [
+  'SECRETARIAT_DG',
+  'CHEF_SERVICE_COURRIER',
+  'DG',
+  'DGA',
+  'ADMIN',
+];
 
 const NATURE_SHORT: Record<string, string> = {
   AGREMENT_REQUEST: "Demande d'agrément",
@@ -118,15 +126,17 @@ export default async function SecretariatDashboardPage() {
     dispatchedRows.filter((r) => r.hoursWithHolder > SLA_HOURS - 24 && r.hoursWithHolder <= SLA_HOURS).length;
 
   const headerLabel =
-    role === 'SECRETARIAT_DG' ? 'Secrétariat DG — Monitoring 72h' :
-    role === 'CHEF_SERVICE_COURRIER' ? 'Service du Courrier — Monitoring 72h' :
-    'Monitoring 72h (vue admin)';
+    role === 'SECRETARIAT_DG'        ? 'Secrétariat DG — Suivi 72h' :
+    role === 'DG'                    ? 'Secrétariat DG — Vue du Directeur Général' :
+    role === 'DGA'                   ? 'Secrétariat DG — Vue du Directeur Général Adjoint' :
+    role === 'CHEF_SERVICE_COURRIER' ? 'Service du Courrier — Suivi 72h' :
+                                       'Secrétariat DG — Suivi 72h (vue admin)';
 
   return (
     <main className="min-h-screen bg-bgsoft">
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
         Portail interne <span className="mx-3 text-gold-500">⚜</span>
-        Monitoring <span className="mx-3 text-gold-500">⚜</span>
+        Secrétariat DG <span className="mx-3 text-gold-500">⚜</span>
         SLA 72h
       </div>
 
@@ -142,7 +152,7 @@ export default async function SecretariatDashboardPage() {
           </Link>
           <div className="leading-tight">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              Portail interne · Monitoring DG
+              Portail interne · Secrétariat DG
             </div>
             <div className="serif text-[17px] font-bold text-ink">{headerLabel}</div>
           </div>

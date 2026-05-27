@@ -41,11 +41,15 @@ export default async function DashboardPage({
   // Unit parapheur (B11): visible to anyone who can receive a DG dispatch —
   // i.e. anyone except pure DG/DGA. ADMIN sees a universal admin view.
   const isUnitMember = role !== 'DG' && role !== 'DGA';
-  // Secretariat monitoring dashboard (B16): SECRETARIAT_DG + CHEF_SERVICE_COURRIER
-  // + ADMIN. Per spec, the same view is available to Service du Courrier.
+  // Secretariat DG dashboard (B16): SECRETARIAT_DG + CHEF_SERVICE_COURRIER
+  // + DG / DGA + ADMIN. The DG and DGA get the same monitoring view as
+  // their secretariat (per organigramme — the secretariat acts on the
+  // DG's behalf for follow-up but the DG keeps oversight).
   const isSecretariatMonitor =
     role === 'SECRETARIAT_DG' ||
     role === 'CHEF_SERVICE_COURRIER' ||
+    role === 'DG' ||
+    role === 'DGA' ||
     role === 'ADMIN';
   const roleFr = roleLabel(role);
 
@@ -160,7 +164,7 @@ export default async function DashboardPage({
             <Link href="/secretariat" className="group border-2 border-cmred bg-white p-6 transition hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmred">✓ B16 · Disponible</div>
               <h3 className="serif text-[19px] font-bold text-ink">
-                Monitoring DG — SLA 72h & rappels
+                Secrétariat DG — SLA 72h & rappels
               </h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
                 Surveillance des dossiers entre les mains du DG et de ceux dispatchés aux
