@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
-import { AdminMarkDecidedRow } from './AdminMarkDecidedRow';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export const metadata = { title: 'Bureau Départ · API Cameroun' };
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,6 @@ export default async function CourrierDepartPage() {
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || !ALLOWED.includes(role)) redirect('/dashboard');
-  const isAdmin = role === 'ADMIN';
 
   // Awaiting outbound = status DECIDED
   // Recent outbound = status RESPONSE_SENT over the last 30 days
@@ -65,28 +64,6 @@ export default async function CourrierDepartPage() {
     }),
   ]);
 
-  // For the admin shortcut: docs that COULD be promoted (anything not yet
-  // decided / sent / closed). Used by the testing helper.
-  const promotable = isAdmin
-    ? await db.document.findMany({
-        where: {
-          status: {
-            in: [
-              'RECEIVED',
-              'AWAITING_DG_ANALYSIS',
-              'ASSIGNED',
-              'IN_TREATMENT',
-              'AWAITING_EXTERNAL_AVIS',
-              'AWAITING_DG_DECISION',
-            ],
-          },
-        },
-        orderBy: { submittedAt: 'desc' },
-        take: 10,
-        select: { id: true, reference: true, subject: true, status: true },
-      })
-    : [];
-
   return (
     <main className="min-h-screen bg-bgsoft">
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
@@ -111,9 +88,12 @@ export default async function CourrierDepartPage() {
             </div>
             <div className="serif text-[17px] font-bold text-ink">Bureau Départ — Expédition</div>
           </div>
-          <div className="ml-auto text-right leading-tight">
-            <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
-            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role)}</div>
+          <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
+            <div className="text-right leading-tight">
+              <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role)}</div>
+            </div>
           </div>
         </div>
       </header>
@@ -179,46 +159,6 @@ export default async function CourrierDepartPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* Admin testing helper */}
-        {isAdmin && (
-          <div className="mt-10 border-2 border-dashed border-gold-700 bg-gold-50/40 px-5 py-5">
-            <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
-              ⚠ Admin · raccourci de test
-            </div>
-            <h3 className="serif text-[16px] font-semibold text-ink">
-              Promouvoir un document au statut DECIDED
-            </h3>
-            <p className="serif mt-1 text-[12.5px] italic text-ink-3">
-              Tant que le flux de décision DG (B15) n&apos;est pas construit,
-              utilisez ce bouton pour pousser un document directement au statut
-              DECIDED afin de tester l&apos;expédition. <strong>À retirer en B15.</strong>
-            </p>
-            {promotable.length === 0 ? (
-              <p className="serif mt-3 text-[12px] italic text-ink-4">
-                Aucun document en cours à promouvoir.
-              </p>
-            ) : (
-              <div className="mt-4 overflow-x-auto bg-white">
-                <table className="w-full">
-                  <thead className="bg-bgsoft">
-                    <tr className="text-left">
-                      <Th>Référence</Th>
-                      <Th>Objet</Th>
-                      <Th>Statut actuel</Th>
-                      <Th>Action</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {promotable.map((d) => (
-                      <AdminMarkDecidedRow key={d.id} doc={d} />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         )}
 

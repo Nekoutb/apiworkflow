@@ -215,7 +215,9 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B14</strong> · Avis externe — Min. Finances, DGI, DGD, etc. (EXTERNAL_OUT/IN)</li>
             <li>✓ <strong className="not-italic">B15</strong> · Renvoi final au DG après traitement — décision (approuvé / rejeté) → Bureau Départ</li>
             <li>✓ <strong className="not-italic">B16</strong> · Secrétariat DG — monitoring SLA 72h + rappels (vue aussi à Service Courrier)</li>
-            <li>✓ <strong className="not-italic">B17</strong> · Notification bell — alertes unifiées · auto-notifs sur dispatch / submit / decide / external / reminder</li>
+            <li>✓ <strong className="not-italic">B17</strong> · Notification bell — alertes unifiées · auto-notifs sur tout l&apos;arbre B8-B16</li>
+            <li>✓ <strong className="not-italic">B18</strong> · Email Resend — pump horaire pour notifs critiques (assigned, to-DG, decided, external, reminder)</li>
+            <li>✓ <strong className="not-italic">B19</strong> · Rappel anticipatif 50h — cron horaire qui détecte les dossiers proches du SLA 72h et notifie le détenteur</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
           </ul>
         </div>

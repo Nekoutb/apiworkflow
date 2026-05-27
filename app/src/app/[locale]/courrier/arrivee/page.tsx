@@ -6,6 +6,7 @@ import { roleLabel } from '@/lib/roles';
 import { isClaudeConfigured } from '@/lib/claude';
 import type { StaffRole } from '@prisma/client';
 import { RegisterForm } from './RegisterForm';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export const metadata = { title: 'Bureau Arrivée · API Cameroun' };
 export const dynamic = 'force-dynamic';
@@ -98,9 +99,12 @@ export default async function CourrierArriveePage() {
             </div>
             <div className="serif text-[17px] font-bold text-ink">Bureau Arrivée — Enregistrement</div>
           </div>
-          <div className="ml-auto text-right leading-tight">
-            <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
-            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role)}</div>
+          <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
+            <div className="text-right leading-tight">
+              <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role)}</div>
+            </div>
           </div>
         </div>
       </header>

@@ -349,6 +349,15 @@ if [[ ! -s "$AUTH_FILE" ]]; then
 fi
 AUTH_SECRET="$(cat "$AUTH_FILE")"
 
+# 1a-bis. CRON_SECRET — generate once, persist forever (B18+B19 cron auth)
+CRON_FILE="$APP_ROOT/shared/.cron-secret"
+if [[ ! -s "$CRON_FILE" ]]; then
+  log "  · Generating CRON_SECRET (first deploy)"
+  openssl rand -hex 32 > "$CRON_FILE"
+  chmod 600 "$CRON_FILE"
+fi
+CRON_SECRET="$(cat "$CRON_FILE")"
+
 # 1b. DB password — prefer existing .db-password, then runtime.env, then create
 DB_NAME="$APP_NAME"
 DB_USER="$APP_NAME"
@@ -434,6 +443,7 @@ NEXTAUTH_URL="https://${APP_DOMAIN_VAL}"
 NODE_ENV="production"
 SOCKET_PATH="${SOCKET_PATH}"
 AUTH_TRUST_HOST="true"
+CRON_SECRET="${CRON_SECRET}"
 
 # Optional integrations - preserved across deploys.
 # Examples:  sk-ant-api03-...    vercel_blob_...    re_...
@@ -757,6 +767,22 @@ fi
 
 # Re-arm strict error handling for the rest of the script
 set -e
+
+# ---------- 6c. Install/update hourly cron for /api/cron/tick (B18+B19) ----
+# Hourly tick that:
+#   1. pumps pending notification emails via Resend
+#   2. fires REMINDER_NUDGE on docs >50h with the same holder (anticipatory
+#      early warning before the 72h gov SLA)
+# Owned by the current deploy user; idempotent — we read existing crontab,
+# strip any previous cmipaportal-tick line, then append the fresh one with
+# the current CRON_SECRET.
+log "Installing hourly cron for /api/cron/tick"
+CRON_TAG="# cmipaportal-tick · managed by vps-deploy.sh"
+CRON_LINE="30 * * * * curl -fsS -m 30 -X POST -H 'X-Cron-Secret: ${CRON_SECRET}' https://${APP_DOMAIN_VAL}/api/cron/tick >> ${LOG_DIR}/cron-tick.log 2>&1  ${CRON_TAG}"
+EXISTING_CRON="$(crontab -l 2>/dev/null || true)"
+PRUNED_CRON="$(echo "${EXISTING_CRON}" | grep -v 'cmipaportal-tick' || true)"
+printf "%s\n%s\n" "${PRUNED_CRON}" "${CRON_LINE}" | sed '/^$/N;/^\n$/D' | crontab -
+ok "Cron installed: hourly tick at H:30 → https://${APP_DOMAIN_VAL}/api/cron/tick"
 
 # ---------- 7. Prune old releases -------------------------------------------
 log "Pruning old releases (keeping last ${KEEP_RELEASES})"

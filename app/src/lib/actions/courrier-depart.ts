@@ -23,9 +23,6 @@ import type { StaffRole } from '@prisma/client';
 //    4. Create DG_TO_COURRIER + RESPONSE_OUT handoffs (audit trail)
 //    5. Set document.status = RESPONSE_SENT + responseSentAt = now
 //
-//  Admin-shortcut: markDecidedForTesting() temporarily bumps a doc to
-//  DECIDED so we can test the outbound flow before B7-B15 (DG decision)
-//  are built. Visible only to ADMIN, will become irrelevant later.
 // ============================================================================
 
 const ALLOWED_ROLES: StaffRole[] = [
@@ -41,12 +38,6 @@ async function assertDepart(): Promise<{ id: string; role: StaffRole }> {
     throw new Error('UNAUTHORIZED');
   }
   return { id: session.user.id!, role };
-}
-
-async function assertAdmin(): Promise<{ id: string }> {
-  const session = await auth();
-  if (session?.user?.role !== 'ADMIN') throw new Error('UNAUTHORIZED');
-  return { id: session.user.id! };
 }
 
 // ----------------------------------------------------------------------------
@@ -236,58 +227,6 @@ export async function sendResponse(
       return { error: 'Vous n\'avez pas les droits Bureau Départ.' };
     }
     console.error('[sendResponse]', e);
-    return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
-  }
-}
-
-// ----------------------------------------------------------------------------
-// markDecidedForTesting — admin-only shortcut so B5 can be tested before
-// B7-B15 (DG decision flow) are built. Bumps a document from any non-terminal
-// status straight to DECIDED so it appears in Bureau Départ's parapheur.
-// Becomes irrelevant once the real DG decision step exists.
-// ----------------------------------------------------------------------------
-
-export async function markDecidedForTesting(
-  documentId: string,
-): Promise<{ ok?: boolean; error?: string }> {
-  try {
-    await assertAdmin();
-    const doc = await db.document.findUnique({
-      where: { id: documentId },
-      select: { id: true, status: true, reference: true },
-    });
-    if (!doc) return { error: 'Document introuvable.' };
-    if (doc.status === 'RESPONSE_SENT' || doc.status === 'CLOSED') {
-      return { error: `Document déjà expédié (statut ${doc.status}).` };
-    }
-
-    await db.$transaction(async (tx) => {
-      await tx.document.update({
-        where: { id: documentId },
-        data: {
-          status: 'DECIDED',
-          decidedAt: new Date(),
-          currentHolderRole: 'CHEF_BUREAU_DEPART',
-        },
-      });
-      await tx.comment.create({
-        data: {
-          documentId,
-          authorUserId: (await auth())!.user!.id!,
-          authorRole: 'ADMIN',
-          body:
-            '[Admin shortcut · B5 test] Document promu au statut DECIDED ' +
-            'pour tester le flux Bureau Départ. À retirer dès que la décision ' +
-            'DG réelle (B15) sera implémentée.',
-        },
-      });
-    });
-
-    revalidatePath('/courrier/arrivee');
-    revalidatePath('/courrier/depart');
-    revalidatePath('/admin/data');
-    return { ok: true };
-  } catch (e) {
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
   }
 }

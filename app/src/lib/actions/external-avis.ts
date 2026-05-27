@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel } from '@/lib/roles';
+import { notifyRole } from '@/lib/notify';
 import type { StaffRole, ExternalRecipient } from '@prisma/client';
 
 // ============================================================================
@@ -361,6 +362,16 @@ export async function recordExternalAvis(
         data: {
           status: 'IN_TREATMENT',
         },
+      });
+
+      // 5. Notify the requesting unit's role (B17)
+      await notifyRole(tx, effectiveRole, {
+        documentId: doc.id,
+        kind: 'EXTERNAL_AVIS_RECEIVED',
+        title: `Avis externe reçu de ${displayName}`,
+        body: `${doc.reference} — vous pouvez reprendre le traitement avec l'avis joint en note.`,
+        link: `/unit/parapheur/${doc.id}`,
+        excludeUserId: userId,
       });
     });
 

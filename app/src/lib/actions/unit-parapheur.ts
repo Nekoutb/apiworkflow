@@ -422,6 +422,16 @@ export async function delegateDown(
           currentHolderUserId: null, // not yet "taken" by an individual subordinate
         },
       });
+
+      // 6. Notify the receiving subordinate role (B17)
+      await notifyRole(tx, targetRole, {
+        documentId: doc.id,
+        kind: 'DOCUMENT_ASSIGNED',
+        title: `Délégation interne : ${doc.reference}`,
+        body: `${fromLabel} vous délègue ce dossier.`,
+        link: `/unit/parapheur/${doc.id}`,
+        excludeUserId: userId,
+      });
     });
 
     revalidatePath('/unit/parapheur');
@@ -566,6 +576,16 @@ export async function returnUp(
           currentHolderRole: parentRole,
           currentHolderUserId: null,
         },
+      });
+
+      // 6. Notify the supervisor (B17)
+      await notifyRole(tx, parentRole, {
+        documentId: doc.id,
+        kind: 'DOCUMENT_RETURNED_UP',
+        title: `Renvoi par ${fromLabel} : ${doc.reference}`,
+        body: `${fromLabel} vous renvoie le dossier avec son avis.`,
+        link: `/unit/parapheur/${doc.id}`,
+        excludeUserId: userId,
       });
     });
 
@@ -760,6 +780,16 @@ export async function requestCoAvis(
           currentHolderUserId: null,
         },
       });
+
+      // 6. Notify the peer Directeur (B17)
+      await notifyRole(tx, targetRole, {
+        documentId: doc.id,
+        kind: 'DOCUMENT_HORIZONTAL',
+        title: `Co-avis demandé par ${fromLabel} : ${doc.reference}`,
+        body: `Vous êtes sollicité pour un co-avis horizontal.`,
+        link: `/unit/parapheur/${doc.id}`,
+        excludeUserId: userId,
+      });
     });
 
     revalidatePath('/unit/parapheur');
@@ -910,6 +940,16 @@ export async function returnCoAvis(
           currentHolderRole: target,
           currentHolderUserId: null,
         },
+      });
+
+      // 6. Notify the original requester (B17)
+      await notifyRole(tx, target, {
+        documentId: doc.id,
+        kind: 'DOCUMENT_HORIZONTAL',
+        title: `Co-avis reçu de ${fromLabel} : ${doc.reference}`,
+        body: `${fromLabel} vous renvoie votre dossier avec son co-avis.`,
+        link: `/unit/parapheur/${doc.id}`,
+        excludeUserId: userId,
       });
     });
 

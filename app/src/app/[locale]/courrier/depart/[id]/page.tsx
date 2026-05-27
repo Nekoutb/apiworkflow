@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 import { ComposeResponseForm } from './ComposeResponseForm';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export const metadata = { title: 'Composer la réponse · Bureau Départ · API Cameroun' };
 export const dynamic = 'force-dynamic';

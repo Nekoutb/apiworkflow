@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { auth } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +69,7 @@ export default async function AdminLayout({
           </nav>
           <div className="ml-auto flex items-center gap-4">
             <LanguageSwitcher variant="compact" />
+            <NotificationBell />
             <div className="text-right leading-tight">
               <div className="text-[13px] font-semibold text-ink">
                 {session.user.name ?? session.user.email}
