@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V1 · Sobre & Centré · API Cameroun</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Palette adaptée du design existant */
+    :root {
+      --obsidian: #0d1822;
+      --ink: #1a1612;
+      --ink-2: #3c372d;
+      --ink-3: #5b554a;
+      --ink-4: #9c9485;
+      --gold-500: #d4a72c;
+      --gold-700: #a37e1e;
+      --cmgreen-800: #0e6b2e;
+      --cmred: #b22234;
+      --line: #e8e3d6;
+      --bgsoft: #f6f4ee;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-feature-settings: 'cv11', 'ss01';
+      color: var(--ink);
+      /* Microsoft-style pastel swirl — layered diffuse blobs on near-white */
+      background:
+        radial-gradient(ellipse 50% 40% at 15% 25%, rgba(170, 145, 220, 0.55) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 45% at 85% 75%, rgba(120, 180, 230, 0.55) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 35% at 90% 15%, rgba(255, 180, 200, 0.50) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 35% at 10% 85%, rgba(170, 205, 240, 0.50) 0%, transparent 60%),
+        radial-gradient(ellipse 35% 25% at 55% 45%, rgba(200, 175, 230, 0.30) 0%, transparent 55%),
+        radial-gradient(ellipse 30% 22% at 30% 65%, rgba(220, 205, 240, 0.32) 0%, transparent 55%),
+        linear-gradient(135deg, #f5f7fc 0%, #ffffff 40%, #f3f4f9 100%);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .official-banner {
+      flex-shrink: 0;
+      background: var(--obsidian);
+      color: #fff;
+      text-align: center;
+      padding: 6px 16px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .official-banner .star { color: var(--gold-500); margin: 0 12px; }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 12px 32px rgba(13, 24, 34, 0.06);
+      width: 100%;
+      max-width: 440px;
+      padding: 40px 36px;
+      text-align: center;
+    }
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+    .logo-wrap img {
+      height: 72px;
+      width: auto;
+      display: block;
+    }
+    .chip {
+      display: inline-block;
+      border: 1px solid var(--line);
+      padding: 5px 12px;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.4px;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+    .body-copy {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--ink-3);
+      margin-bottom: 30px;
+      font-weight: 400;
+    }
+    .cta {
+      display: block;
+      width: 100%;
+      background: #0067b8;            /* Microsoft sky blue */
+      color: #ffffff;
+      border: 1px solid #0067b8;
+      padding: 13px 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-transform: none;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .cta:hover { background: #005a9e; }
+    .cta:active { background: #004a85; }
+    .secondary {
+      display: block;
+      margin-top: 16px;
+      color: var(--ink-3);
+      font-size: 11px;
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+    .secondary:hover { color: var(--ink); text-decoration: underline; }
+    .lang-toggle {
+      position: absolute;
+      top: 28px;
+      right: 28px;
+      display: inline-flex;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .lang-toggle button {
+      background: #fff;
+      border: none;
+      padding: 5px 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--ink-3);
+      cursor: pointer;
+    }
+    .lang-toggle button.active { background: var(--obsidian); color: #fff; }
+    .lang-toggle button + button { border-left: 1px solid var(--line); }
+    footer {
+      flex-shrink: 0;
+      text-align: center;
+      padding: 12px 16px;
+      font-size: 10px;
+      color: var(--ink-4);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .restricted {
+      color: var(--cmred);
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-top: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="lang-toggle">
+    <button class="active">FR</button>
+    <button>EN</button>
+  </div>
+
+  <div class="official-banner">
+    <span class="star">⚜</span>Portail interne · Accès réservé au personnel<span class="star">⚜</span>
+  </div>
+
+  <main>
+    <div class="card">
+      <div class="logo-wrap">
+        <img src="logo-ipa.png" alt="API Cameroun · Agence de Promotion des Investissements">
+      </div>
+      <div class="chip">Portail interne</div>
+      <h1>Connexion personnel</h1>
+      <p class="body-copy">
+        Plateforme interne de traitement des dossiers d'investissement.
+        Authentification requise.
+      </p>
+      <a href="#" class="cta">🔐 Se connecter</a>
+      <a href="#" class="secondary">Besoin d'aide ?</a>
+    </div>
+  </main>
+
+  <footer>
+    ⚜ API Cameroun ⚜ · République du Cameroun · © MMXXVI
+  </footer>
+</body>
+</html>

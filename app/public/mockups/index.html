@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing — 3 variations à choisir</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fff;
+      color: #1a1612;
+    }
+    header {
+      background: #0d1822;
+      color: #fff;
+      padding: 18px 24px;
+      text-align: center;
+    }
+    header h1 {
+      font-family: Georgia, serif;
+      font-size: 18px;
+      letter-spacing: -0.2px;
+      font-weight: 600;
+    }
+    header .sub {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+      margin-top: 4px;
+    }
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 24px;
+      border-bottom: 1px solid #e8e3d6;
+      background: #f6f4ee;
+    }
+    .controls button {
+      background: #fff;
+      border: 1px solid #e8e3d6;
+      padding: 8px 18px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #5b554a;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .controls button.active {
+      background: #0d1822;
+      color: #d4a72c;
+      border-color: #0d1822;
+    }
+    .controls button:hover:not(.active) {
+      border-color: #0d1822;
+      color: #1a1612;
+    }
+    .controls .external {
+      margin-left: auto;
+      background: transparent;
+      border: 1px dashed #9c9485;
+      color: #5b554a;
+      font-weight: 600;
+    }
+    .stage {
+      width: 100%;
+      height: calc(100vh - 120px);
+      background: #f6f4ee;
+    }
+    .stage iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+    .legend {
+      padding: 12px 24px;
+      font-size: 12px;
+      color: #5b554a;
+      border-top: 1px solid #e8e3d6;
+      background: #fff;
+      text-align: center;
+    }
+    .legend strong { color: #1a1612; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Landing — sélection de l'option à déployer</h1>
+    <div class="sub">3 variations · choisissez celle à mettre en production</div>
+  </header>
+
+  <div class="controls">
+    <button id="b1" class="active" onclick="show('v1')">V1 · Sobre & Centré</button>
+    <button id="b2" onclick="show('v2')">V2 · Officiel & Institutionnel</button>
+    <button id="b3" onclick="show('v3')">V3 · Ultra-minimal</button>
+    <button class="external" onclick="window.open(current(), '_blank')">↗ Ouvrir en plein écran</button>
+  </div>
+
+  <div class="stage">
+    <iframe id="frame" src="landing-v1.html" title="Aperçu landing"></iframe>
+  </div>
+
+  <div class="legend" id="legend">
+    <strong>V1 · Sobre & Centré</strong> — Plus proche du screenshot Microsoft. Carte blanche centrée, bandeau officiel obsidienne en haut, footer minimal. Toggle langue dans le coin supérieur droit. Champ "Besoin d'aide ?" en lien secondaire.
+  </div>
+
+  <script>
+    const variations = {
+      v1: {
+        title: 'V1 · Sobre & Centré',
+        desc: 'Plus proche du screenshot Microsoft. Carte blanche centrée, bandeau officiel obsidienne en haut, footer minimal. Toggle langue dans le coin supérieur droit. Champ "Besoin d\'aide ?" en lien secondaire.'
+      },
+      v2: {
+        title: 'V2 · Officiel & Institutionnel',
+        desc: 'Carte avec accent gold haut, en-tête institutionnel complet (sceau + République + nom officiel) au-dessus, footer obsidienne avec sceau + mention. Plus formel, plus de hiérarchie visuelle. Convient si vous voulez que le branding API soit visible avant la carte.'
+      },
+      v3: {
+        title: 'V3 · Ultra-minimal',
+        desc: 'Aucune carte ni bandeau. Tout centré, fond blanc pur, sceau + nom + titre + CTA + mention restreint. Apple-style. Maximum d\'espace négatif. Moins "officiel" mais plus moderne.'
+      }
+    };
+    function show(v) {
+      document.getElementById('frame').src = 'landing-' + v + '.html';
+      document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+      document.getElementById('b' + v.slice(1)).classList.add('active');
+      document.getElementById('legend').innerHTML =
+        '<strong>' + variations[v].title + '</strong> — ' + variations[v].desc;
+    }
+    function current() {
+      const active = document.querySelector('.controls button.active');
+      return 'landing-' + active.id.replace('b', 'v') + '.html';
+    }
+  </script>
+</body>
+</html>

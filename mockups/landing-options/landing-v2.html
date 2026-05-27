@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V2 · Officiel & Institutionnel · API Cameroun</title>
+  <style>
+    :root {
+      --obsidian: #0d1822;
+      --ink: #1a1612;
+      --ink-2: #3c372d;
+      --ink-3: #5b554a;
+      --ink-4: #9c9485;
+      --gold-500: #d4a72c;
+      --gold-600: #b8901f;
+      --gold-700: #a37e1e;
+      --cmgreen-800: #0e6b2e;
+      --cmred: #b22234;
+      --line: #e8e3d6;
+      --bgsoft: #f6f4ee;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--bgsoft);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(12, 18, 32, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+    .official-banner {
+      flex-shrink: 0;
+      background: var(--obsidian);
+      color: #fff;
+      text-align: center;
+      padding: 7px 16px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 2;
+    }
+    .official-banner .star { color: var(--gold-500); margin: 0 12px; }
+
+    .top-bar {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 36px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+      position: relative;
+      z-index: 2;
+    }
+    .top-bar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .top-bar-brand .seal-small {
+      width: 36px; height: 36px;
+      background: var(--obsidian);
+      color: var(--gold-500);
+      font-family: Georgia, serif;
+      font-weight: 700;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .top-bar-brand .seal-small::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 1px solid rgba(212, 167, 44, 0.45);
+    }
+    .top-bar-brand .titles { line-height: 1.2; }
+    .top-bar-brand .republic {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .top-bar-brand .org {
+      font-family: Georgia, serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .lang-toggle {
+      display: inline-flex;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .lang-toggle button {
+      background: #fff; border: none;
+      padding: 5px 10px; font-size: 10.5px; font-weight: 700;
+      color: var(--ink-3); cursor: pointer;
+    }
+    .lang-toggle button.active { background: var(--obsidian); color: #fff; }
+    .lang-toggle button + button { border-left: 1px solid var(--line); }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      z-index: 1;
+    }
+    .card {
+      background: #fff;
+      border-top: 4px solid var(--gold-600);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 16px 40px rgba(13, 24, 34, 0.08);
+      width: 100%;
+      max-width: 460px;
+      padding: 36px 40px;
+    }
+    .card-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--gold-700);
+      margin-bottom: 18px;
+    }
+    .card-eyebrow::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--gold-600);
+      opacity: 0.4;
+    }
+    h1 {
+      font-family: Georgia, serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+      margin-bottom: 8px;
+    }
+    .lead {
+      font-family: Georgia, serif;
+      font-size: 14px;
+      font-style: italic;
+      color: var(--ink-3);
+      line-height: 1.55;
+      margin-bottom: 28px;
+    }
+    .cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      background: var(--obsidian);
+      color: var(--gold-500);
+      border: none;
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .cta:hover { background: var(--ink); }
+    .restricted-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-size: 11px;
+      color: var(--ink-3);
+    }
+    .restricted-row .dot { color: var(--cmred); font-weight: 700; }
+    .restricted-row .badge {
+      background: rgba(178, 34, 52, 0.08);
+      color: var(--cmred);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 9.5px;
+      padding: 3px 7px;
+    }
+    footer {
+      flex-shrink: 0;
+      background: var(--obsidian);
+      color: rgba(255,255,255,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 36px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 2;
+    }
+    footer .star { color: var(--gold-500); }
+  </style>
+</head>
+<body>
+  <div class="official-banner">
+    <span class="star">⚜</span>Portail interne · Accès réservé au personnel<span class="star">⚜</span>
+  </div>
+
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <div class="seal-small">A</div>
+      <div class="titles">
+        <div class="republic">République du Cameroun</div>
+        <div class="org">Agence de Promotion des Investissements</div>
+      </div>
+    </div>
+    <div class="lang-toggle">
+      <button class="active">FR</button>
+      <button>EN</button>
+    </div>
+  </div>
+
+  <main>
+    <div class="card">
+      <div class="card-eyebrow">Portail interne</div>
+      <h1>Connexion personnel</h1>
+      <p class="lead">
+        Plateforme interne de traitement, de suivi et de décision pour le
+        personnel de l'API Cameroun.
+      </p>
+      <a href="#" class="cta">🔐 Se connecter →</a>
+      <div class="restricted-row">
+        <span class="badge">⚠ Restreint</span>
+        <span>Authentification requise · activité tracée</span>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div><span class="star">⚜</span> API Cameroun <span class="star">⚜</span></div>
+    <div>Portail interne · usage strictement professionnel</div>
+    <div>© MMXXVI</div>
+  </footer>
+</body>
+</html>

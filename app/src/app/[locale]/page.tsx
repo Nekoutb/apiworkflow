@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
@@ -24,136 +25,91 @@ export default async function LandingPage({
   const tCommon = await getTranslations('Common');
 
   return (
-    <main className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-b from-white via-[#f3f8f5] to-[#e8f1ec]">
-      {/* Subtle radial glow + dot grid (kept) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            'radial-gradient(ellipse 60% 40% at 85% 0%, rgba(193, 151, 63, 0.10) 0%, transparent 55%), radial-gradient(ellipse 70% 50% at 0% 100%, rgba(0, 107, 58, 0.08) 0%, transparent 55%)',
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: 'radial-gradient(rgba(12, 18, 32, 0.03) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
-        }}
-      />
-
-      {/* Official obsidian banner — sets the "internal / restricted" tone */}
+    <main
+      className="relative flex h-screen flex-col overflow-hidden"
+      // Microsoft-style soft pastel swirl — 6 layered diffuse blobs over a
+      // near-white linear wash. Done as an inline style so we don't need to
+      // teach Tailwind a custom keyframe.
+      style={{
+        background: [
+          'radial-gradient(ellipse 50% 40% at 15% 25%, rgba(170, 145, 220, 0.55) 0%, transparent 65%)',
+          'radial-gradient(ellipse 60% 45% at 85% 75%, rgba(120, 180, 230, 0.55) 0%, transparent 65%)',
+          'radial-gradient(ellipse 40% 35% at 90% 15%, rgba(255, 180, 200, 0.50) 0%, transparent 60%)',
+          'radial-gradient(ellipse 45% 35% at 10% 85%, rgba(170, 205, 240, 0.50) 0%, transparent 60%)',
+          'radial-gradient(ellipse 35% 25% at 55% 45%, rgba(200, 175, 230, 0.30) 0%, transparent 55%)',
+          'radial-gradient(ellipse 30% 22% at 30% 65%, rgba(220, 205, 240, 0.32) 0%, transparent 55%)',
+          'linear-gradient(135deg, #f5f7fc 0%, #ffffff 40%, #f3f4f9 100%)',
+        ].join(', '),
+      }}
+    >
+      {/* Slim obsidian banner — "internal portal" signal */}
       <div className="relative z-10 flex flex-shrink-0 items-center justify-center gap-3 bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
         <span className="text-gold-500">⚜</span>
         {t('officialBanner')}
         <span className="text-gold-500">⚜</span>
       </div>
 
-      {/* Header — logo + language switcher */}
-      <header className="relative z-10 flex flex-shrink-0 items-center justify-between border-b border-line bg-white/80 px-14 py-4 backdrop-blur">
-        <div className="flex items-center gap-3.5">
-          <div className="relative flex h-11 w-11 items-center justify-center border border-obsidian bg-obsidian font-display text-lg font-bold tracking-wide text-gold-500">
-            A
-            <span aria-hidden className="pointer-events-none absolute inset-[3px] border border-gold-500/45" />
-          </div>
-          <div className="leading-tight">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              {tCommon('republic')}
-            </div>
-            <div className="serif text-[17px] font-bold text-ink">
-              {tCommon('appNameLong')}
-            </div>
-          </div>
-        </div>
-        <LanguageSwitcher variant="editorial" />
-      </header>
+      {/* Language toggle floats top-right (no full header bar) */}
+      <div className="absolute right-6 top-9 z-20">
+        <LanguageSwitcher variant="compact" />
+      </div>
 
-      {/* Main — centred, fills remaining viewport */}
-      <section className="relative z-10 flex flex-1 items-center px-14 py-8">
-        <div className="mx-auto grid w-full max-w-6xl grid-cols-[1.5fr_0.6fr] gap-14">
-          {/* Left — eyebrow + tagline + subtitle + CTA + restricted-access notice */}
-          <div className="flex flex-col justify-center">
-            <div className="mb-4 inline-flex items-center gap-3 text-[10.5px] font-bold uppercase tracking-[0.26em] text-gold-700">
-              {t('internalPortalBadge')}
-              <span className="h-px w-11 bg-gold-600" />
-            </div>
-
-            <h1 className="serif mb-5 max-w-[680px] text-[clamp(36px,4.2vw,52px)] font-semibold leading-[1.08] tracking-[-0.02em] text-ink">
-              {t('tagline')}
-            </h1>
-
-            <p className="mb-7 max-w-[560px] text-[15px] leading-[1.6] text-ink-2">
-              {t('subtitle')}
-            </p>
-
-            {/* Primary CTA — restricted-access login */}
-            <div className="flex flex-wrap items-center gap-4">
-              <Link
-                href="/login"
-                className="group inline-flex items-center gap-2 border-2 border-obsidian bg-obsidian px-6 py-3 text-[12px] font-bold uppercase tracking-[0.16em] text-gold-500 transition hover:bg-ink hover:gap-3"
-              >
-                🔐 {t('ctaLogin')}
-                <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
-              </Link>
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.18em] text-cmred">
-                ⚠ {t('restrictedAccess')}
-              </div>
-            </div>
-
-            <div className="serif mt-8 inline-flex items-center gap-2.5 border-l-2 border-gold-600 pl-4 text-[13.5px] italic text-gold-700">
-              « {t('quote')} »
-            </div>
+      {/* Centered card */}
+      <section className="relative z-10 flex flex-1 items-center justify-center px-6">
+        <div className="w-full max-w-[440px] border border-line bg-white px-9 py-10 text-center shadow-[0_1px_3px_rgba(0,0,0,0.04),_0_12px_32px_rgba(13,24,34,0.06)]">
+          {/* IPA logo */}
+          <div className="mb-6 flex justify-center">
+            <Image
+              src="/logo-ipa.png"
+              alt="API Cameroun · Agence de Promotion des Investissements"
+              width={1501}
+              height={1136}
+              priority
+              className="h-[72px] w-auto"
+            />
           </div>
 
-          {/* Right — three compact stats stacked */}
-          <aside className="flex flex-col justify-center border-l border-line pl-12">
-            <Stat num="7"  label={t('phasesLabel')} />
-            <Stat num="37" label={t('rolesLabel')} />
-            <Stat num="II" unit={locale === 'en' ? 'languages' : 'langues'} label="Français · English" last />
-          </aside>
+          {/* "Portail interne" chip */}
+          <div className="mb-4 inline-block border border-line px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-ink-3">
+            {t('internalPortalBadge')}
+          </div>
+
+          {/* Headline */}
+          <h1
+            className="mb-3.5 text-[28px] font-semibold leading-[1.15] tracking-[-0.4px] text-ink"
+            style={{ fontFamily: 'var(--font-display), Georgia, serif' }}
+          >
+            {t('ctaLogin')}
+          </h1>
+
+          {/* Body */}
+          <p className="mb-7 text-[14px] leading-[1.6] text-ink-3">
+            {t('subtitle')}
+          </p>
+
+          {/* Primary CTA — Microsoft sky blue */}
+          <Link
+            href="/login"
+            className="block w-full bg-[#0067b8] px-4 py-[13px] text-[14px] font-semibold text-white transition-colors hover:bg-[#005a9e] active:bg-[#004a85]"
+          >
+            🔐 {t('ctaLogin')}
+          </Link>
+
+          {/* Secondary link */}
+          <Link
+            href="/login"
+            className="mt-4 inline-block text-[12px] text-ink-3 hover:text-ink hover:underline"
+          >
+            {locale === 'en' ? 'Need help?' : 'Besoin d\'aide ?'}
+          </Link>
         </div>
       </section>
 
-      {/* Footer — minimal seal + note */}
-      <footer className="relative z-10 flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line bg-obsidian px-14 py-3 text-[10px] uppercase tracking-[0.16em] text-white/65">
-        <div className="flex items-center gap-2">
-          <span className="text-gold-500">⚜</span>
-          <span className="font-bold text-white">{tCommon('appName')}</span>
-          <span className="text-gold-500">⚜</span>
-          <span className="ml-3 text-white/45">{tCommon('republic')}</span>
-        </div>
-        <div className="text-white/55 italic normal-case tracking-normal text-[10.5px]">
-          {t('footerNote')}
-        </div>
-        <div className="text-white/45">© MMXXVI</div>
+      {/* Tiny footer */}
+      <footer className="relative z-10 flex-shrink-0 px-6 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-4">
+        <span className="text-gold-500">⚜</span> {tCommon('appName')} ·{' '}
+        {tCommon('republic')} · © MMXXVI
       </footer>
     </main>
-  );
-}
-
-function Stat({
-  num,
-  unit,
-  label,
-  last,
-}: {
-  num: string;
-  unit?: string;
-  label: string;
-  last?: boolean;
-}) {
-  return (
-    <div className={last ? 'py-4' : 'border-b border-line py-4'}>
-      <div className="flex items-baseline gap-1.5">
-        <span className="serif text-[40px] font-semibold leading-none tracking-[-0.02em] text-cmgreen-800">
-          {num}
-        </span>
-        {unit ? <span className="text-[13px] font-medium italic text-ink-4">{unit}</span> : null}
-      </div>
-      <div className="mt-1.5 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-3">
-        {label}
-      </div>
-    </div>
   );
 }
