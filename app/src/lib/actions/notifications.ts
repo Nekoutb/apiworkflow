@@ -2,7 +2,6 @@
 
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import { revalidatePath } from 'next/cache';
 
 // ============================================================================
 //  B17 — Notification bell actions
@@ -86,7 +85,11 @@ export async function markNotificationRead(id: string): Promise<MarkReadResult> 
       data: { read: true },
     });
 
-    revalidatePath('/');
+    // Note: NO revalidatePath here. The bell maintains its own client-side
+    // state (setItems / setUnread inside the bell component), and triggering
+    // a global revalidate while the browser is also navigating to the
+    // notification's deep link causes a brief flash of stale UI during
+    // the action's response/redirect handshake.
     return { ok: true };
   } catch (e) {
     console.error('[markNotificationRead]', e);
@@ -104,7 +107,8 @@ export async function markAllNotificationsRead(): Promise<MarkReadResult> {
       data: { read: true },
     });
 
-    revalidatePath('/');
+    // Same rationale as markNotificationRead — no revalidatePath needed,
+    // the bell updates its own state.
     return { ok: true };
   } catch (e) {
     console.error('[markAllNotificationsRead]', e);

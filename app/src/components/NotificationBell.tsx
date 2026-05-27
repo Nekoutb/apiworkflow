@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition, useRef } from 'react';
+import { Link } from '@/i18n/navigation';
 import {
   getMyNotifications,
   markNotificationRead,
@@ -151,6 +152,7 @@ export function NotificationBell() {
                     <NotificationRow
                       n={n}
                       onMarkRead={() => handleMarkOne(n.id)}
+                      onNavigate={() => setOpen(false)}
                       pending={pending}
                     />
                   </li>
@@ -167,10 +169,12 @@ export function NotificationBell() {
 function NotificationRow({
   n,
   onMarkRead,
+  onNavigate,
   pending,
 }: {
   n: NotificationView;
   onMarkRead: () => void;
+  onNavigate: () => void;
   pending: boolean;
 }) {
   const icon = KIND_ICON[n.kind] ?? '•';
@@ -204,17 +208,25 @@ function NotificationRow({
     </div>
   );
 
+  // Use next-intl Link for client-side, locale-aware navigation. Plain <a>
+  // triggers a full-page reload, which would briefly flash the destination's
+  // server-rendered "loading" state before settling. With <Link>, navigation
+  // is instant + locale-prefix-correct, and the bell dropdown closes cleanly
+  // before the new page mounts (no flash of stale dropdown state).
   if (n.link) {
     return (
-      <a
+      <Link
         href={n.link}
         onClick={() => {
-          if (!n.read && !pending) onMarkRead();
+          onNavigate();              // close the dropdown FIRST
+          if (!n.read && !pending) {
+            onMarkRead();            // mark-read in the background
+          }
         }}
         className="block hover:bg-bgsoft"
       >
         {inner}
-      </a>
+      </Link>
     );
   }
   return (
