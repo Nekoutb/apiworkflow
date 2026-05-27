@@ -6,6 +6,7 @@ import { roleLabel } from '@/lib/roles';
 import { isClaudeConfigured } from '@/lib/claude';
 import type { StaffRole } from '@prisma/client';
 import { DispatchAiPanel } from './DispatchAiPanel';
+import { DecisionPanel } from './DecisionPanel';
 
 export const metadata = { title: 'Analyse DG · API Cameroun' };
 export const dynamic = 'force-dynamic';
@@ -78,7 +79,10 @@ export default async function DgDocumentDetailPage({
   });
   if (!doc) notFound();
 
-  if (doc.status !== 'AWAITING_DG_ANALYSIS') {
+  // The DG parapheur page handles two workable states: initial analysis +
+  // final decision (B15). All other states (in-treatment by a unit, etc.)
+  // belong elsewhere in the workflow.
+  if (doc.status !== 'AWAITING_DG_ANALYSIS' && doc.status !== 'AWAITING_DG_DECISION') {
     return (
       <main className="min-h-screen bg-bgsoft">
         <DgBar role={role} session={session.user} />
@@ -91,8 +95,9 @@ export default async function DgDocumentDetailPage({
               {doc.reference} · {doc.status}
             </h1>
             <p className="serif mt-2 text-[13.5px] italic text-ink-3">
-              Seuls les documents au statut <strong>AWAITING_DG_ANALYSIS</strong> apparaissent
-              dans le parapheur DG. Ce document est actuellement au statut{' '}
+              Seuls les documents au statut <strong>AWAITING_DG_ANALYSIS</strong> ou
+              {' '}<strong>AWAITING_DG_DECISION</strong> apparaissent dans le parapheur DG.
+              Ce document est actuellement au statut{' '}
               <code className="font-mono">{doc.status}</code>.
             </p>
           </div>
@@ -108,6 +113,15 @@ export default async function DgDocumentDetailPage({
   }
 
   const cached = doc.aiAnalyses[0];
+  const isDecisionMode = doc.status === 'AWAITING_DG_DECISION';
+
+  // For decision mode, find the most recent RETURN_TO_DG handoff to know
+  // who submitted the dossier and when.
+  const submittedHandoff = isDecisionMode
+    ? [...doc.handoffs]
+        .reverse()
+        .find((h) => h.type === 'RETURN_TO_DG')
+    : null;
 
   return (
     <main className="min-h-screen bg-bgsoft">
@@ -123,9 +137,15 @@ export default async function DgDocumentDetailPage({
 
         <div className="flex items-baseline gap-4">
           <div className="font-mono text-[14px] font-bold text-cmgreen-900">{doc.reference}</div>
-          <span className="rounded-sm bg-gold-50 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-gold-700">
-            En attente · analyse DG
-          </span>
+          {isDecisionMode ? (
+            <span className="rounded-sm bg-cmgreen-50 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-cmgreen-900">
+              ⚖ En attente · décision DG
+            </span>
+          ) : (
+            <span className="rounded-sm bg-gold-50 px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-gold-700">
+              En attente · analyse DG
+            </span>
+          )}
         </div>
         <h1 className="serif mt-1 text-[28px] font-semibold tracking-[-0.3px] text-ink">
           {doc.subject}
@@ -229,22 +249,33 @@ export default async function DgDocumentDetailPage({
             )}
           </div>
 
-          {/* RIGHT — AI dispatch panel */}
+          {/* RIGHT — context-aware panel: dispatch or decision */}
           <div>
-            <DispatchAiPanel
-              documentId={doc.id}
-              aiEnabled={isClaudeConfigured()}
-              cached={
-                cached
-                  ? {
-                      summary: cached.summary,
-                      data: cached.contentJson as Record<string, unknown>,
-                      generatedAt: cached.generatedAt,
-                      modelName: cached.modelName,
-                    }
-                  : null
-              }
-            />
+            {isDecisionMode ? (
+              <DecisionPanel
+                documentId={doc.id}
+                documentReference={doc.reference}
+                submittedByLabel={
+                  submittedHandoff?.fromRole ? roleLabel(submittedHandoff.fromRole) : null
+                }
+                submittedAt={submittedHandoff?.createdAt?.toISOString() ?? null}
+              />
+            ) : (
+              <DispatchAiPanel
+                documentId={doc.id}
+                aiEnabled={isClaudeConfigured()}
+                cached={
+                  cached
+                    ? {
+                        summary: cached.summary,
+                        data: cached.contentJson as Record<string, unknown>,
+                        generatedAt: cached.generatedAt,
+                        modelName: cached.modelName,
+                      }
+                    : null
+                }
+              />
+            )}
           </div>
         </div>
       </section>

@@ -8,11 +8,13 @@ import {
   returnUp,
   requestCoAvis,
   returnCoAvis,
+  submitToDgForDecision,
   type ReturnToDgResult,
   type DelegateDownResult,
   type ReturnUpResult,
   type RequestCoAvisResult,
   type ReturnCoAvisResult,
+  type SubmitToDgResult,
 } from '@/lib/actions/unit-parapheur';
 import {
   requestExternalAvis,
@@ -69,7 +71,9 @@ type View =
   | 'recording-external'  // form: Enregistrer la réponse externe (B14)
   | 'recorded-external'   //   ↳ success
   | 'cancelling-external' // form: Annuler la demande externe (B14)
-  | 'cancelled-external'; //   ↳ success
+  | 'cancelled-external'  //   ↳ success
+  | 'submitting-dg'       // form: Soumettre au DG pour décision (B15)
+  | 'submitted-dg';       //   ↳ success
 
 const initialReturn: ReturnToDgResult = {};
 const initialDelegate: DelegateDownResult = {};
@@ -79,6 +83,7 @@ const initialReturnCoAvis: ReturnCoAvisResult = {};
 const initialRequestExternal: RequestExternalAvisResult = {};
 const initialRecordExternal: RecordExternalAvisResult = {};
 const initialCancelExternal: CancelExternalAvisResult = {};
+const initialSubmitDg: SubmitToDgResult = {};
 
 export function UnitActions({
   documentId,
@@ -118,6 +123,7 @@ export function UnitActions({
   const [reqExtState, reqExtAction, reqExtPending] = useActionState(requestExternalAvis, initialRequestExternal);
   const [recExtState, recExtAction, recExtPending] = useActionState(recordExternalAvis, initialRecordExternal);
   const [canExtState, canExtAction, canExtPending] = useActionState(cancelExternalAvis, initialCancelExternal);
+  const [submitDgState, submitDgAction, submitDgPending] = useActionState(submitToDgForDecision, initialSubmitDg);
   const [recipientChoice, setRecipientChoice] = useState<ExternalRecipient>('MINISTRE_FINANCES');
 
   // Promote each form's success into the corresponding view via useEffect
@@ -146,6 +152,9 @@ export function UnitActions({
   useEffect(() => {
     if (canExtState.ok && view !== 'cancelled-external') setView('cancelled-external');
   }, [canExtState.ok, view]);
+  useEffect(() => {
+    if (submitDgState.ok && view !== 'submitted-dg') setView('submitted-dg');
+  }, [submitDgState.ok, view]);
 
   function handleTake() {
     setTakeError(null);
@@ -170,6 +179,8 @@ export function UnitActions({
   const pendingExternal = externalTransmissions.find((t) => t.status === 'PENDING');
   const isAwaitingExternal = currentStatus === 'AWAITING_EXTERNAL_AVIS';
   const recipientFreeText = RECIPIENT_OPTIONS.find((o) => o.value === recipientChoice)?.freeText ?? false;
+  // B15 — submit to DG for decision (Director-level only)
+  const canSubmitDg = isDirectorLevel && !canReturnCoAvis;
 
   // =========================================================================
   //  Success views (each form has its own)
@@ -247,6 +258,15 @@ export function UnitActions({
     return (
       <SuccessCard
         kind="cancelled-external"
+        documentReference={documentReference}
+        backHref="/unit/parapheur"
+      />
+    );
+  }
+  if (view === 'submitted-dg') {
+    return (
+      <SuccessCard
+        kind="submitted-dg"
         documentReference={documentReference}
         backHref="/unit/parapheur"
       />
@@ -443,6 +463,90 @@ export function UnitActions({
                 className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
               >
                 {returnUpPending ? 'Envoi…' : `Renvoyer à ${parentMeta?.shortFr ?? '…'} →`}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (view === 'submitting-dg') {
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <form action={submitDgAction} className="border-2 border-cmgreen-800 bg-white">
+          <div className="border-b border-line bg-cmgreen-50/50 px-4 py-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmgreen-900">
+              ⬆ Soumission au DG · décision finale
+            </div>
+            <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+              Soumettre au DG pour décision
+            </h3>
+          </div>
+
+          <div className="space-y-4 p-5">
+            {submitDgState.error && (
+              <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+                {submitDgState.error}
+              </div>
+            )}
+
+            <input type="hidden" name="documentId" value={documentId} />
+
+            <div>
+              <label
+                htmlFor="recommendation"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Recommandation au DG <span className="text-cmred">*</span>
+              </label>
+              <textarea
+                id="recommendation"
+                name="recommendation"
+                rows={9}
+                required
+                minLength={10}
+                maxLength={4000}
+                placeholder="ex. Après instruction par mon département (analyse juridique de la Sous-Direction Étranger, avis fiscal de la DGI joint en note interne), je recommande l'approbation du dossier sous réserve de la production du certificat de localisation sous 30 jours."
+                className={
+                  'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 ' +
+                  (submitDgState.fieldErrors?.recommendation
+                    ? 'border-cmred focus:border-cmred focus:ring-cmred'
+                    : 'border-line-2 focus:border-cmgreen-800 focus:ring-cmgreen-800')
+                }
+              />
+              {submitDgState.fieldErrors?.recommendation && (
+                <p className="mt-1 text-[11px] text-cmred">{submitDgState.fieldErrors.recommendation}</p>
+              )}
+              <p className="mt-1 text-[10.5px] italic text-ink-4">
+                Synthèse de l&apos;avis de votre département (et des co-avis et avis externes reçus).
+                C&apos;est sur cette base que le DG tranchera. Devient une note tagguée
+                <code className="font-mono">[Soumission au DG…]</code>.
+              </p>
+            </div>
+
+            <div className="border border-cmgreen-800/40 bg-cmgreen-50/50 px-3 py-2 text-[11.5px] italic text-cmgreen-900">
+              ⓘ Le dossier transitionne <code className="font-mono not-italic">{currentStatus}</code> →{' '}
+              <code className="font-mono not-italic">AWAITING_DG_DECISION</code>. Il apparaît dans
+              la file « En attente de décision » du parapheur DG. Votre affectation sera marquée
+              <strong> COMPLETED</strong>.
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setView('menu')}
+                disabled={submitDgPending}
+                className="flex-1 border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={submitDgPending}
+                className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+              >
+                {submitDgPending ? 'Soumission…' : '⬆ Soumettre au DG →'}
               </button>
             </div>
           </div>
@@ -1220,6 +1324,30 @@ export function UnitActions({
         )}
       </div>
 
+      {/* 1.5 Soumettre au DG pour décision — B15 (Director-level only, end of cycle) */}
+      {canSubmitDg && (
+        <div className="border-2 border-cmgreen-800 bg-cmgreen-50/30 p-5">
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmgreen-900">
+            ⬆ Soumission au DG · fin de traitement
+          </div>
+          <h3 className="serif mt-1 text-[16px] font-bold text-ink">
+            Soumettre au DG pour décision finale
+          </h3>
+          <p className="serif mt-2 text-[12.5px] italic text-ink-3">
+            Le traitement de votre département est terminé (chaîne hiérarchique remontée, co-avis
+            et avis externes reçus si demandés). Soumettez votre recommandation au DG pour la
+            décision finale (approbation / rejet).
+          </p>
+          <button
+            type="button"
+            onClick={() => setView('submitting-dg')}
+            className="mt-4 w-full bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+          >
+            ⬆ Rédiger la recommandation…
+          </button>
+        </div>
+      )}
+
       {/* 2. Déléguer à une sous-unité — B12 (only if children exist) */}
       {canDelegate && (
         <div className="border border-cmgreen-700 bg-white p-5">
@@ -1414,7 +1542,8 @@ function SuccessCard({
     | 'returned-coavis'
     | 'requested-external'
     | 'recorded-external'
-    | 'cancelled-external';
+    | 'cancelled-external'
+    | 'submitted-dg';
   documentReference: string;
   backHref: string;
   targetLabel?: string;
@@ -1482,13 +1611,22 @@ function SuccessCard({
             'département et le DG. Le document est repassé au statut IN_TREATMENT — vous pouvez ' +
             'reprendre la chaîne normale (déléguer, renvoyer, etc.).',
         }
-      : {
+      : kind === 'cancelled-external'
+      ? {
           title: '✓ Demande externe annulée',
           headline: `${documentReference} reprend son traitement`,
           body:
             'La demande d\'avis externe a été annulée et marquée comme telle dans les notes. ' +
             'Le document est repassé au statut IN_TREATMENT — vous pouvez poursuivre le ' +
             'traitement sans cet avis.',
+        }
+      : {
+          title: '✓ Dossier soumis au DG',
+          headline: `${documentReference} en attente de décision du DG`,
+          body:
+            'Votre recommandation est jointe en note interne. Le DG la trouvera dans la file ' +
+            '« En attente de décision » de son parapheur. Une fois la décision rendue, ' +
+            'le dossier filera au Bureau Départ pour expédition de la réponse à l\'émetteur.',
         };
 
   return (

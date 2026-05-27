@@ -924,3 +924,150 @@ export async function returnCoAvis(
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
   }
 }
+
+// ============================================================================
+//  B15 — Final submission to DG for decision
+//
+//  After the department has finished its analysis (delegation chain wrapped up,
+//  any co-avis received, any external avis recorded), the Directeur-level role
+//  holding the file submits it to the DG for the final decision.
+//
+//  This is NOT the same as B11's "Renvoyer au DG" (refusal). Distinction:
+//
+//    B11 returnToDg              → AWAITING_DG_ANALYSIS   (DG re-routes)
+//    B15 submitToDgForDecision   → AWAITING_DG_DECISION   (DG decides)
+//
+//  Both use the RETURN_TO_DG handoff type, distinguished by the handoff's
+//  `reason` text and the target status.
+//
+//  Auth: caller must be at Directeur level (roleParent === DG). Lower-level
+//  roles cannot submit directly — they must return up the chain first (B12).
+// ============================================================================
+
+export type SubmitToDgResult = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+};
+
+const SubmitToDgSchema = z.object({
+  documentId:    z.string().min(1),
+  recommendation:
+    z.string({ required_error: 'Recommandation requise.' })
+      .min(10, 'Recommandation trop courte (10 caractères minimum).')
+      .max(4000),
+});
+
+export async function submitToDgForDecision(
+  _prev: SubmitToDgResult,
+  formData: FormData,
+): Promise<SubmitToDgResult> {
+  try {
+    const { id: userId, role } = await assertUnitMember();
+
+    const parsed = SubmitToDgSchema.safeParse({
+      documentId:     formData.get('documentId'),
+      recommendation: formData.get('recommendation'),
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path.join('.');
+        if (!fieldErrors[k]) fieldErrors[k] = issue.message;
+      }
+      return { fieldErrors };
+    }
+
+    const doc = await db.document.findUnique({
+      where: { id: parsed.data.documentId },
+      select: { id: true, status: true, reference: true },
+    });
+    if (!doc) return { error: 'Document introuvable.' };
+
+    const assignment = await findActiveAssignment(doc.id, role);
+    if (!assignment) {
+      return { error: 'Aucune affectation active pour votre rôle sur ce document.' };
+    }
+
+    if (doc.status !== 'ASSIGNED' && doc.status !== 'IN_TREATMENT') {
+      return {
+        error:
+          `Statut inattendu : ${doc.status}. La soumission au DG pour décision n'est possible ` +
+          `que sur les documents ASSIGNED ou IN_TREATMENT.`,
+      };
+    }
+
+    const effectiveRole = role === 'ADMIN' ? assignment.assignedToRole : role;
+
+    if (!isDirectorPeer(effectiveRole)) {
+      return {
+        error:
+          `${roleLabel(effectiveRole)} n'est pas au niveau Directeur. ` +
+          `Seuls les rôles rattachés directement au DG peuvent soumettre un dossier pour ` +
+          `décision finale. Renvoyez d'abord à votre supérieur (B12).`,
+      };
+    }
+
+    const now = new Date();
+    const fromLabel = roleLabel(effectiveRole);
+
+    await db.$transaction(async (tx) => {
+      // 1. Mark current Assignment as COMPLETED — work is done
+      await tx.assignment.update({
+        where: { id: assignment.id },
+        data: { status: 'COMPLETED', completedAt: now },
+      });
+
+      // 2. RETURN_TO_DG handoff — distinguished from B11 refusal by the reason
+      //    text and by the fact that the target status will be AWAITING_DG_DECISION,
+      //    not AWAITING_DG_ANALYSIS.
+      await tx.handoff.create({
+        data: {
+          documentId: doc.id,
+          type: 'RETURN_TO_DG',
+          fromRole: effectiveRole,
+          fromUserId: userId,
+          toRole: 'DG',
+          reason:
+            `${fromLabel} soumet le dossier au DG pour décision finale, ` +
+            `après traitement par le département. Avis compilé joint en note interne.`,
+        },
+      });
+
+      // 3. The compiled recommendation as a tagged Comment (visible to DG)
+      await tx.comment.create({
+        data: {
+          documentId: doc.id,
+          authorUserId: userId,
+          authorRole: effectiveRole,
+          body:
+            `[Soumission au DG pour décision — recommandation de ${fromLabel}]\n\n` +
+            parsed.data.recommendation.trim(),
+        },
+      });
+
+      // 4. Document: status → AWAITING_DG_DECISION, holder = DG
+      await tx.document.update({
+        where: { id: doc.id },
+        data: {
+          status: 'AWAITING_DG_DECISION',
+          currentHolderRole: 'DG',
+          currentHolderUserId: null,
+        },
+      });
+    });
+
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
+    revalidatePath('/dg/parapheur');
+    revalidatePath(`/dg/parapheur/${doc.id}`);
+    revalidatePath('/admin/data');
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof Error && e.message === 'UNAUTHORIZED') {
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
+    }
+    console.error('[submitToDgForDecision]', e);
+    return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
+  }
+}

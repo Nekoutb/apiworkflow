@@ -26,7 +26,7 @@ export default async function DgParapheurPage() {
   if (!session?.user) redirect('/login');
   if (!role || !ALLOWED.includes(role)) redirect('/dashboard');
 
-  const [pending, processedToday, oldestWaiting, totalProcessed] = await Promise.all([
+  const [pending, awaitingDecision, processedToday, oldestWaiting, totalProcessed] = await Promise.all([
     db.document.findMany({
       where: { status: 'AWAITING_DG_ANALYSIS' },
       orderBy: { submittedAt: 'asc' }, // FIFO
@@ -45,6 +45,30 @@ export default async function DgParapheurPage() {
           orderBy: { generatedAt: 'desc' },
           take: 1,
           select: { id: true, summary: true, generatedAt: true, contentJson: true },
+        },
+      },
+    }),
+    // B15: documents returned to DG for final decision
+    db.document.findMany({
+      where: { status: 'AWAITING_DG_DECISION' },
+      orderBy: { updatedAt: 'asc' }, // oldest pending decision first
+      take: 100,
+      select: {
+        id: true,
+        reference: true,
+        subject: true,
+        nature: true,
+        submittedAt: true,
+        updatedAt: true,
+        submission: {
+          select: { senderName: true, senderEmail: true, senderOrganization: true },
+        },
+        // The last RETURN_TO_DG handoff tells us who submitted it
+        handoffs: {
+          where: { type: 'RETURN_TO_DG' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { fromRole: true, createdAt: true, fromUser: { select: { name: true, email: true } } },
         },
       },
     }),
@@ -110,7 +134,7 @@ export default async function DgParapheurPage() {
         {/* Stats */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="En attente d'analyse" value={pending.length} accent />
-          <Stat label="Dispatchés aujourd'hui" value={processedToday} />
+          <Stat label="En attente de décision" value={awaitingDecision.length} accent={awaitingDecision.length > 0} urgent={awaitingDecision.length > 0} />
           <Stat label="Doyen en file" value={oldestWaiting ? humanAge(oldestAgeMs) : '—'} mono />
           <Stat label="Total traités" value={totalProcessed} />
         </div>
@@ -202,6 +226,93 @@ export default async function DgParapheurPage() {
           </div>
         )}
 
+        {/* B15 — Decisions awaiting DG ruling */}
+        <h2 className="serif mb-3 mt-16 text-[22px] font-semibold tracking-[-0.3px] text-ink">
+          Dossiers en attente de décision DG
+        </h2>
+        <p className="serif mb-4 text-[12.5px] italic text-ink-3">
+          Documents que les Directeurs ont traités et soumis au DG pour décision finale
+          (approbation ou rejet). Une fois la décision rendue, le dossier file au Bureau Départ
+          pour expédition de la réponse.
+        </p>
+
+        {awaitingDecision.length === 0 ? (
+          <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
+            Aucun dossier en attente de décision. Cette file se remplit dès qu&apos;un Directeur
+            soumet un dossier traité (B15).
+          </div>
+        ) : (
+          <div className="overflow-x-auto border border-line bg-white">
+            <table className="w-full">
+              <thead className="bg-bgsoft">
+                <tr className="text-left">
+                  <Th>Âge décision</Th>
+                  <Th>Référence</Th>
+                  <Th>Émetteur</Th>
+                  <Th>Objet</Th>
+                  <Th>Nature</Th>
+                  <Th>Soumis par</Th>
+                  <Th>Action</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {awaitingDecision.map((d) => {
+                  const submitted = d.handoffs[0];
+                  const submittedAt = submitted?.createdAt ?? d.updatedAt;
+                  const ageMs = Date.now() - submittedAt.getTime();
+                  const ageClass =
+                    ageMs > 7 * 24 * 60 * 60 * 1000 ? 'text-cmred' :
+                    ageMs > 3 * 24 * 60 * 60 * 1000 ? 'text-gold-700' :
+                    'text-ink-3';
+                  return (
+                    <tr key={d.id} className="border-t border-line align-top">
+                      <td className={'px-4 py-3 font-mono text-[11px] font-semibold ' + ageClass}>
+                        {humanAge(ageMs)}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-[11.5px] font-semibold text-cmgreen-900">
+                        {d.reference}
+                      </td>
+                      <td className="px-4 py-3 text-[12.5px]">
+                        <div className="font-semibold text-ink">{d.submission?.senderName ?? '—'}</div>
+                        <div className="text-[11px] text-ink-3">{d.submission?.senderEmail}</div>
+                        {d.submission?.senderOrganization && (
+                          <div className="text-[10.5px] italic text-ink-4">
+                            {d.submission.senderOrganization}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-[12.5px] text-ink-2">
+                        <div className="max-w-md truncate" title={d.subject}>{d.subject}</div>
+                      </td>
+                      <td className="px-4 py-3 text-[11px] text-ink-3">
+                        {NATURE_SHORT[d.nature] ?? d.nature}
+                      </td>
+                      <td className="px-4 py-3 text-[11px] text-ink-3">
+                        <div className="font-semibold text-ink-2">
+                          {submitted?.fromRole ? roleLabel(submitted.fromRole) : '—'}
+                        </div>
+                        {submitted?.fromUser && (
+                          <div className="text-[10.5px] italic text-ink-4">
+                            {submitted.fromUser.name ?? submitted.fromUser.email}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/dg/parapheur/${d.id}`}
+                          className="bg-cmgreen-800 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+                        >
+                          Décider →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <div className="mt-10">
           <Link
             href="/dashboard"
@@ -231,14 +342,23 @@ function humanAge(ms: number): string {
   return `${mo} mois`;
 }
 
-function Stat({ label, value, accent, mono }: { label: string; value: number | string; accent?: boolean; mono?: boolean }) {
+function Stat({
+  label, value, accent, mono, urgent,
+}: {
+  label: string; value: number | string; accent?: boolean; mono?: boolean; urgent?: boolean;
+}) {
   return (
-    <div className={'border bg-white px-4 py-3.5 ' + (accent ? 'border-cmgreen-700' : 'border-line')}>
+    <div
+      className={
+        'border bg-white px-4 py-3.5 ' +
+        (urgent ? 'border-gold-700' : accent ? 'border-cmgreen-700' : 'border-line')
+      }
+    >
       <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3">{label}</div>
       <div
         className={
           'mt-1 text-[24px] font-semibold ' +
-          (accent ? 'text-cmgreen-900' : 'text-ink') + ' ' +
+          (urgent ? 'text-gold-700' : accent ? 'text-cmgreen-900' : 'text-ink') + ' ' +
           (mono ? 'font-mono' : '')
         }
       >

@@ -113,7 +113,7 @@ function Inner({
     return (
       <div className="border border-line bg-bgsoft p-5">
         <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-3">
-          🤖 Suggestion de dispatch IA
+          🤖 Suggestion de dispatch
         </div>
         <h3 className="serif text-[16px] font-semibold text-ink">Mode démo</h3>
         <p className="serif mt-2 text-[12.5px] italic text-ink-3">
@@ -214,7 +214,7 @@ function Inner({
       <div className={`relative overflow-hidden border border-obsidian ${dark} p-6 text-white`}>
         <div className="mb-3 flex items-center justify-between">
           <div className="text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-            ✨ Suggestion de dispatch · IA
+            ✨ Suggestion de dispatch
           </div>
           <div className={'text-[10.5px] font-bold uppercase tracking-[0.16em] ' + confidenceColor}>
             ● {confidenceLabel}
