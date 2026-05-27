@@ -87,6 +87,24 @@ export default async function UnitDocumentDetailPage({
           assignedBy: { select: { name: true, email: true } },
         },
       },
+      externalTransmissions: {
+        orderBy: { sentAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          recipient: true,
+          recipientName: true,
+          recipientEmail: true,
+          recipientAddress: true,
+          purpose: true,
+          sentAt: true,
+          expectedReturnAt: true,
+          receivedAt: true,
+          opinionSummary: true,
+          status: true,
+          sentBy: { select: { name: true, email: true } },
+        },
+      },
     },
   });
   if (!doc) notFound();
@@ -129,7 +147,12 @@ export default async function UnitDocumentDetailPage({
   }
 
   // Document is no longer in a workable state — show banner but keep context.
-  const isWorkable = doc.status === 'ASSIGNED' || doc.status === 'IN_TREATMENT';
+  // AWAITING_EXTERNAL_AVIS counts as workable (B14): the unit still owns it and
+  // can record the response or cancel the request.
+  const isWorkable =
+    doc.status === 'ASSIGNED' ||
+    doc.status === 'IN_TREATMENT' ||
+    doc.status === 'AWAITING_EXTERNAL_AVIS';
   const effectiveRoleForActions =
     role === 'ADMIN' ? myAssignment.assignedToRole : role;
 
@@ -301,6 +324,19 @@ export default async function UnitDocumentDetailPage({
                 isDirectorLevel={isDirectorPeer(effectiveRoleForActions)}
                 peerRoles={directorPeers(effectiveRoleForActions, ALL_STAFF_ROLES)}
                 coAvisReturnTarget={coAvisReturnTarget(doc.handoffs, effectiveRoleForActions)}
+                externalTransmissions={doc.externalTransmissions.map((t) => ({
+                  id: t.id,
+                  recipient: t.recipient,
+                  recipientName: t.recipientName,
+                  recipientEmail: t.recipientEmail,
+                  purpose: t.purpose,
+                  sentAt: t.sentAt.toISOString(),
+                  expectedReturnAt: t.expectedReturnAt?.toISOString() ?? null,
+                  receivedAt: t.receivedAt?.toISOString() ?? null,
+                  opinionSummary: t.opinionSummary,
+                  status: t.status,
+                  sentByName: t.sentBy?.name ?? t.sentBy?.email ?? null,
+                }))}
               />
             ) : (
               <div className="lg:sticky lg:top-6 lg:self-start">
@@ -378,15 +414,15 @@ function UnitBar({
 
 function StatusPill({ status }: { status: string }) {
   const style =
-    status === 'IN_TREATMENT'
-      ? 'bg-cmgreen-50 text-cmgreen-900'
-      : status === 'ASSIGNED'
-      ? 'bg-gold-50 text-gold-700'
-      : 'bg-line/50 text-ink-3';
+    status === 'IN_TREATMENT'           ? 'bg-cmgreen-50 text-cmgreen-900' :
+    status === 'ASSIGNED'               ? 'bg-gold-50 text-gold-700' :
+    status === 'AWAITING_EXTERNAL_AVIS' ? 'bg-cmred-50 text-cmred' :
+                                          'bg-line/50 text-ink-3';
   const label =
-    status === 'IN_TREATMENT' ? 'En traitement' :
-    status === 'ASSIGNED'     ? 'À prendre en charge' :
-    status;
+    status === 'IN_TREATMENT'           ? 'En traitement' :
+    status === 'ASSIGNED'               ? 'À prendre en charge' :
+    status === 'AWAITING_EXTERNAL_AVIS' ? '⏳ Attente avis externe' :
+                                          status;
   return (
     <span className={'rounded-sm px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] ' + style}>
       {label}

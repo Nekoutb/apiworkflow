@@ -14,8 +14,43 @@ import {
   type RequestCoAvisResult,
   type ReturnCoAvisResult,
 } from '@/lib/actions/unit-corbeille';
+import {
+  requestExternalAvis,
+  recordExternalAvis,
+  cancelExternalAvis,
+  type RequestExternalAvisResult,
+  type RecordExternalAvisResult,
+  type CancelExternalAvisResult,
+} from '@/lib/actions/external-avis';
 import { roleLabel, roleMeta } from '@/lib/roles';
-import type { StaffRole } from '@prisma/client';
+import type { StaffRole, ExternalRecipient, ExternalTransmissionStatus } from '@prisma/client';
+
+const RECIPIENT_OPTIONS: Array<{ value: ExternalRecipient; label: string; freeText: boolean }> = [
+  { value: 'MINISTRE_FINANCES',    label: 'Ministère des Finances',                  freeText: false },
+  { value: 'MINISTRE_INDUSTRIE',   label: 'Ministère de l\'Industrie',               freeText: false },
+  { value: 'DGI',                  label: 'Direction Générale des Impôts (DGI)',     freeText: false },
+  { value: 'DGD',                  label: 'Direction Générale des Douanes (DGD)',    freeText: false },
+  { value: 'MINISTRE_AUTRE',       label: 'Autre ministère',                          freeText: true  },
+  { value: 'ADMINISTRATION_AUTRE', label: 'Autre administration',                     freeText: true  },
+];
+
+const RECIPIENT_LABEL: Record<ExternalRecipient, string> = Object.fromEntries(
+  RECIPIENT_OPTIONS.map((o) => [o.value, o.label]),
+) as Record<ExternalRecipient, string>;
+
+export type ExternalTransmissionView = {
+  id: string;
+  recipient: ExternalRecipient;
+  recipientName: string | null;
+  recipientEmail: string | null;
+  purpose: string;
+  sentAt: string;
+  expectedReturnAt: string | null;
+  receivedAt: string | null;
+  opinionSummary: string | null;
+  status: ExternalTransmissionStatus;
+  sentByName: string | null;
+};
 
 type View =
   | 'menu'
@@ -28,13 +63,22 @@ type View =
   | 'requesting-coavis'  // form: Demander un co-avis à un pair (B13 · HORIZONTAL out)
   | 'requested-coavis'   //   ↳ success
   | 'returning-coavis'   // form: Renvoyer le co-avis (B13 · HORIZONTAL back)
-  | 'returned-coavis';   //   ↳ success
+  | 'returned-coavis'    //   ↳ success
+  | 'requesting-external' // form: Demander un avis externe (B14)
+  | 'requested-external'  //   ↳ success
+  | 'recording-external'  // form: Enregistrer la réponse externe (B14)
+  | 'recorded-external'   //   ↳ success
+  | 'cancelling-external' // form: Annuler la demande externe (B14)
+  | 'cancelled-external'; //   ↳ success
 
 const initialReturn: ReturnToDgResult = {};
 const initialDelegate: DelegateDownResult = {};
 const initialReturnUp: ReturnUpResult = {};
 const initialRequestCoAvis: RequestCoAvisResult = {};
 const initialReturnCoAvis: ReturnCoAvisResult = {};
+const initialRequestExternal: RequestExternalAvisResult = {};
+const initialRecordExternal: RecordExternalAvisResult = {};
+const initialCancelExternal: CancelExternalAvisResult = {};
 
 export function UnitActions({
   documentId,
@@ -47,6 +91,7 @@ export function UnitActions({
   isDirectorLevel,
   peerRoles,
   coAvisReturnTarget,
+  externalTransmissions,
 }: {
   documentId: string;
   documentReference: string;
@@ -58,6 +103,7 @@ export function UnitActions({
   isDirectorLevel: boolean;
   peerRoles: StaffRole[];
   coAvisReturnTarget: StaffRole | null;
+  externalTransmissions: ExternalTransmissionView[];
 }) {
   const [view, setView] = useState<View>('menu');
   const [takeError, setTakeError] = useState<string | null>(null);
@@ -69,6 +115,10 @@ export function UnitActions({
   const [returnUpState, returnUpAction, returnUpPending] = useActionState(returnUp, initialReturnUp);
   const [reqCoState, reqCoAction, reqCoPending] = useActionState(requestCoAvis, initialRequestCoAvis);
   const [retCoState, retCoAction, retCoPending] = useActionState(returnCoAvis, initialReturnCoAvis);
+  const [reqExtState, reqExtAction, reqExtPending] = useActionState(requestExternalAvis, initialRequestExternal);
+  const [recExtState, recExtAction, recExtPending] = useActionState(recordExternalAvis, initialRecordExternal);
+  const [canExtState, canExtAction, canExtPending] = useActionState(cancelExternalAvis, initialCancelExternal);
+  const [recipientChoice, setRecipientChoice] = useState<ExternalRecipient>('MINISTRE_FINANCES');
 
   // Promote each form's success into the corresponding view via useEffect
   // (avoids setState-in-render warnings).
@@ -87,6 +137,15 @@ export function UnitActions({
   useEffect(() => {
     if (retCoState.ok && view !== 'returned-coavis') setView('returned-coavis');
   }, [retCoState.ok, view]);
+  useEffect(() => {
+    if (reqExtState.ok && view !== 'requested-external') setView('requested-external');
+  }, [reqExtState.ok, view]);
+  useEffect(() => {
+    if (recExtState.ok && view !== 'recorded-external') setView('recorded-external');
+  }, [recExtState.ok, view]);
+  useEffect(() => {
+    if (canExtState.ok && view !== 'cancelled-external') setView('cancelled-external');
+  }, [canExtState.ok, view]);
 
   function handleTake() {
     setTakeError(null);
@@ -107,6 +166,10 @@ export function UnitActions({
   const canRequestCoAvis = isDirectorLevel && peerRoles.length > 0;
   const canReturnCoAvis  = !!coAvisReturnTarget;
   const coAvisOriginMeta = coAvisReturnTarget ? roleMeta(coAvisReturnTarget) : undefined;
+  // B14 — external avis
+  const pendingExternal = externalTransmissions.find((t) => t.status === 'PENDING');
+  const isAwaitingExternal = currentStatus === 'AWAITING_EXTERNAL_AVIS';
+  const recipientFreeText = RECIPIENT_OPTIONS.find((o) => o.value === recipientChoice)?.freeText ?? false;
 
   // =========================================================================
   //  Success views (each form has its own)
@@ -158,6 +221,34 @@ export function UnitActions({
         documentReference={documentReference}
         backHref="/unit/corbeille"
         targetLabel={retCoState.targetLabel ?? ''}
+      />
+    );
+  }
+  if (view === 'requested-external') {
+    return (
+      <SuccessCard
+        kind="requested-external"
+        documentReference={documentReference}
+        backHref="/unit/corbeille"
+        targetLabel={reqExtState.recipientLabel ?? ''}
+      />
+    );
+  }
+  if (view === 'recorded-external') {
+    return (
+      <SuccessCard
+        kind="recorded-external"
+        documentReference={documentReference}
+        backHref="/unit/corbeille"
+      />
+    );
+  }
+  if (view === 'cancelled-external') {
+    return (
+      <SuccessCard
+        kind="cancelled-external"
+        documentReference={documentReference}
+        backHref="/unit/corbeille"
       />
     );
   }
@@ -352,6 +443,337 @@ export function UnitActions({
                 className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
               >
                 {returnUpPending ? 'Envoi…' : `Renvoyer à ${parentMeta?.shortFr ?? '…'} →`}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (view === 'requesting-external') {
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <form action={reqExtAction} className="border border-cmred bg-white">
+          <div className="border-b border-line bg-cmred-50 px-4 py-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmred">
+              ⤴ Avis externe (hors API)
+            </div>
+            <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+              Solliciter un avis d&apos;une administration externe
+            </h3>
+          </div>
+
+          <div className="space-y-4 p-5">
+            {reqExtState.error && (
+              <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+                {reqExtState.error}
+              </div>
+            )}
+
+            <input type="hidden" name="documentId" value={documentId} />
+
+            <div>
+              <label
+                htmlFor="recipient"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Destinataire <span className="text-cmred">*</span>
+              </label>
+              <select
+                id="recipient"
+                name="recipient"
+                required
+                value={recipientChoice}
+                onChange={(e) => setRecipientChoice(e.target.value as ExternalRecipient)}
+                className={
+                  'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink focus:outline-none focus:ring-1 ' +
+                  (reqExtState.fieldErrors?.recipient
+                    ? 'border-cmred focus:border-cmred focus:ring-cmred'
+                    : 'border-line-2 focus:border-cmred focus:ring-cmred')
+                }
+              >
+                {RECIPIENT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+              {reqExtState.fieldErrors?.recipient && (
+                <p className="mt-1 text-[11px] text-cmred">{reqExtState.fieldErrors.recipient}</p>
+              )}
+            </div>
+
+            {recipientFreeText && (
+              <div>
+                <label
+                  htmlFor="recipientName"
+                  className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+                >
+                  Nom exact de l&apos;administration <span className="text-cmred">*</span>
+                </label>
+                <input
+                  id="recipientName"
+                  name="recipientName"
+                  type="text"
+                  maxLength={200}
+                  required
+                  placeholder="ex. Ministère de l'Économie · Direction des Stratégies"
+                  className={
+                    'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 ' +
+                    (reqExtState.fieldErrors?.recipientName
+                      ? 'border-cmred focus:border-cmred focus:ring-cmred'
+                      : 'border-line-2 focus:border-cmred focus:ring-cmred')
+                  }
+                />
+                {reqExtState.fieldErrors?.recipientName && (
+                  <p className="mt-1 text-[11px] text-cmred">{reqExtState.fieldErrors.recipientName}</p>
+                )}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label
+                  htmlFor="recipientEmail"
+                  className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+                >
+                  Email (optionnel)
+                </label>
+                <input
+                  id="recipientEmail"
+                  name="recipientEmail"
+                  type="email"
+                  maxLength={200}
+                  placeholder="contact@…"
+                  className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[12.5px] text-ink placeholder:text-ink-4 focus:border-cmred focus:outline-none focus:ring-1 focus:ring-cmred"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="expectedReturnDays"
+                  className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+                >
+                  Délai souhaité (jours)
+                </label>
+                <input
+                  id="expectedReturnDays"
+                  name="expectedReturnDays"
+                  type="number"
+                  min={1}
+                  max={365}
+                  placeholder="14"
+                  className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[12.5px] text-ink placeholder:text-ink-4 focus:border-cmred focus:outline-none focus:ring-1 focus:ring-cmred"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="purpose"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Motif de la demande <span className="text-cmred">*</span>
+              </label>
+              <textarea
+                id="purpose"
+                name="purpose"
+                rows={4}
+                required
+                minLength={10}
+                maxLength={2000}
+                placeholder="ex. Avis fiscal sur l'éligibilité au régime d'incitation prévu à l'art. 17 de l'Ordonnance 2025-002."
+                className={
+                  'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 ' +
+                  (reqExtState.fieldErrors?.purpose
+                    ? 'border-cmred focus:border-cmred focus:ring-cmred'
+                    : 'border-line-2 focus:border-cmred focus:ring-cmred')
+                }
+              />
+              {reqExtState.fieldErrors?.purpose && (
+                <p className="mt-1 text-[11px] text-cmred">{reqExtState.fieldErrors.purpose}</p>
+              )}
+            </div>
+
+            <div className="border border-cmred/40 bg-cmred-50/40 px-3 py-2 text-[11.5px] italic text-cmred">
+              ⓘ Le document passera au statut <code className="font-mono not-italic">AWAITING_EXTERNAL_AVIS</code>.
+              Votre unité reste détentrice — vous pourrez enregistrer la réponse reçue ou annuler
+              la demande à tout moment. Toutes les autres actions (déléguer, renvoyer, etc.) sont
+              suspendues jusqu&apos;au retour.
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setView('menu')}
+                disabled={reqExtPending}
+                className="flex-1 border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={reqExtPending}
+                className="flex-1 bg-cmred px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmred-900 disabled:opacity-50"
+              >
+                {reqExtPending ? 'Envoi…' : 'Envoyer la demande →'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (view === 'recording-external' && pendingExternal) {
+    const recipientDisplay = pendingExternal.recipientName?.trim() || RECIPIENT_LABEL[pendingExternal.recipient];
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <form action={recExtAction} className="border border-cmgreen-700 bg-white">
+          <div className="border-b border-line bg-cmgreen-50/50 px-4 py-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmgreen-900">
+              ✓ Enregistrer la réponse externe
+            </div>
+            <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+              Avis reçu de {recipientDisplay}
+            </h3>
+          </div>
+
+          <div className="space-y-4 p-5">
+            {recExtState.error && (
+              <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+                {recExtState.error}
+              </div>
+            )}
+
+            <input type="hidden" name="documentId" value={documentId} />
+            <input type="hidden" name="transmissionId" value={pendingExternal.id} />
+
+            <div className="border border-line bg-bgsoft px-3 py-2 text-[11.5px]">
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-3">
+                Demande initiale
+              </div>
+              <p className="serif mt-1 italic text-ink-2">{pendingExternal.purpose}</p>
+              <p className="mt-1 text-[10.5px] text-ink-4">
+                Envoyée le {new Date(pendingExternal.sentAt).toLocaleDateString('fr-FR')}
+                {pendingExternal.sentByName && ` par ${pendingExternal.sentByName}`}.
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="opinionSummary"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Résumé de l&apos;avis reçu <span className="text-cmred">*</span>
+              </label>
+              <textarea
+                id="opinionSummary"
+                name="opinionSummary"
+                rows={7}
+                required
+                minLength={10}
+                maxLength={4000}
+                placeholder="ex. Avis favorable de la DGI. L'investisseur est éligible au régime d'incitation. Réserve : production du certificat de localisation sous 30 jours."
+                className={
+                  'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 ' +
+                  (recExtState.fieldErrors?.opinionSummary
+                    ? 'border-cmred focus:border-cmred focus:ring-cmred'
+                    : 'border-line-2 focus:border-cmgreen-800 focus:ring-cmgreen-800')
+                }
+              />
+              {recExtState.fieldErrors?.opinionSummary && (
+                <p className="mt-1 text-[11px] text-cmred">{recExtState.fieldErrors.opinionSummary}</p>
+              )}
+              <p className="mt-1 text-[10.5px] italic text-ink-4">
+                Recopiez fidèlement l&apos;avis reçu (la pièce papier/PDF originale reste votre
+                référence). Le résumé devient une note interne visible par tout le département
+                et par le DG.
+              </p>
+            </div>
+
+            <div className="border border-cmgreen-800/40 bg-cmgreen-50/50 px-3 py-2 text-[11.5px] italic text-cmgreen-900">
+              ⓘ Le document repasse au statut <code className="font-mono not-italic">IN_TREATMENT</code>
+              {' '}— vous pouvez reprendre le traitement normal (déléguer, renvoyer, etc.).
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setView('menu')}
+                disabled={recExtPending}
+                className="flex-1 border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={recExtPending}
+                className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+              >
+                {recExtPending ? 'Enregistrement…' : 'Enregistrer l\'avis →'}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (view === 'cancelling-external' && pendingExternal) {
+    const recipientDisplay = pendingExternal.recipientName?.trim() || RECIPIENT_LABEL[pendingExternal.recipient];
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start">
+        <form action={canExtAction} className="border border-cmred bg-white">
+          <div className="border-b border-line bg-cmred-50 px-4 py-3">
+            <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmred">
+              ✕ Annuler la demande externe
+            </div>
+            <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
+              Retirer la demande envoyée à {recipientDisplay}
+            </h3>
+          </div>
+
+          <div className="space-y-4 p-5">
+            {canExtState.error && (
+              <div className="border border-cmred bg-cmred-50 px-3.5 py-2.5 text-[12.5px] font-medium text-cmred">
+                {canExtState.error}
+              </div>
+            )}
+
+            <input type="hidden" name="documentId" value={documentId} />
+            <input type="hidden" name="transmissionId" value={pendingExternal.id} />
+
+            <div>
+              <label
+                htmlFor="cancel-reason"
+                className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
+              >
+                Motif d&apos;annulation (optionnel)
+              </label>
+              <textarea
+                id="cancel-reason"
+                name="reason"
+                rows={3}
+                maxLength={2000}
+                placeholder="ex. Aucune réponse après 30 jours · le traitement reprend sans l'avis externe."
+                className="w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:border-cmred focus:outline-none focus:ring-1 focus:ring-cmred"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setView('menu')}
+                disabled={canExtPending}
+                className="flex-1 border border-line-2 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 transition hover:border-ink hover:text-ink disabled:opacity-50"
+              >
+                Garder en attente
+              </button>
+              <button
+                type="submit"
+                disabled={canExtPending}
+                className="flex-1 bg-cmred px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmred-900 disabled:opacity-50"
+              >
+                {canExtPending ? 'Annulation…' : 'Annuler la demande →'}
               </button>
             </div>
           </div>
@@ -633,6 +1055,95 @@ export function UnitActions({
   }
 
   // =========================================================================
+  //  AWAITING_EXTERNAL_AVIS — dedicated waiting state (B14)
+  //  All other actions are suspended until the response is recorded or the
+  //  request is cancelled.
+  // =========================================================================
+
+  if (isAwaitingExternal && pendingExternal) {
+    const recipientDisplay = pendingExternal.recipientName?.trim() || RECIPIENT_LABEL[pendingExternal.recipient];
+    const sentDate = new Date(pendingExternal.sentAt);
+    const expectedDate = pendingExternal.expectedReturnAt ? new Date(pendingExternal.expectedReturnAt) : null;
+    const overdue = expectedDate && expectedDate.getTime() < Date.now();
+    const daysSent = Math.floor((Date.now() - sentDate.getTime()) / (24 * 60 * 60 * 1000));
+
+    return (
+      <div className="lg:sticky lg:top-6 lg:self-start space-y-4">
+        <div className="border-2 border-cmred bg-cmred-50 p-5">
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmred">
+            ⏳ Avis externe en attente
+          </div>
+          <h3 className="serif mt-1 text-[16px] font-bold text-ink">
+            En attente d&apos;une réponse de {recipientDisplay}
+          </h3>
+
+          <div className="mt-3 space-y-2 border-l-2 border-cmred/40 pl-3">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-cmred/70">
+                Motif envoyé
+              </div>
+              <p className="serif mt-0.5 text-[12.5px] italic text-ink-2">
+                {pendingExternal.purpose}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
+              <span className="text-ink-3">
+                Envoyé : <strong className="font-semibold text-ink-2">
+                  {sentDate.toLocaleDateString('fr-FR')}
+                </strong>
+                {' '}(il y a {daysSent} jour{daysSent > 1 ? 's' : ''})
+              </span>
+              {expectedDate && (
+                <span className={overdue ? 'font-bold text-cmred' : 'text-ink-3'}>
+                  Retour attendu : <strong className="font-semibold">
+                    {expectedDate.toLocaleDateString('fr-FR')}
+                  </strong>
+                  {overdue && ' ⚠ dépassé'}
+                </span>
+              )}
+              {pendingExternal.sentByName && (
+                <span className="text-ink-4">par {pendingExternal.sentByName}</span>
+              )}
+            </div>
+            {pendingExternal.recipientEmail && (
+              <div className="text-[11px] text-ink-3">
+                Email : <code className="font-mono text-[10.5px]">{pendingExternal.recipientEmail}</code>
+              </div>
+            )}
+          </div>
+
+          <p className="serif mt-3 text-[12px] italic text-cmred-900/80">
+            Toutes les autres actions sont suspendues. Enregistrez la réponse lorsqu&apos;elle
+            arrive, ou annulez la demande si vous décidez de poursuivre sans cet avis.
+          </p>
+
+          <div className="mt-4 space-y-2">
+            <button
+              type="button"
+              onClick={() => setView('recording-external')}
+              className="w-full bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+            >
+              ✓ Enregistrer la réponse reçue →
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('cancelling-external')}
+              className="w-full border border-cmred bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmred transition hover:bg-cmred hover:text-white"
+            >
+              ✕ Annuler la demande…
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[10.5px] italic text-ink-4">
+          L&apos;historique d&apos;avis externes (passés et en cours) reste consultable dans la
+          colonne de gauche. Toutes les actions sont tracées.
+        </p>
+      </div>
+    );
+  }
+
+  // =========================================================================
   //  Menu (default view) — stacked action cards
   // =========================================================================
 
@@ -819,6 +1330,41 @@ export function UnitActions({
         </div>
       )}
 
+      {/* 3.7 Demander un avis externe — B14 (always available in IN_TREATMENT/ASSIGNED) */}
+      <div className="border border-cmred bg-white p-5">
+        <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmred">
+          ⤴ Avis externe (hors API)
+        </div>
+        <h3 className="serif mt-1 text-[16px] font-bold text-ink">
+          Demander un avis à une administration externe
+        </h3>
+        <p className="serif mt-2 text-[12.5px] italic text-ink-3">
+          Solliciter l&apos;avis du Ministère des Finances, de la DGI, de la DGD, ou
+          d&apos;une autre administration. Le document passe en attente jusqu&apos;à
+          réception de la réponse.
+        </p>
+
+        {/* Show past transmissions count if any */}
+        {externalTransmissions.length > 0 && (
+          <div className="mt-3 text-[10.5px] italic text-ink-4">
+            ⓘ {externalTransmissions.length} demande{externalTransmissions.length > 1 ? 's' : ''} externe
+            {externalTransmissions.length > 1 ? 's' : ''} déjà effectuée
+            {externalTransmissions.length > 1 ? 's' : ''} sur ce dossier
+            {externalTransmissions.filter((t) => t.status === 'RESPONSE_RECEIVED').length > 0 &&
+              ` · ${externalTransmissions.filter((t) => t.status === 'RESPONSE_RECEIVED').length} réponse(s) reçue(s)`}
+            .
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setView('requesting-external')}
+          className="mt-4 w-full border border-cmred bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmred transition hover:bg-cmred hover:text-white"
+        >
+          ⤴ Préparer la demande…
+        </button>
+      </div>
+
       {/* 4. Renvoyer au DG (refusal) — always visible */}
       <div className="border border-line bg-white p-5">
         <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-3">
@@ -865,7 +1411,10 @@ function SuccessCard({
     | 'delegated'
     | 'returned-up'
     | 'requested-coavis'
-    | 'returned-coavis';
+    | 'returned-coavis'
+    | 'requested-external'
+    | 'recorded-external'
+    | 'cancelled-external';
   documentReference: string;
   backHref: string;
   targetLabel?: string;
@@ -906,13 +1455,40 @@ function SuccessCard({
             'propre chaîne hiérarchique puis vous le renverra avec son co-avis attaché. Vous ' +
             'le verrez réapparaître dans votre corbeille dès le retour.',
         }
-      : {
+      : kind === 'returned-coavis'
+      ? {
           title: '✓ Co-avis retourné',
           headline: `${documentReference} renvoyé à ${targetLabel}`,
           body:
             'Le Directeur qui vous avait sollicité retrouve le dossier dans sa corbeille avec ' +
             'votre co-avis joint comme note interne taggée. Le dossier reste au statut ' +
             'IN_TREATMENT — il poursuit son cycle dans le département d\'origine.',
+        }
+      : kind === 'requested-external'
+      ? {
+          title: '✓ Avis externe demandé',
+          headline: `${documentReference} en attente d'avis de ${targetLabel}`,
+          body:
+            'Le document est désormais au statut AWAITING_EXTERNAL_AVIS. Toutes les autres ' +
+            'actions sont suspendues. Lorsque la réponse arrivera (par courrier, email ou fax), ' +
+            'revenez sur cette page pour l\'enregistrer — le document repassera alors en traitement.',
+        }
+      : kind === 'recorded-external'
+      ? {
+          title: '✓ Avis externe enregistré',
+          headline: `${documentReference} reprend son traitement`,
+          body:
+            'L\'avis externe a été ajouté aux notes du dossier et est visible par tout le ' +
+            'département et le DG. Le document est repassé au statut IN_TREATMENT — vous pouvez ' +
+            'reprendre la chaîne normale (déléguer, renvoyer, etc.).',
+        }
+      : {
+          title: '✓ Demande externe annulée',
+          headline: `${documentReference} reprend son traitement`,
+          body:
+            'La demande d\'avis externe a été annulée et marquée comme telle dans les notes. ' +
+            'Le document est repassé au statut IN_TREATMENT — vous pouvez poursuivre le ' +
+            'traitement sans cet avis.',
         };
 
   return (

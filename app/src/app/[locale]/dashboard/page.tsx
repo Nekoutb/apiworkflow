@@ -101,7 +101,7 @@ export default async function DashboardPage({
           )}
           {isUnitMember && (
             <Link href="/unit/corbeille" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B11-B13 · Disponible</div>
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B11-B14 · Disponible</div>
               <h3 className="serif text-[19px] font-bold text-ink">
                 {isAdmin
                   ? 'Corbeille universelle (vue admin)'
@@ -190,7 +190,7 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B11</strong> · Corbeille universelle des unités — prise en charge & renvoi au DG</li>
             <li>✓ <strong className="not-italic">B12</strong> · Délégation interne — VERTICAL_DOWN + RETURN_UP (hiérarchie organigramme)</li>
             <li>✓ <strong className="not-italic">B13</strong> · Transferts horizontaux — co-avis entre pairs Directeurs (HORIZONTAL)</li>
-            <li>⬜ <strong className="not-italic">B14</strong> · Avis externe (Min. Finances, DGI, DGD…)</li>
+            <li>✓ <strong className="not-italic">B14</strong> · Avis externe — Min. Finances, DGI, DGD, etc. (EXTERNAL_OUT/IN)</li>
             <li>⬜ <strong className="not-italic">B15</strong> · Renvoi final au DG après traitement (avec avis compilé)</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
           </ul>
