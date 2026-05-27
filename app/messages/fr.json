@@ -26,13 +26,18 @@
     "adminDataTitle": "Aperçu base de données · Administration · API Cameroun"
   },
   "Home": {
-    "tagline": "L'investissement au Cameroun, une affaire de souveraineté.",
-    "subtitle": "Plateforme officielle de soumission, d'instruction et de suivi des conventions d'investissement entre l'État du Cameroun et les investisseurs nationaux et internationaux.",
-    "submitDocument": "Soumettre un document",
-    "submitDocumentSoon": "Bientôt disponible (B4)",
-    "staffLogin": "Connexion Personnel",
-    "staffLoginHint": "Accès réservé aux agents API",
-    "quote": "Promouvoir l'investissement productif."
+    "officialBanner": "Portail interne · Accès réservé au personnel",
+    "internalPortalBadge": "Portail interne",
+    "tagline": "Le circuit officiel des dossiers d'investissement.",
+    "subtitle": "Plateforme interne de traitement, de suivi et de décision pour le personnel de l'Agence de Promotion des Investissements du Cameroun.",
+    "ctaLogin": "Connexion personnel",
+    "ctaLoginArrow": "Connexion personnel →",
+    "restrictedAccess": "Accès réservé · authentification requise · activité tracée",
+    "phasesLabel": "Phases du circuit",
+    "rolesLabel": "Rôles organigramme",
+    "languagesLabel": "Langues",
+    "quote": "Promouvoir l'investissement productif.",
+    "footerNote": "Portail interne · usage strictement professionnel"
   },
   "Login": {
     "panelHeading": "Portail interne",

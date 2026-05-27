@@ -26,13 +26,18 @@
     "adminDataTitle": "Database overview · Administration · Cameroon IPA"
   },
   "Home": {
-    "tagline": "Investment in Cameroon: a matter of sovereignty.",
-    "subtitle": "Official platform for submission, processing and tracking of investment conventions between the State of Cameroon and national and international investors.",
-    "submitDocument": "Submit a document",
-    "submitDocumentSoon": "Coming soon (B4)",
-    "staffLogin": "Staff sign-in",
-    "staffLoginHint": "Restricted to IPA staff",
-    "quote": "Promoting productive investment."
+    "officialBanner": "Internal portal · Authorised personnel only",
+    "internalPortalBadge": "Internal portal",
+    "tagline": "The official workflow for investment dossiers.",
+    "subtitle": "Internal platform for processing, monitoring and decisions, for the staff of the Cameroon Investment Promotion Agency.",
+    "ctaLogin": "Staff sign-in",
+    "ctaLoginArrow": "Staff sign-in →",
+    "restrictedAccess": "Restricted access · authentication required · activity is logged",
+    "phasesLabel": "Workflow phases",
+    "rolesLabel": "Org chart roles",
+    "languagesLabel": "Languages",
+    "quote": "Promoting productive investment.",
+    "footerNote": "Internal portal · strictly professional use"
   },
   "Login": {
     "panelHeading": "Internal portal",
