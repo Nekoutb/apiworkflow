@@ -230,13 +230,13 @@ export async function requestExternalAvis(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true, recipientLabel: displayName };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[requestExternalAvis]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -364,13 +364,13 @@ export async function recordExternalAvis(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[recordExternalAvis]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -472,13 +472,13 @@ export async function cancelExternalAvis(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[cancelExternalAvis]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };

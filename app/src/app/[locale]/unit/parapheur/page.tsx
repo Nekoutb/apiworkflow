@@ -5,10 +5,10 @@ import { db } from '@/lib/db';
 import { roleLabel, roleMeta } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 
-export const metadata = { title: 'Corbeille de l\'unité · API Cameroun' };
+export const metadata = { title: 'Parapheur de l\'unité · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
-// DG / DGA have their own /dg/corbeille — they don't belong here.
+// DG / DGA have their own /dg/parapheur — they don't belong here.
 const FORBIDDEN: StaffRole[] = ['DG', 'DGA'];
 
 const NATURE_SHORT: Record<string, string> = {
@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<string, string> = {
   IN_TREATMENT: 'En traitement',
 };
 
-export default async function UnitCorbeillePage() {
+export default async function UnitParapheurPage() {
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
@@ -88,15 +88,15 @@ export default async function UnitCorbeillePage() {
   const myRoleMeta = roleMeta(role);
   const headerLabel =
     role === 'ADMIN'
-      ? 'Corbeille universelle (vue admin · toutes les unités)'
-      : `Corbeille — ${myRoleMeta?.fr ?? roleLabel(role)}`;
+      ? 'Parapheur universel (vue admin · toutes les unités)'
+      : `Parapheur — ${myRoleMeta?.fr ?? roleLabel(role)}`;
 
   return (
     <main className="min-h-screen bg-bgsoft">
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
         Portail interne <span className="mx-3 text-gold-500">⚜</span>
         Unité <span className="mx-3 text-gold-500">⚜</span>
-        Corbeille
+        Parapheur
       </div>
 
       <header className="border-b border-line bg-white">
@@ -147,8 +147,8 @@ export default async function UnitCorbeillePage() {
         {active.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
             {role === 'ADMIN'
-              ? 'Aucune affectation active dans aucune unité. La corbeille se remplit dès qu\'un document est dispatché depuis le DG.'
-              : 'Aucune affectation active. Votre corbeille se remplira dès que le DG vous dispatchera un document.'}
+              ? 'Aucune affectation active dans aucune unité. Le parapheur se remplit dès qu\'un document est dispatché depuis le DG.'
+              : 'Aucune affectation active. Votre parapheur se remplira dès que le DG vous dispatchera un document.'}
           </div>
         ) : (
           <div className="overflow-x-auto border border-line bg-white">
@@ -234,7 +234,7 @@ export default async function UnitCorbeillePage() {
                       )}
                       <td className="px-4 py-3">
                         <Link
-                          href={`/unit/corbeille/${a.document.id}`}
+                          href={`/unit/parapheur/${a.document.id}`}
                           className="bg-cmgreen-800 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
                         >
                           Ouvrir →

@@ -152,7 +152,7 @@ export async function getOrComputeDispatchSuggestion(
       },
     });
 
-    revalidatePath(`/dg/corbeille/${documentId}`);
+    revalidatePath(`/dg/parapheur/${documentId}`);
     return {
       ok: true,
       data: result.data,

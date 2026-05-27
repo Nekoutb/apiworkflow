@@ -37,7 +37,7 @@ export default async function DashboardPage({
     role === 'CHEF_SERVICE_COURRIER' ||
     role === 'ADMIN';
   const isDg = role === 'DG' || role === 'DGA' || role === 'ADMIN';
-  // Unit corbeille (B11): visible to anyone who can receive a DG dispatch —
+  // Unit parapheur (B11): visible to anyone who can receive a DG dispatch —
   // i.e. anyone except pure DG/DGA. ADMIN sees a universal admin view.
   const isUnitMember = role !== 'DG' && role !== 'DGA';
   const roleFr = roleLabel(role);
@@ -89,9 +89,9 @@ export default async function DashboardPage({
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
           {isDg && (
-            <Link href="/dg/corbeille" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
+            <Link href="/dg/parapheur" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B7-B8 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Corbeille DG — Analyse & Dispatch</h3>
+              <h3 className="serif text-[19px] font-bold text-ink">Parapheur DG — Analyse & Dispatch</h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
                 Documents transmis par le Bureau Arrivée, triés du plus ancien au plus récent.
                 L&apos;IA propose une unité de l&apos;organigramme pour chaque dossier.
@@ -100,12 +100,12 @@ export default async function DashboardPage({
             </Link>
           )}
           {isUnitMember && (
-            <Link href="/unit/corbeille" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
+            <Link href="/unit/parapheur" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B11-B14 · Disponible</div>
               <h3 className="serif text-[19px] font-bold text-ink">
                 {isAdmin
-                  ? 'Corbeille universelle (vue admin)'
-                  : 'Corbeille de mon unité'}
+                  ? 'Parapheur universel (vue admin)'
+                  : 'Parapheur de mon unité'}
               </h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
                 {isAdmin
@@ -185,9 +185,9 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B4</strong> · Service du Courrier — Arrivée (enregistrement + OCR IA)</li>
             <li>✓ <strong className="not-italic">B5</strong> · Service du Courrier — Départ (composition + expédition)</li>
             <li>✓ <strong className="not-italic">B6</strong> · Service du Courrier — Archives (clôture + recherche)</li>
-            <li>✓ <strong className="not-italic">B7</strong> · Corbeille DG — analyse IA + suggestion d&apos;unité</li>
+            <li>✓ <strong className="not-italic">B7</strong> · Parapheur DG — analyse IA + suggestion d&apos;unité</li>
             <li>✓ <strong className="not-italic">B8</strong> · DG dispatcher — envoi vers l&apos;unité (Courrier transit)</li>
-            <li>✓ <strong className="not-italic">B11</strong> · Corbeille universelle des unités — prise en charge & renvoi au DG</li>
+            <li>✓ <strong className="not-italic">B11</strong> · Parapheur universel des unités — prise en charge & renvoi au DG</li>
             <li>✓ <strong className="not-italic">B12</strong> · Délégation interne — VERTICAL_DOWN + RETURN_UP (hiérarchie organigramme)</li>
             <li>✓ <strong className="not-italic">B13</strong> · Transferts horizontaux — co-avis entre pairs Directeurs (HORIZONTAL)</li>
             <li>✓ <strong className="not-italic">B14</strong> · Avis externe — Min. Finances, DGI, DGD, etc. (EXTERNAL_OUT/IN)</li>

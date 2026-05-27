@@ -243,7 +243,7 @@ export async function sendResponse(
 // ----------------------------------------------------------------------------
 // markDecidedForTesting — admin-only shortcut so B5 can be tested before
 // B7-B15 (DG decision flow) are built. Bumps a document from any non-terminal
-// status straight to DECIDED so it appears in Bureau Départ's corbeille.
+// status straight to DECIDED so it appears in Bureau Départ's parapheur.
 // Becomes irrelevant once the real DG decision step exists.
 // ----------------------------------------------------------------------------
 

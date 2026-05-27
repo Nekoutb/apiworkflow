@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  *   ADMIN                                → /dashboard
  *   DG / DGA                             → /dashboard (DG inbox arrives in B7)
  *   CHEF_BUREAU_ARRIVEE / DEPART / ARCH  → /dashboard (Courrier dashboards in B5-B6)
- *   any other staff role                 → /dashboard (corbeille rework in B9-B10)
+ *   any other staff role                 → /dashboard (parapheur rework in B9-B10)
  *   no recognised role                   → /login
  */
 export default async function PostLoginPage() {

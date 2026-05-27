@@ -13,7 +13,7 @@ import {
   type ReturnUpResult,
   type RequestCoAvisResult,
   type ReturnCoAvisResult,
-} from '@/lib/actions/unit-corbeille';
+} from '@/lib/actions/unit-parapheur';
 import {
   requestExternalAvis,
   recordExternalAvis,
@@ -180,7 +180,7 @@ export function UnitActions({
       <SuccessCard
         kind="returned-dg"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
       />
     );
   }
@@ -189,7 +189,7 @@ export function UnitActions({
       <SuccessCard
         kind="delegated"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
         targetLabel={delegateState.targetLabel ?? ''}
       />
     );
@@ -199,7 +199,7 @@ export function UnitActions({
       <SuccessCard
         kind="returned-up"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
         targetLabel={returnUpState.targetLabel ?? ''}
       />
     );
@@ -209,7 +209,7 @@ export function UnitActions({
       <SuccessCard
         kind="requested-coavis"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
         targetLabel={reqCoState.targetLabel ?? ''}
       />
     );
@@ -219,7 +219,7 @@ export function UnitActions({
       <SuccessCard
         kind="returned-coavis"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
         targetLabel={retCoState.targetLabel ?? ''}
       />
     );
@@ -229,7 +229,7 @@ export function UnitActions({
       <SuccessCard
         kind="requested-external"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
         targetLabel={reqExtState.recipientLabel ?? ''}
       />
     );
@@ -239,7 +239,7 @@ export function UnitActions({
       <SuccessCard
         kind="recorded-external"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
       />
     );
   }
@@ -248,7 +248,7 @@ export function UnitActions({
       <SuccessCard
         kind="cancelled-external"
         documentReference={documentReference}
-        backHref="/unit/corbeille"
+        backHref="/unit/parapheur"
       />
     );
   }
@@ -1376,7 +1376,7 @@ export function UnitActions({
         <p className="serif mt-2 text-[12.5px] italic text-ink-3">
           Si le DG s&apos;est trompé d&apos;unité ou si vous n&apos;êtes pas compétent pour
           ce dossier (et qu&apos;aucun de vos subordonnés ne l&apos;est non plus), vous
-          pouvez le renvoyer avec un motif. Le DG le retrouve dans sa corbeille et peut
+          pouvez le renvoyer avec un motif. Le DG le retrouve dans son parapheur et peut
           re-dispatcher.
         </p>
         <button
@@ -1425,7 +1425,7 @@ function SuccessCard({
           title: '✓ Document renvoyé au DG',
           headline: `${documentReference} retourné via le Service du Courrier`,
           body:
-            'Le DG le retrouvera dans sa corbeille (statut AWAITING_DG_ANALYSIS) avec votre ' +
+            'Le DG le retrouvera dans son parapheur (statut AWAITING_DG_ANALYSIS) avec votre ' +
             'motif visible dans les notes du dossier. Il pourra alors le re-dispatcher vers une ' +
             'autre unité.',
         }
@@ -1434,7 +1434,7 @@ function SuccessCard({
           title: '✓ Dossier délégué',
           headline: `${documentReference} transmis à ${targetLabel}`,
           body:
-            'La sous-unité destinataire le verra dans sa corbeille. Le dossier reste au statut ' +
+            'La sous-unité destinataire le verra dans son parapheur. Le dossier reste au statut ' +
             'IN_TREATMENT — votre département en garde la responsabilité collective jusqu\'au ' +
             'retour final au DG (B15).',
         }
@@ -1443,7 +1443,7 @@ function SuccessCard({
           title: '✓ Dossier renvoyé au supérieur',
           headline: `${documentReference} transmis à ${targetLabel}`,
           body:
-            'Votre supérieur le verra dans sa corbeille avec votre avis joint comme note interne. ' +
+            'Votre supérieur le verra dans son parapheur avec votre avis joint comme note interne. ' +
             'Le dossier reste au statut IN_TREATMENT.',
         }
       : kind === 'requested-coavis'
@@ -1453,14 +1453,14 @@ function SuccessCard({
           body:
             'Le pair Directeur a maintenant le dossier en main. Il pourra le traiter dans sa ' +
             'propre chaîne hiérarchique puis vous le renverra avec son co-avis attaché. Vous ' +
-            'le verrez réapparaître dans votre corbeille dès le retour.',
+            'le verrez réapparaître dans votre parapheur dès le retour.',
         }
       : kind === 'returned-coavis'
       ? {
           title: '✓ Co-avis retourné',
           headline: `${documentReference} renvoyé à ${targetLabel}`,
           body:
-            'Le Directeur qui vous avait sollicité retrouve le dossier dans sa corbeille avec ' +
+            'Le Directeur qui vous avait sollicité retrouve le dossier dans son parapheur avec ' +
             'votre co-avis joint comme note interne taggée. Le dossier reste au statut ' +
             'IN_TREATMENT — il poursuit son cycle dans le département d\'origine.',
         }
@@ -1503,7 +1503,7 @@ function SuccessCard({
           href={backHref}
           className="mt-4 inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white"
         >
-          ← Retour à ma corbeille
+          ← Retour à mon parapheur
         </a>
       </div>
     </div>

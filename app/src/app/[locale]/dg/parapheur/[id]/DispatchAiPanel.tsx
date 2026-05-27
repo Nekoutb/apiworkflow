@@ -323,21 +323,21 @@ function DispatchForm({
         </h3>
         <p className="serif mt-2 text-[12.5px] italic text-cmgreen-900/80">
           Le document a été transféré via le Service du Courrier vers l&apos;unité cible.
-          Il apparaît désormais dans la <strong>corbeille de cette unité</strong> (B11), où le chef
+          Il apparaît désormais dans le <strong>parapheur de cette unité</strong> (B11), où le chef
           d&apos;unité peut le prendre en charge ou le renvoyer.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <a
-            href="/dg/corbeille"
+            href="/dg/parapheur"
             className="inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white"
           >
-            ← Retour à la corbeille DG
+            ← Retour au parapheur DG
           </a>
           <a
-            href="/unit/corbeille"
+            href="/unit/parapheur"
             className="inline-block border border-cmgreen-800 bg-cmgreen-800 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-cmgreen-900"
           >
-            Voir la corbeille unité →
+            Voir le parapheur unité →
           </a>
         </div>
       </div>

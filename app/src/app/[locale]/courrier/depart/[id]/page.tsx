@@ -103,7 +103,7 @@ export default async function ComposeResponsePage({
             href="/courrier/depart"
             className="mt-6 inline-block border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
           >
-            ← Retour à la corbeille Bureau Départ
+            ← Retour au parapheur Bureau Départ
           </Link>
         </section>
       </main>

@@ -128,7 +128,7 @@ export default async function LandingPage({
               body={
                 locale === 'en'
                   ? 'Access your dashboard, inbox and active dossiers within your scope per the organisation chart.'
-                  : 'Accédez à votre tableau de bord, à votre corbeille et aux dossiers en cours dans votre périmètre selon l\'organigramme.'
+                  : 'Accédez à votre tableau de bord, à votre parapheur et aux dossiers en cours dans votre périmètre selon l\'organigramme.'
               }
               cta={`${t('staffLogin')} →`}
               accent

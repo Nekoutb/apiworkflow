@@ -17,7 +17,7 @@ import type { StaffRole } from '@prisma/client';
 //    - The status transitions in one move (AWAITING_DG_ANALYSIS → ASSIGNED)
 //      to keep the UX clean; the transit is metadata, not a separate state
 //    - An Assignment row is created on the target role (the receiving
-//      Direction's chef appears in their corbeille — B11)
+//      Direction's chef appears in their parapheur — B11)
 //
 //  Status transition:
 //    AWAITING_DG_ANALYSIS  →  ASSIGNED
@@ -106,7 +106,7 @@ export async function dispatchToUnit(
     if (!doc) return { error: 'Document introuvable.' };
     if (doc.status !== 'AWAITING_DG_ANALYSIS') {
       return {
-        error: `Statut inattendu : ${doc.status}. Seuls les documents au statut AWAITING_DG_ANALYSIS peuvent être dispatchés depuis la corbeille DG.`,
+        error: `Statut inattendu : ${doc.status}. Seuls les documents au statut AWAITING_DG_ANALYSIS peuvent être dispatchés depuis le parapheur DG.`,
       };
     }
 
@@ -134,7 +134,7 @@ export async function dispatchToUnit(
         },
       });
 
-      // 2. The Assignment row — surfaces the doc in the target unit's corbeille (B11)
+      // 2. The Assignment row — surfaces the doc in the target unit's parapheur (B11)
       await tx.assignment.create({
         data: {
           documentId: doc.id,
@@ -169,12 +169,12 @@ export async function dispatchToUnit(
       });
     });
 
-    revalidatePath('/dg/corbeille');
-    revalidatePath(`/dg/corbeille/${doc.id}`);
+    revalidatePath('/dg/parapheur');
+    revalidatePath(`/dg/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
-    // The receiving unit's corbeille — even though B11 (per-direction corbeille)
+    // The receiving unit's parapheur (B11 — per-direction parapheur)
     // doesn't exist yet, this is the future revalidation target.
-    revalidatePath('/unit/corbeille');
+    revalidatePath('/unit/parapheur');
 
     return { ok: true, targetRole, targetLabel };
   } catch (e) {

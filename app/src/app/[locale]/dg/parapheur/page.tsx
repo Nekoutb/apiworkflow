@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 
-export const metadata = { title: 'Corbeille DG · API Cameroun' };
+export const metadata = { title: 'Parapheur DG · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 const ALLOWED: StaffRole[] = ['DG', 'DGA', 'ADMIN'];
@@ -20,7 +20,7 @@ const NATURE_SHORT: Record<string, string> = {
   OTHER: 'Autre',
 };
 
-export default async function DgCorbeillePage() {
+export default async function DgParapheurPage() {
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
@@ -74,7 +74,7 @@ export default async function DgCorbeillePage() {
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
         Portail interne <span className="mx-3 text-gold-500">⚜</span>
         Direction Générale <span className="mx-3 text-gold-500">⚜</span>
-        Corbeille
+        Parapheur
       </div>
 
       <header className="border-b border-line bg-white">
@@ -92,7 +92,7 @@ export default async function DgCorbeillePage() {
               Portail interne · Direction Générale
             </div>
             <div className="serif text-[17px] font-bold text-ink">
-              Corbeille DG — Analyse & Dispatch
+              Parapheur DG — Analyse & Dispatch
             </div>
           </div>
           <div className="ml-auto text-right leading-tight">
@@ -125,7 +125,7 @@ export default async function DgCorbeillePage() {
 
         {pending.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            Aucun document en attente. La corbeille se remplit dès qu&apos;un courrier est enregistré
+            Aucun document en attente. Le parapheur se remplit dès qu&apos;un courrier est enregistré
             au Bureau Arrivée.
           </div>
         ) : (
@@ -188,7 +188,7 @@ export default async function DgCorbeillePage() {
                       </td>
                       <td className="px-4 py-3">
                         <Link
-                          href={`/dg/corbeille/${d.id}`}
+                          href={`/dg/parapheur/${d.id}`}
                           className="bg-cmgreen-800 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
                         >
                           Ouvrir →

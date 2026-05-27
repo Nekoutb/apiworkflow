@@ -9,7 +9,7 @@ import { UnitActions } from './UnitActions';
 
 const ALL_STAFF_ROLES: StaffRole[] = ROLES.map((r) => r.role);
 
-export const metadata = { title: 'Document · Corbeille de l\'unité · API Cameroun' };
+export const metadata = { title: 'Document · Parapheur de l\'unité · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 const FORBIDDEN: StaffRole[] = ['DG', 'DGA'];
@@ -136,10 +136,10 @@ export default async function UnitDocumentDetailPage({
             </p>
           </div>
           <Link
-            href="/unit/corbeille"
+            href="/unit/parapheur"
             className="mt-6 inline-block border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
           >
-            ← Retour à ma corbeille
+            ← Retour à mon parapheur
           </Link>
         </section>
       </main>
@@ -162,10 +162,10 @@ export default async function UnitDocumentDetailPage({
 
       <section className="mx-auto max-w-7xl px-7 py-8">
         <Link
-          href="/unit/corbeille"
+          href="/unit/parapheur"
           className="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
         >
-          ← Ma corbeille
+          ← Mon parapheur
         </Link>
 
         <div className="flex flex-wrap items-baseline gap-3">
@@ -348,11 +348,11 @@ export default async function UnitDocumentDetailPage({
                     Statut : {doc.status}
                   </h3>
                   <p className="serif mt-2 text-[12.5px] italic text-ink-3">
-                    Les actions de la corbeille ne sont disponibles que sur les documents au statut{' '}
+                    Les actions du parapheur ne sont disponibles que sur les documents au statut{' '}
                     <strong>ASSIGNED</strong> ou <strong>IN_TREATMENT</strong>.
                   </p>
                   <Link
-                    href="/unit/corbeille"
+                    href="/unit/parapheur"
                     className="mt-4 inline-block border border-line-2 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
                   >
                     ← Retour

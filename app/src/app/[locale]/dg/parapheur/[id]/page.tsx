@@ -92,15 +92,15 @@ export default async function DgDocumentDetailPage({
             </h1>
             <p className="serif mt-2 text-[13.5px] italic text-ink-3">
               Seuls les documents au statut <strong>AWAITING_DG_ANALYSIS</strong> apparaissent
-              dans la corbeille DG. Ce document est actuellement au statut{' '}
+              dans le parapheur DG. Ce document est actuellement au statut{' '}
               <code className="font-mono">{doc.status}</code>.
             </p>
           </div>
           <Link
-            href="/dg/corbeille"
+            href="/dg/parapheur"
             className="mt-6 inline-block border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
           >
-            ← Retour à la corbeille DG
+            ← Retour au parapheur DG
           </Link>
         </section>
       </main>
@@ -115,10 +115,10 @@ export default async function DgDocumentDetailPage({
 
       <section className="mx-auto max-w-7xl px-7 py-8">
         <Link
-          href="/dg/corbeille"
+          href="/dg/parapheur"
           className="mb-4 inline-block text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
         >
-          ← Corbeille DG
+          ← Parapheur DG
         </Link>
 
         <div className="flex items-baseline gap-4">

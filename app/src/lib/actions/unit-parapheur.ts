@@ -9,7 +9,7 @@ import { coAvisReturnTarget, isDirectorPeer } from '@/lib/co-avis';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
-//  Server actions for /unit/corbeille (B11)
+//  Server actions for /unit/parapheur (B11)
 //
 //  Two actions per assignment:
 //    1. markInTreatment  →  ASSIGNED → IN_TREATMENT
@@ -22,10 +22,10 @@ import type { StaffRole } from '@prisma/client';
 //                           or they can't / shouldn't handle it.
 //                           Creates a RETURN_TO_DG Handoff (transit via Courrier
 //                           per B14.5) and marks the Assignment as RETURNED.
-//                           DG re-opens the doc in their corbeille and re-routes.
+//                           DG re-opens the doc in their parapheur and re-routes.
 //
 //  Role gating:
-//    - DG / DGA cannot use these (they have /dg/corbeille).
+//    - DG / DGA cannot use these (they have /dg/parapheur).
 //    - ADMIN is allowed for testing — acts "on behalf of" the assigned role
 //      for the specific document.
 //    - Any other StaffRole may use the actions only on documents assigned to
@@ -124,13 +124,13 @@ export async function markInTreatment(documentId: string): Promise<MarkInTreatme
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${documentId}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${documentId}`);
     revalidatePath('/admin/data');
     return { ok: true };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[markInTreatment]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -221,7 +221,7 @@ export async function returnToDg(
         },
       });
 
-      // 3. Add a Comment with the unit's reason (visible to DG in /dg/corbeille/[id])
+      // 3. Add a Comment with the unit's reason (visible to DG in /dg/parapheur/[id])
       await tx.comment.create({
         data: {
           documentId,
@@ -243,15 +243,15 @@ export async function returnToDg(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${documentId}`);
-    revalidatePath('/dg/corbeille');
-    revalidatePath(`/dg/corbeille/${documentId}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${documentId}`);
+    revalidatePath('/dg/parapheur');
+    revalidatePath(`/dg/parapheur/${documentId}`);
     revalidatePath('/admin/data');
     return { ok: true };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[returnToDg]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -423,13 +423,13 @@ export async function delegateDown(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true, targetRole, targetLabel };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[delegateDown]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -568,13 +568,13 @@ export async function returnUp(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true, targetRole: parentRole, targetLabel };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[returnUp]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -761,13 +761,13 @@ export async function requestCoAvis(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true, targetRole, targetLabel };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[requestCoAvis]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
@@ -912,13 +912,13 @@ export async function returnCoAvis(
       });
     });
 
-    revalidatePath('/unit/corbeille');
-    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/unit/parapheur');
+    revalidatePath(`/unit/parapheur/${doc.id}`);
     revalidatePath('/admin/data');
     return { ok: true, targetRole: target, targetLabel };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+      return { error: 'Vous n\'avez pas accès au parapheur d\'unité.' };
     }
     console.error('[returnCoAvis]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };

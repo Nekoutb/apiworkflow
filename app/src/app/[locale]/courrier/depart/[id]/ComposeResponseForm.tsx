@@ -37,7 +37,7 @@ export function ComposeResponseForm({
   const [fileName, setFileName] = useState('');
   const [cover, setCover] = useState(DEFAULT_COVER_LETTER);
 
-  // After successful send, kick the user back to the corbeille
+  // After successful send, kick the user back to the parapheur
   useEffect(() => {
     if (state.ok) {
       const t = setTimeout(() => router.push('/courrier/depart'), 1800);
@@ -76,7 +76,7 @@ export function ComposeResponseForm({
                 {state.reference}
               </div>
               <p className="serif mt-1 text-[11.5px] italic text-cmgreen-900/80">
-                Redirection vers la corbeille…
+                Redirection vers le parapheur…
               </p>
             </div>
           )}
