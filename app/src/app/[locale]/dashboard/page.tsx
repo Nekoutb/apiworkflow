@@ -101,7 +101,7 @@ export default async function DashboardPage({
           )}
           {isUnitMember && (
             <Link href="/unit/corbeille" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B11 · Disponible</div>
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B11-B12 · Disponible</div>
               <h3 className="serif text-[19px] font-bold text-ink">
                 {isAdmin
                   ? 'Corbeille universelle (vue admin)'
@@ -109,8 +109,8 @@ export default async function DashboardPage({
               </h3>
               <p className="serif mt-2 text-[13px] italic text-ink-3">
                 {isAdmin
-                  ? 'Toutes les affectations actives dans toutes les unités — surveillance admin du workflow post-dispatch DG.'
-                  : `Documents dispatchés par le DG vers votre unité (${roleFr}). Prenez en charge ou renvoyez au DG si l'affectation n'est pas pour vous.`}
+                  ? 'Toutes les affectations actives dans toutes les unités — surveillance admin du workflow post-dispatch DG et de la délégation hiérarchique interne.'
+                  : `Documents dispatchés par le DG vers votre unité (${roleFr}). Prenez en charge, déléguez à une sous-unité, ou renvoyez à votre supérieur / au DG selon l'organigramme.`}
               </p>
               <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
             </Link>
@@ -188,7 +188,10 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B7</strong> · Corbeille DG — analyse IA + suggestion d&apos;unité</li>
             <li>✓ <strong className="not-italic">B8</strong> · DG dispatcher — envoi vers l&apos;unité (Courrier transit)</li>
             <li>✓ <strong className="not-italic">B11</strong> · Corbeille universelle des unités — prise en charge & renvoi au DG</li>
-            <li>⬜ <strong className="not-italic">B12-B15</strong> · Workspace traitement universel (avis, brouillon, renvoi DG après traitement)</li>
+            <li>✓ <strong className="not-italic">B12</strong> · Délégation interne — VERTICAL_DOWN + RETURN_UP (hiérarchie organigramme)</li>
+            <li>⬜ <strong className="not-italic">B13</strong> · Transferts horizontaux entre directeurs (co-avis)</li>
+            <li>⬜ <strong className="not-italic">B14</strong> · Avis externe (Min. Finances, DGI, DGD…)</li>
+            <li>⬜ <strong className="not-italic">B15</strong> · Renvoi final au DG après traitement (avec avis compilé)</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
           </ul>
         </div>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { roleLabel, roleMeta } from '@/lib/roles';
+import { roleLabel, roleMeta, roleChildren, roleParent } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 import { UnitActions } from './UnitActions';
 
@@ -285,7 +285,16 @@ export default async function UnitDocumentDetailPage({
                 documentId={doc.id}
                 documentReference={doc.reference}
                 currentStatus={doc.status}
+                effectiveRole={effectiveRoleForActions}
                 effectiveRoleLabel={roleLabel(effectiveRoleForActions)}
+                childrenRoles={roleChildren(effectiveRoleForActions)}
+                parentRole={(() => {
+                  const p = roleParent(effectiveRoleForActions);
+                  // Hide the "Renvoyer au supérieur" path when the parent is DG/DGA —
+                  // that's the "Renvoyer au DG" button instead.
+                  if (!p || p === 'DG' || p === 'DGA') return null;
+                  return p;
+                })()}
               />
             ) : (
               <div className="lg:sticky lg:top-6 lg:self-start">

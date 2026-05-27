@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
-import { roleLabel } from '@/lib/roles';
+import { roleLabel, roleChildren, roleParent, isStaffRole } from '@/lib/roles';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -253,6 +253,329 @@ export async function returnToDg(
       return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
     }
     console.error('[returnToDg]', e);
+    return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
+  }
+}
+
+// ============================================================================
+//  B12 — Intra-department workflow
+//
+//  Two more actions that keep the document inside the same department,
+//  moving along the organigramme hierarchy.
+//
+//    delegateDown  → VERTICAL_DOWN (Directeur → Sous-dir → Service)
+//                    Target MUST be a direct child of the caller's role
+//                    (roleChildren check). Document stays IN_TREATMENT,
+//                    currentHolderRole updates, current Assignment is
+//                    marked SUPERSEDED and a new ACTIVE one is created
+//                    on the target.
+//
+//    returnUp      → RETURN_UP   (Service → Sous-dir → Directeur)
+//                    Target = roleParent(caller). Refuses to fire if the
+//                    parent is DG / DGA — that path is "Renvoyer au DG
+//                    après traitement" (B15) or the existing refusal-style
+//                    "Renvoyer au DG" (B11), not this one.
+//
+//  Both actions reuse the same auth + assignment lookup helpers from above,
+//  including the ADMIN-acts-on-behalf-of-assigned-role pattern.
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+//  delegateDown
+// ----------------------------------------------------------------------------
+
+export type DelegateDownResult = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  targetRole?: StaffRole;
+  targetLabel?: string;
+};
+
+const DelegateSchema = z.object({
+  documentId: z.string().min(1),
+  targetRole: z.string().refine(isStaffRole, 'Rôle cible invalide.'),
+  message:    z.string().max(2000).optional().nullable(),
+});
+
+export async function delegateDown(
+  _prev: DelegateDownResult,
+  formData: FormData,
+): Promise<DelegateDownResult> {
+  try {
+    const { id: userId, role } = await assertUnitMember();
+
+    const parsed = DelegateSchema.safeParse({
+      documentId: formData.get('documentId'),
+      targetRole: formData.get('targetRole'),
+      message:    formData.get('message') || null,
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path.join('.');
+        if (!fieldErrors[k]) fieldErrors[k] = issue.message;
+      }
+      return { fieldErrors };
+    }
+
+    const targetRole = parsed.data.targetRole as StaffRole;
+    if (FORBIDDEN.includes(targetRole) || targetRole === 'ADMIN') {
+      return {
+        fieldErrors: {
+          targetRole:
+            'Cible non autorisée (DG, DGA et ADMIN ne reçoivent pas de délégation interne).',
+        },
+      };
+    }
+
+    const doc = await db.document.findUnique({
+      where: { id: parsed.data.documentId },
+      select: { id: true, status: true, reference: true },
+    });
+    if (!doc) return { error: 'Document introuvable.' };
+
+    const assignment = await findActiveAssignment(doc.id, role);
+    if (!assignment) {
+      return { error: 'Aucune affectation active pour votre rôle sur ce document.' };
+    }
+
+    if (doc.status !== 'ASSIGNED' && doc.status !== 'IN_TREATMENT') {
+      return {
+        error:
+          `Statut inattendu : ${doc.status}. La délégation interne n'est possible ` +
+          `que sur les documents ASSIGNED ou IN_TREATMENT.`,
+      };
+    }
+
+    const effectiveRole = role === 'ADMIN' ? assignment.assignedToRole : role;
+
+    // Organigramme constraint — target must be a direct child of the caller
+    const children = roleChildren(effectiveRole);
+    if (!children.includes(targetRole)) {
+      return {
+        fieldErrors: {
+          targetRole:
+            `${roleLabel(targetRole)} n'est pas un subordonné direct de ` +
+            `${roleLabel(effectiveRole)} dans l'organigramme.`,
+        },
+      };
+    }
+
+    const now = new Date();
+    const targetLabel = roleLabel(targetRole);
+    const fromLabel = roleLabel(effectiveRole);
+
+    await db.$transaction(async (tx) => {
+      // 1. Mark current Assignment as SUPERSEDED
+      await tx.assignment.update({
+        where: { id: assignment.id },
+        data: { status: 'SUPERSEDED', completedAt: now },
+      });
+
+      // 2. New ACTIVE Assignment on the target child
+      await tx.assignment.create({
+        data: {
+          documentId: doc.id,
+          assignedToRole: targetRole,
+          assignedByUserId: userId,
+          assignedAt: now,
+          instructions: parsed.data.message?.trim() || null,
+          status: 'ACTIVE',
+        },
+      });
+
+      // 3. VERTICAL_DOWN handoff
+      await tx.handoff.create({
+        data: {
+          documentId: doc.id,
+          type: 'VERTICAL_DOWN',
+          fromRole: effectiveRole,
+          fromUserId: userId,
+          toRole: targetRole,
+          reason:
+            `${fromLabel} délègue le dossier à ${targetLabel} ` +
+            `(subordonné direct dans l'organigramme).`,
+        },
+      });
+
+      // 4. Optional message → Comment
+      if (parsed.data.message && parsed.data.message.trim().length > 0) {
+        await tx.comment.create({
+          data: {
+            documentId: doc.id,
+            authorUserId: userId,
+            authorRole: effectiveRole,
+            body: `[Délégation interne → ${targetLabel}]\n\n${parsed.data.message.trim()}`,
+          },
+        });
+      }
+
+      // 5. Document — handed to child, status stays/becomes IN_TREATMENT
+      await tx.document.update({
+        where: { id: doc.id },
+        data: {
+          status: 'IN_TREATMENT',
+          currentHolderRole: targetRole,
+          currentHolderUserId: null, // not yet "taken" by an individual subordinate
+        },
+      });
+    });
+
+    revalidatePath('/unit/corbeille');
+    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/admin/data');
+    return { ok: true, targetRole, targetLabel };
+  } catch (e) {
+    if (e instanceof Error && e.message === 'UNAUTHORIZED') {
+      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+    }
+    console.error('[delegateDown]', e);
+    return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
+  }
+}
+
+// ----------------------------------------------------------------------------
+//  returnUp
+// ----------------------------------------------------------------------------
+
+export type ReturnUpResult = {
+  ok?: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+  targetRole?: StaffRole;
+  targetLabel?: string;
+};
+
+const ReturnUpSchema = z.object({
+  documentId: z.string().min(1),
+  message:    z.string().max(2000).optional().nullable(),
+});
+
+export async function returnUp(
+  _prev: ReturnUpResult,
+  formData: FormData,
+): Promise<ReturnUpResult> {
+  try {
+    const { id: userId, role } = await assertUnitMember();
+
+    const parsed = ReturnUpSchema.safeParse({
+      documentId: formData.get('documentId'),
+      message:    formData.get('message') || null,
+    });
+    if (!parsed.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const k = issue.path.join('.');
+        if (!fieldErrors[k]) fieldErrors[k] = issue.message;
+      }
+      return { fieldErrors };
+    }
+
+    const doc = await db.document.findUnique({
+      where: { id: parsed.data.documentId },
+      select: { id: true, status: true, reference: true },
+    });
+    if (!doc) return { error: 'Document introuvable.' };
+
+    const assignment = await findActiveAssignment(doc.id, role);
+    if (!assignment) {
+      return { error: 'Aucune affectation active pour votre rôle sur ce document.' };
+    }
+
+    if (doc.status !== 'ASSIGNED' && doc.status !== 'IN_TREATMENT') {
+      return {
+        error:
+          `Statut inattendu : ${doc.status}. Le renvoi au supérieur n'est possible ` +
+          `que sur les documents ASSIGNED ou IN_TREATMENT.`,
+      };
+    }
+
+    const effectiveRole = role === 'ADMIN' ? assignment.assignedToRole : role;
+    const parentRole = roleParent(effectiveRole);
+
+    if (!parentRole) {
+      return {
+        error: `${roleLabel(effectiveRole)} n'a pas de supérieur direct dans l'organigramme.`,
+      };
+    }
+    if (parentRole === 'DG' || parentRole === 'DGA') {
+      return {
+        error:
+          'Pour renvoyer au DG, utilisez le bouton « Renvoyer au DG ». ' +
+          'Le renvoi au supérieur direct est réservé aux niveaux Service → Sous-Direction → Direction.',
+      };
+    }
+
+    const now = new Date();
+    const fromLabel = roleLabel(effectiveRole);
+    const targetLabel = roleLabel(parentRole);
+
+    await db.$transaction(async (tx) => {
+      // 1. Mark current Assignment as SUPERSEDED
+      await tx.assignment.update({
+        where: { id: assignment.id },
+        data: { status: 'SUPERSEDED', completedAt: now },
+      });
+
+      // 2. New ACTIVE Assignment on parent
+      await tx.assignment.create({
+        data: {
+          documentId: doc.id,
+          assignedToRole: parentRole,
+          assignedByUserId: userId,
+          assignedAt: now,
+          instructions: parsed.data.message?.trim() || null,
+          status: 'ACTIVE',
+        },
+      });
+
+      // 3. RETURN_UP handoff
+      await tx.handoff.create({
+        data: {
+          documentId: doc.id,
+          type: 'RETURN_UP',
+          fromRole: effectiveRole,
+          fromUserId: userId,
+          toRole: parentRole,
+          reason:
+            `${fromLabel} renvoie le dossier à ${targetLabel} ` +
+            `(supérieur hiérarchique direct).`,
+        },
+      });
+
+      // 4. Optional message → Comment (the avis from the subordinate)
+      if (parsed.data.message && parsed.data.message.trim().length > 0) {
+        await tx.comment.create({
+          data: {
+            documentId: doc.id,
+            authorUserId: userId,
+            authorRole: effectiveRole,
+            body: `[Renvoi au supérieur → ${targetLabel}]\n\n${parsed.data.message.trim()}`,
+          },
+        });
+      }
+
+      // 5. Document — handed to parent, status stays IN_TREATMENT
+      await tx.document.update({
+        where: { id: doc.id },
+        data: {
+          status: 'IN_TREATMENT',
+          currentHolderRole: parentRole,
+          currentHolderUserId: null,
+        },
+      });
+    });
+
+    revalidatePath('/unit/corbeille');
+    revalidatePath(`/unit/corbeille/${doc.id}`);
+    revalidatePath('/admin/data');
+    return { ok: true, targetRole: parentRole, targetLabel };
+  } catch (e) {
+    if (e instanceof Error && e.message === 'UNAUTHORIZED') {
+      return { error: 'Vous n\'avez pas accès à la corbeille d\'unité.' };
+    }
+    console.error('[returnUp]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };
   }
 }
