@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel, roleChildren, roleParent, isStaffRole } from '@/lib/roles';
 import { coAvisReturnTarget, isDirectorPeer } from '@/lib/co-avis';
+import { notifyRole, notifyUser } from '@/lib/notify';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -980,7 +981,7 @@ export async function submitToDgForDecision(
 
     const doc = await db.document.findUnique({
       where: { id: parsed.data.documentId },
-      select: { id: true, status: true, reference: true },
+      select: { id: true, status: true, reference: true, subject: true },
     });
     if (!doc) return { error: 'Document introuvable.' };
 
@@ -1054,6 +1055,23 @@ export async function submitToDgForDecision(
           currentHolderRole: 'DG',
           currentHolderUserId: null,
         },
+      });
+
+      // 5. Notify DG users + Secretariat DG (so secretariat sees it on dashboard)
+      await notifyRole(tx, 'DG', {
+        documentId: doc.id,
+        kind: 'DOCUMENT_TO_DG',
+        title: `Dossier soumis pour décision : ${doc.reference}`,
+        body: `${fromLabel} a soumis « ${doc.subject.slice(0, 120)}${doc.subject.length > 120 ? '…' : ''} » pour votre décision finale.`,
+        link: `/dg/parapheur/${doc.id}`,
+        excludeUserId: userId,
+      });
+      await notifyRole(tx, 'SECRETARIAT_DG', {
+        documentId: doc.id,
+        kind: 'DOCUMENT_TO_DG',
+        title: `Nouveau dossier au DG pour décision : ${doc.reference}`,
+        body: `Soumis par ${fromLabel}. À surveiller pour le SLA 72h.`,
+        link: `/secretariat`,
       });
     });
 

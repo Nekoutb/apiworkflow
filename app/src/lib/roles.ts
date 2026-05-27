@@ -67,6 +67,7 @@ export const ROLES: RoleMeta[] = [
   // --- Auprès du DG
   { role: 'ATTACHE',          group: 'AUPRES_DG', fr: 'Attaché',           en: 'Attaché',            shortFr: 'Attaché',          article: 'Art. 3', parent: 'DG' },
   { role: 'AUDITEUR_INTERNE', group: 'AUPRES_DG', fr: 'Auditeur Interne',  en: 'Internal Auditor',   shortFr: 'Auditeur Interne', article: 'Art. 4', parent: 'DG' },
+  { role: 'SECRETARIAT_DG',   group: 'AUPRES_DG', fr: 'Secrétariat du DG', en: 'DG Secretariat',     shortFr: 'Secrétariat DG',   article: '—',      parent: 'DG' },
 
   // --- Sous-direction Communication
   { role: 'CHEF_SOUSDIR_COMM', group: 'SD_COMMUNICATION', fr: 'Sous-directeur de la Communication & RP', en: 'Head of Communications & PR Sub-Dept', shortFr: 'SD Communication', article: 'Art. 5', parent: 'DG' },

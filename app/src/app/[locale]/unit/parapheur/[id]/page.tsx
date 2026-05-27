@@ -6,6 +6,7 @@ import { roleLabel, roleMeta, roleChildren, roleParent, ROLES } from '@/lib/role
 import { coAvisReturnTarget, directorPeers, isDirectorPeer } from '@/lib/co-avis';
 import type { StaffRole } from '@prisma/client';
 import { UnitActions } from './UnitActions';
+import { NotificationBell } from '@/components/NotificationBell';
 
 const ALL_STAFF_ROLES: StaffRole[] = ROLES.map((r) => r.role);
 
@@ -398,12 +399,15 @@ function UnitBar({
             </div>
             <div className="serif text-[17px] font-bold text-ink">Document affecté à mon unité</div>
           </div>
-          <div className="ml-auto text-right leading-tight">
-            <div className="text-[13px] font-semibold text-ink">
-              {session.name ?? session.email}
-            </div>
-            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
-              {roleLabel(role)}
+          <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
+            <div className="text-right leading-tight">
+              <div className="text-[13px] font-semibold text-ink">
+                {session.name ?? session.email}
+              </div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
+                {roleLabel(role)}
+              </div>
             </div>
           </div>
         </div>

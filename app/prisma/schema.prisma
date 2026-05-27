@@ -75,6 +75,7 @@ enum StaffRole {
   // --- Auprès du DG
   ATTACHE                  // Art. 3
   AUDITEUR_INTERNE         // Art. 4
+  SECRETARIAT_DG           // Secrétariat du DG — monitoring + reminders (B16)
 
   // --- Sous-direction Communication (Art. 5-7)
   CHEF_SOUSDIR_COMM
@@ -551,6 +552,7 @@ enum NotificationKind {
   RESPONSE_SENT          // pour DG quand expédié
   ACK_SENT               // pour Bureau Arrivée
   COMMENT_ADDED          // pour hiérarchie + destinataire
+  REMINDER_NUDGE         // pour détenteur — rappel envoyé par Secrétariat DG ou Courrier (B16)
 }
 
 // ---------------------------------------------------------

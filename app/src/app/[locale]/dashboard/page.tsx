@@ -4,6 +4,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { NotificationBell } from '@/components/NotificationBell';
 import { isStaffRole, roleLabel } from '@/lib/roles';
 
 export const metadata = { title: 'Tableau de bord · API Cameroun' };
@@ -40,6 +41,12 @@ export default async function DashboardPage({
   // Unit parapheur (B11): visible to anyone who can receive a DG dispatch —
   // i.e. anyone except pure DG/DGA. ADMIN sees a universal admin view.
   const isUnitMember = role !== 'DG' && role !== 'DGA';
+  // Secretariat monitoring dashboard (B16): SECRETARIAT_DG + CHEF_SERVICE_COURRIER
+  // + ADMIN. Per spec, the same view is available to Service du Courrier.
+  const isSecretariatMonitor =
+    role === 'SECRETARIAT_DG' ||
+    role === 'CHEF_SERVICE_COURRIER' ||
+    role === 'ADMIN';
   const roleFr = roleLabel(role);
 
   return (
@@ -65,7 +72,8 @@ export default async function DashboardPage({
               <Link href="/admin/data" className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink">Données</Link>
             </nav>
           )}
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
             <div className="text-right leading-tight">
               <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
               <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
@@ -148,6 +156,20 @@ export default async function DashboardPage({
               <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
             </Link>
           )}
+          {isSecretariatMonitor && (
+            <Link href="/secretariat" className="group border-2 border-cmred bg-white p-6 transition hover:shadow-lift">
+              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmred">✓ B16 · Disponible</div>
+              <h3 className="serif text-[19px] font-bold text-ink">
+                Monitoring DG — SLA 72h & rappels
+              </h3>
+              <p className="serif mt-2 text-[13px] italic text-ink-3">
+                Surveillance des dossiers entre les mains du DG et de ceux dispatchés aux
+                départements. Indicateurs SLA 72h, alertes de dépassement, bouton de rappel
+                vers le détenteur courant.
+              </p>
+              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmred">Ouvrir →</div>
+            </Link>
+          )}
           {isAdmin && (
             <Link href="/admin/users" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
               <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B2 · Disponible</div>
@@ -192,6 +214,8 @@ export default async function DashboardPage({
             <li>✓ <strong className="not-italic">B13</strong> · Transferts horizontaux — co-avis entre pairs Directeurs (HORIZONTAL)</li>
             <li>✓ <strong className="not-italic">B14</strong> · Avis externe — Min. Finances, DGI, DGD, etc. (EXTERNAL_OUT/IN)</li>
             <li>✓ <strong className="not-italic">B15</strong> · Renvoi final au DG après traitement — décision (approuvé / rejeté) → Bureau Départ</li>
+            <li>✓ <strong className="not-italic">B16</strong> · Secrétariat DG — monitoring SLA 72h + rappels (vue aussi à Service Courrier)</li>
+            <li>✓ <strong className="not-italic">B17</strong> · Notification bell — alertes unifiées · auto-notifs sur dispatch / submit / decide / external / reminder</li>
             <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
           </ul>
         </div>

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel } from '@/lib/roles';
+import { notifyRole } from '@/lib/notify';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -135,6 +136,16 @@ export async function dgDecide(
           currentHolderRole: 'CHEF_BUREAU_DEPART',
           currentHolderUserId: null,
         },
+      });
+
+      // 4. Notify Bureau Départ (they need to compose the response now)
+      await notifyRole(tx, 'CHEF_BUREAU_DEPART', {
+        documentId: doc.id,
+        kind: 'DG_DECISION_MADE',
+        title: `Décision DG · ${decisionLabelFr} : ${doc.reference}`,
+        body: `${dgLabel} a tranché. Composez la lettre de réponse et expédiez à l'émetteur.`,
+        link: `/courrier/depart/${doc.id}`,
+        excludeUserId: userId,
       });
     });
 

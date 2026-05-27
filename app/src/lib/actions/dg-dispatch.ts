@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { isStaffRole, roleLabel } from '@/lib/roles';
+import { notifyRole } from '@/lib/notify';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -166,6 +167,16 @@ export async function dispatchToUnit(
           dispatchedAt: now,
           currentHolderRole: targetRole,
         },
+      });
+
+      // 5. Notify all active users with the target role (B17)
+      await notifyRole(tx, targetRole, {
+        documentId: doc.id,
+        kind: 'DOCUMENT_ASSIGNED',
+        title: `Nouveau dossier dispatché par le DG : ${doc.reference}`,
+        body: `${dispatcher} vous a dispatché « ${doc.subject.slice(0, 120)}${doc.subject.length > 120 ? '…' : ''} ».`,
+        link: `/unit/parapheur/${doc.id}`,
+        excludeUserId: userId,
       });
     });
 
