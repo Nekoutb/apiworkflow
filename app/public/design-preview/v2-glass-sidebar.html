@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>V2 · Glass Console — API Cameroun</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --navy:#12304f; --blue:#2f72b8; --blue-bright:#4f97d8; --blue-soft:#dce9f6;
@@ -22,6 +25,10 @@
       radial-gradient(45rem 35rem at 5% 100%, rgba(47,114,184,.12), transparent 55%),
       linear-gradient(160deg,#eef3f9,#e6eef7 60%,#eaf0f7);
     background-attachment:fixed;min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  /* B · Lexend on headings, Inter on body */
+  .hello,.login-card h1,.panel h2,.stat .n,.side .brand .t2,.section-label{
+    font-family:'Lexend','Inter',sans-serif;
   }
   .section-label{text-align:center;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);padding:34px 0 6px}
   .section-sub{text-align:center;color:var(--grey-500);font-size:13px;margin-bottom:22px}
@@ -98,7 +105,7 @@
 </style>
 </head>
 <body>
-  <div class="section-label">V2 · Glass Console</div>
+  <div class="section-label">V2 · Glass Console · police Lexend + Inter (B)</div>
   <div class="section-sub">Barre latérale en verre teinté navy · espace de travail type console d'administration (Vercel / Linear)</div>
 
   <!-- LOGIN -->

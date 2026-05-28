@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typographie — pairings professionnels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&family=Lexend:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Source+Sans+3:wght@400;600;700&family=Public+Sans:wght@400;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#16365a;--blue:#2f72b8;--blue-bright:#4f97d8;--blue-soft:#dce9f6;
+    --ink:#1f2a37;--grey-500:#6b7685;--grey-400:#94a0b1;--grey-200:#dfe5ec;
+    --flag-g:#0a8a3e;--flag-y:#f4c20d;--flag-r:#c8102e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,sans-serif;color:var(--ink);background:linear-gradient(170deg,#f4f7fb,#eaf0f7);min-height:100vh;-webkit-font-smoothing:antialiased}
+  header{text-align:center;padding:40px 20px 10px;max-width:760px;margin:0 auto}
+  header h1{font-family:'Source Serif 4',serif;font-size:30px;font-weight:700;color:var(--navy);letter-spacing:-.5px}
+  header p{color:var(--grey-500);font-size:14px;margin-top:10px;line-height:1.6}
+  .rec{display:inline-block;margin-top:14px;background:var(--blue-soft);color:var(--blue);font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px}
+  .grid{max-width:1000px;margin:24px auto 60px;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .card{background:rgba(255,255,255,.72);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.8);border-radius:16px;box-shadow:0 1px 2px rgba(22,54,90,.05),0 14px 34px rgba(22,54,90,.1);padding:26px;display:flex;flex-direction:column}
+  .card .meta{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--grey-200);padding-bottom:12px;margin-bottom:18px}
+  .card .meta .name{font-size:13px;font-weight:700;color:var(--navy)}
+  .card .meta .ref{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);background:var(--blue-soft);padding:4px 9px;border-radius:999px}
+  .eyebrow{font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--flag-g);margin-bottom:8px}
+  .headline{font-size:27px;line-height:1.12;letter-spacing:-.5px;color:var(--navy);margin-bottom:12px;font-weight:700}
+  .body{font-size:14px;line-height:1.65;color:#46505f;margin-bottom:18px}
+  .ui-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
+  .btn{background:linear-gradient(180deg,var(--blue-bright),var(--blue));color:#fff;border:none;border-radius:10px;padding:11px 18px;font-size:13.5px;font-weight:600;cursor:pointer}
+  .num{font-size:30px;font-weight:800;color:var(--navy);letter-spacing:-.5px;line-height:1}
+  .num small{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-400);margin-top:3px}
+  .mono{font-family:ui-monospace,'SF Mono',monospace;font-size:12px;color:var(--blue);font-weight:600}
+  .stack{font-size:10.5px;color:var(--grey-400);margin-top:16px;border-top:1px solid var(--grey-200);padding-top:10px}
+
+  /* font assignments per card */
+  .ibm   .headline,.ibm   .eyebrow{font-family:'IBM Plex Sans',sans-serif}
+  .ibm   .body,.ibm .btn,.ibm .num,.ibm .num small{font-family:'IBM Plex Sans',sans-serif}
+  .ibm   .headline{font-weight:600}
+
+  .lex   .headline,.lex .eyebrow,.lex .num,.lex .num small{font-family:'Lexend',sans-serif}
+  .lex   .body,.lex .btn{font-family:'Inter',sans-serif}
+
+  .src   .headline{font-family:'Source Serif 4',serif}
+  .src   .eyebrow,.src .body,.src .btn,.src .num,.src .num small{font-family:'Source Sans 3',sans-serif}
+
+  .pub   .headline,.pub .eyebrow,.pub .body,.pub .btn,.pub .num,.pub .num small{font-family:'Public Sans',sans-serif}
+  .pub   .headline{font-weight:700}
+
+  .man   .headline,.man .eyebrow,.man .num,.man .num small{font-family:'Manrope',sans-serif}
+  .man   .body,.man .btn{font-family:'Inter',sans-serif}
+  .man   .headline{font-weight:800}
+
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Typographie — quel pairing professionnel ?</h1>
+    <p>Le même contenu rendu dans 5 pairings libres &amp; auto-hébergeables (via next/font, zéro décalage de mise en page). Inspirés du registre institutionnel de la Banque mondiale (humaniste) et de l'ACCA (sans corporate).</p>
+    <div class="rec">★ Recommandation : A (IBM Plex) ou B (Lexend) pour un portail interne d'État</div>
+  </header>
+
+  <div class="grid">
+    <!-- A -->
+    <div class="card ibm">
+      <div class="meta"><span class="name">A · IBM Plex Sans</span><span class="ref">Institutionnel · ACCA-like</span></div>
+      <div class="eyebrow">Portail interne</div>
+      <div class="headline">Le circuit officiel des dossiers d'investissement.</div>
+      <div class="body">Plateforme interne de traitement, de suivi et de décision. Conçue par IBM pour l'identité d'entreprise — sobre, rigoureuse, parfaitement lisible à toute taille.</div>
+      <div class="ui-row"><button class="btn">🔐 Se connecter</button><div class="num">37<small>rôles</small></div><span class="mono">CRR-2026-000148</span></div>
+      <div class="stack">Titres + corps : IBM Plex Sans · mono : IBM Plex Mono</div>
+    </div>
+
+    <!-- B -->
+    <div class="card lex">
+      <div class="meta"><span class="name">B · Lexend + Inter</span><span class="ref">Humaniste · World Bank-like</span></div>
+      <div class="eyebrow">Portail interne</div>
+      <div class="headline">Le circuit officiel des dossiers d'investissement.</div>
+      <div class="body">Plateforme interne de traitement, de suivi et de décision. Lexend est calibré pour la lisibilité (usage éducatif/public) — proche du ton humaniste de la Banque mondiale ; Inter porte le corps.</div>
+      <div class="ui-row"><button class="btn">🔐 Se connecter</button><div class="num">37<small>rôles</small></div><span class="mono">CRR-2026-000148</span></div>
+      <div class="stack">Titres : Lexend · corps : Inter</div>
+    </div>
+
+    <!-- C -->
+    <div class="card src">
+      <div class="meta"><span class="name">C · Source Serif + Source Sans</span><span class="ref">Autorité éditoriale</span></div>
+      <div class="eyebrow">Portail interne</div>
+      <div class="headline">Le circuit officiel des dossiers d'investissement.</div>
+      <div class="body">Plateforme interne de traitement, de suivi et de décision. Titres en serif d'Adobe (ton « rapport officiel » / OCDE-FMI), corps en sans très neutre. Gravité documentaire.</div>
+      <div class="ui-row"><button class="btn">🔐 Se connecter</button><div class="num">37<small>rôles</small></div><span class="mono">CRR-2026-000148</span></div>
+      <div class="stack">Titres : Source Serif 4 · corps : Source Sans 3</div>
+    </div>
+
+    <!-- D -->
+    <div class="card pub">
+      <div class="meta"><span class="name">D · Public Sans</span><span class="ref">Standard gouvernemental (US)</span></div>
+      <div class="eyebrow">Portail interne</div>
+      <div class="headline">Le circuit officiel des dossiers d'investissement.</div>
+      <div class="body">Plateforme interne de traitement, de suivi et de décision. Typographie officielle du système de design du gouvernement américain (USWDS) — neutralité maximale, crédibilité institutionnelle, accessibilité.</div>
+      <div class="ui-row"><button class="btn">🔐 Se connecter</button><div class="num">37<small>rôles</small></div><span class="mono">CRR-2026-000148</span></div>
+      <div class="stack">Titres + corps : Public Sans</div>
+    </div>
+
+    <!-- E -->
+    <div class="card man">
+      <div class="meta"><span class="name">E · Manrope + Inter</span><span class="ref">Corporate moderne</span></div>
+      <div class="eyebrow">Portail interne</div>
+      <div class="headline">Le circuit officiel des dossiers d'investissement.</div>
+      <div class="body">Plateforme interne de traitement, de suivi et de décision. Manrope (géométrique, contemporain) pour des titres affirmés type fintech ; Inter pour le corps. Le plus « tech / moderne ».</div>
+      <div class="ui-row"><button class="btn">🔐 Se connecter</button><div class="num">37<small>rôles</small></div><span class="mono">CRR-2026-000148</span></div>
+      <div class="stack">Titres : Manrope · corps : Inter</div>
+    </div>
+
+    <div class="card" style="justify-content:center;text-align:center;background:rgba(22,54,90,.04)">
+      <div style="font-size:13px;color:var(--grey-500);line-height:1.7">
+        <b style="color:var(--navy)">Comment choisir ?</b><br>
+        Répondez par la lettre du pairing<br>(<b>A</b>, <b>B</b>, <b>C</b>, <b>D</b> ou <b>E</b>)<br>
+        + la variation de design (<b>V1</b>, <b>V2</b>, <b>V3</b>).<br><br>
+        Ex. : « <b>V2 + B</b> » = console à barre latérale, titres Lexend.
+      </div>
+    </div>
+  </div>
+</body>
+</html>
