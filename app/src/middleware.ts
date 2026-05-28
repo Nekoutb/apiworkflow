@@ -26,8 +26,18 @@ const intlMiddleware = createIntlMiddleware(routing);
 
 export default function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  // Bypass routes that should never be touched by next-intl
-  if (pathname === '/_health' || pathname.startsWith('/api/')) {
+  // Bypass routes that should never be touched by next-intl:
+  //   - health probe + API routes
+  //   - static .html mockups served from /public (e.g. /design-preview/*.html,
+  //     /mockups/*.html). Without this, next-intl rewrites them to /fr/... and
+  //     Next.js 404s because there's no [locale] route for them.
+  if (
+    pathname === '/_health' ||
+    pathname.startsWith('/api/') ||
+    pathname.endsWith('.html') ||
+    pathname.startsWith('/design-preview') ||
+    pathname.startsWith('/mockups')
+  ) {
     return NextResponse.next();
   }
   return intlMiddleware(req);
@@ -42,6 +52,6 @@ export const config = {
     // Without this, next-intl would rewrite e.g. /sample-courrier.pdf to
     // /fr/sample-courrier.pdf and Next.js would return 404 (the public/
     // file is at the root, not under a [locale] segment).
-    '/((?!_next/static|_next/image|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|pdf|txt|json|xml|zip|csv|woff2?|ttf|otf|map|mp3|mp4|webm)$).*)',
+    '/((?!_next/static|_next/image|favicon|.*\\.(?:html?|svg|png|jpg|jpeg|gif|webp|ico|css|js|pdf|txt|json|xml|zip|csv|woff2?|ttf|otf|map|mp3|mp4|webm)$).*)',
   ],
 };
