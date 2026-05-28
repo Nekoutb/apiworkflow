@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refonte UI — 3 variations verre liquide</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter','Segoe UI',-apple-system,sans-serif;background:#0f2238;color:#e8eef6;min-height:100vh}
+  header{text-align:center;padding:40px 20px 26px}
+  header img{height:50px;margin-bottom:16px;background:#fff;border-radius:10px;padding:6px}
+  header h1{font-size:24px;font-weight:700;letter-spacing:-.3px}
+  header p{color:#9fb2c9;font-size:14px;margin-top:8px}
+  .grid{max-width:1080px;margin:0 auto;padding:10px 20px 50px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:16px;overflow:hidden;transition:.2s;text-decoration:none;color:inherit;display:flex;flex-direction:column}
+  .card:hover{transform:translateY(-4px);border-color:rgba(82,168,236,.6);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+  .swatch{height:90px;position:relative}
+  .v1{background:linear-gradient(165deg,#f3f7fc,#e9f0f8)}
+  .v2{background:linear-gradient(160deg,#eef3f9,#12304f 220%)}
+  .v3{background:linear-gradient(135deg,#6fb6ef,#39c0d6 60%,#10355c)}
+  .swatch .flag{position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#0a8a3e,#f4c20d,#c8102e)}
+  .card .body{padding:18px 18px 20px}
+  .card .tag{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#52a8ec}
+  .card h2{font-size:17px;font-weight:700;margin:6px 0 8px}
+  .card p{font-size:12.5px;color:#9fb2c9;line-height:1.55}
+  .card .open{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#52a8ec}
+  .note{max-width:1080px;margin:0 auto 50px;padding:0 20px;color:#7e93ab;font-size:12.5px;text-align:center;line-height:1.7}
+  @media(max-width:780px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <header>
+    <img src="logo-ipa.png" alt="API Cameroun">
+    <h1>Refonte UI — verre liquide · bleu &amp; gris</h1>
+    <p>3 directions à comparer · choisissez celle à développer avant déploiement</p>
+  </header>
+  <div class="grid">
+    <a class="card" href="v1-frosted-corporate.html">
+      <div class="swatch v1"><div class="flag"></div></div>
+      <div class="body">
+        <div class="tag">Variation 1</div>
+        <h2>Frosted Corporate</h2>
+        <p>Verre dépoli clair sur fond bleu pâle. Barre de navigation horizontale. Propre, sobre, type SaaS (Stripe / Linear). Le plus « classique entreprise ».</p>
+        <div class="open">Ouvrir V1 →</div>
+      </div>
+    </a>
+    <a class="card" href="v2-glass-sidebar.html">
+      <div class="swatch v2"><div class="flag"></div></div>
+      <div class="body">
+        <div class="tag">Variation 2</div>
+        <h2>Glass Console</h2>
+        <p>Barre latérale en verre teinté navy + espace de travail à droite. Type console d'administration. Idéal pour la densité d'information des pages internes.</p>
+        <div class="open">Ouvrir V2 →</div>
+      </div>
+    </a>
+    <a class="card" href="v3-aurora-glass.html">
+      <div class="swatch v3"><div class="flag"></div></div>
+      <div class="body">
+        <div class="tag">Variation 3</div>
+        <h2>Aurora Glass</h2>
+        <p>Verre liquide profond sur dégradés « aurore ». Flou prononcé, translucidité, accent drapeau. Le plus moderne / premium (Apple Vision).</p>
+        <div class="open">Ouvrir V3 →</div>
+      </div>
+    </a>
+  </div>
+  <div class="note">
+    Toutes les variations : verre liquide léger, responsive mobile, logo de l'API, palette bleu/gris tirée du logo,
+    accent discret aux couleurs du drapeau (vert / jaune / rouge). Maquettes statiques — aucun lien fonctionnel.<br>
+    Répondez <b style="color:#e8eef6">V1</b>, <b style="color:#e8eef6">V2</b> ou <b style="color:#e8eef6">V3</b> (avec vos ajustements) pour lancer le développement.
+  </div>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3 · Aurora Glass — API Cameroun</title>
+<style>
+  :root{
+    --navy:#10355c; --blue:#2b7ec9; --blue-bright:#52a8ec; --cyan:#39c0d6;
+    --ink:#16263a; --grey-700:#3a4a60; --grey-500:#647389; --grey-400:#93a1b6; --grey-200:#dde6f0;
+    --glass:rgba(255,255,255,0.48); --glass-2:rgba(255,255,255,0.34);
+    --stroke:rgba(255,255,255,0.6); --hairline:rgba(120,150,190,0.16);
+    --shadow:0 2px 6px rgba(16,53,92,.06),0 20px 50px rgba(16,53,92,.16);
+    --radius:22px;
+    --flag-g:#0a8a3e; --flag-y:#f4c20d; --flag-r:#c8102e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter','Segoe UI',-apple-system,sans-serif;color:var(--ink);
+    background:#eaf1fa;min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased;
+    position:relative;overflow-x:hidden;
+  }
+  /* aurora blobs */
+  .aurora{position:fixed;inset:0;z-index:-1;overflow:hidden}
+  .aurora span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55}
+  .aurora .b1{width:46vw;height:46vw;background:#6fb6ef;top:-12vw;right:-8vw}
+  .aurora .b2{width:40vw;height:40vw;background:#39c0d6;bottom:-14vw;left:-6vw;opacity:.4}
+  .aurora .b3{width:30vw;height:30vw;background:#a5c8f2;top:38%;left:42%;opacity:.35}
+  .aurora .b4{width:22vw;height:22vw;background:#f4c20d;bottom:8%;right:14%;opacity:.16}
+  .aurora .b5{width:20vw;height:20vw;background:#0a8a3e;top:10%;left:8%;opacity:.12}
+
+  .section-label{text-align:center;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--blue);padding:34px 0 6px}
+  .section-sub{text-align:center;color:var(--grey-500);font-size:13px;margin-bottom:22px}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  .glass{
+    background:var(--glass);
+    backdrop-filter:blur(26px) saturate(165%);-webkit-backdrop-filter:blur(26px) saturate(165%);
+    border:1px solid var(--stroke);box-shadow:var(--shadow);border-radius:var(--radius);
+    position:relative;
+  }
+  .glass::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0) 40%)}
+  .flag-line{height:3px;border-radius:99px;background:linear-gradient(90deg,var(--flag-g),var(--flag-y),var(--flag-r))}
+
+  /* nav */
+  nav.bar{position:sticky;top:14px;z-index:30;margin:14px auto;max-width:1180px;display:flex;align-items:center;gap:16px;padding:10px 16px}
+  nav.bar img{height:34px;position:relative;z-index:1}
+  .nav-links{display:flex;gap:2px;margin-left:6px;position:relative;z-index:1}
+  .nav-links a{text-decoration:none;color:var(--grey-700);font-size:13px;font-weight:600;padding:7px 13px;border-radius:11px;transition:.15s}
+  .nav-links a:hover{background:rgba(43,126,201,.1)}
+  .nav-links a.active{background:rgba(43,126,201,.16);color:var(--navy)}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+  .lang{display:inline-flex;border:1px solid var(--hairline);border-radius:9px;overflow:hidden;background:rgba(255,255,255,.4)}
+  .lang button{border:none;background:transparent;padding:5px 10px;font-size:11px;font-weight:700;color:var(--grey-500);cursor:pointer}
+  .lang button.on{background:var(--navy);color:#fff}
+  .bell{width:34px;height:34px;border-radius:11px;border:1px solid var(--hairline);background:rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;font-size:15px;position:relative}
+  .bell .dot{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--flag-y);color:var(--navy);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #eaf1fa}
+  .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--navy));color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+
+  /* login */
+  .login-stage{display:flex;justify-content:center;padding:24px 20px 46px}
+  .login-card{width:100%;max-width:420px;padding:0;overflow:hidden}
+  .login-inner{padding:34px 34px 30px;text-align:center;position:relative;z-index:1}
+  .login-card img{height:64px;margin:0 auto 16px;display:block}
+  .pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);background:rgba(43,126,201,.12);padding:5px 13px;border-radius:999px;margin-bottom:13px}
+  .login-card h1{font-size:23px;font-weight:700;color:var(--navy);margin-bottom:7px;letter-spacing:-.4px}
+  .login-card p.lead{font-size:13.5px;color:var(--grey-500);margin-bottom:22px}
+  .field{text-align:left;margin-bottom:13px}
+  .field label{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--grey-500);margin-bottom:6px}
+  .field input{width:100%;padding:11px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.55);font-size:14px;color:var(--ink)}
+  .field input:focus{outline:none;border-color:var(--blue-bright);box-shadow:0 0 0 3px rgba(82,168,236,.2)}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border:none;border-radius:13px;cursor:pointer;font-size:14px;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--blue-bright),var(--blue) 70%,var(--navy));box-shadow:0 8px 22px rgba(43,126,201,.4);transition:.15s}
+  .btn:hover{transform:translateY(-1px);filter:brightness(1.06)}
+
+  /* dashboard */
+  .dash-head{padding:8px 4px 18px}
+  .dash-head .hello{font-size:27px;font-weight:800;letter-spacing:-.6px;color:var(--navy)}
+  .dash-head .role{display:inline-block;margin-top:7px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-500);background:rgba(255,255,255,.5);border:1px solid var(--hairline);padding:4px 11px;border-radius:999px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .tile{padding:0;text-decoration:none;color:inherit;display:block;overflow:hidden;transition:.2s}
+  .tile:hover{transform:translateY(-4px)}
+  .tile .inner{padding:22px;position:relative;z-index:1}
+  .tile .ic{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;background:linear-gradient(135deg,rgba(82,168,236,.9),rgba(43,126,201,.85));color:#fff;margin-bottom:14px;box-shadow:0 6px 16px rgba(43,126,201,.3)}
+  .tile h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px}
+  .tile p{font-size:12.5px;color:var(--grey-500);line-height:1.5}
+  .tile .go{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+
+  .panel{padding:0;overflow:hidden;margin-top:18px}
+  .panel .inner{padding:18px 20px;position:relative;z-index:1}
+  .panel h2{font-size:15px;font-weight:700;color:var(--navy)}
+  .panel .desc{font-size:12px;color:var(--grey-500);margin:2px 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey-400);padding:8px 10px;border-bottom:1px solid var(--hairline)}
+  td{padding:11px 10px;border-bottom:1px solid rgba(120,150,190,.12);color:var(--grey-700)}
+  tr:last-child td{border-bottom:none}
+  .ref{font-family:ui-monospace,monospace;font-weight:600;color:var(--blue)}
+  .badge{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+  .badge.amber{background:rgba(244,194,13,.18);color:#9a7400}.badge.green{background:rgba(10,138,62,.16);color:var(--flag-g)}.badge.blue{background:rgba(43,126,201,.14);color:var(--blue)}
+  .sla{height:6px;border-radius:99px;background:rgba(120,150,190,.2);overflow:hidden;width:90px}
+  .sla i{display:block;height:100%;border-radius:99px}
+  .mini-btn{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 13px;border-radius:9px;border:none;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--blue-bright),var(--blue))}
+
+  .swatches{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .swatches .btn{width:auto;padding:11px 20px}
+  footer{text-align:center;padding:34px 0;color:var(--grey-400);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+
+  @media(max-width:860px){.tiles{grid-template-columns:1fr 1fr}.nav-links{display:none}}
+  @media(max-width:560px){.tiles{grid-template-columns:1fr}.hide-sm{display:none}.uname{display:none}}
+</style>
+</head>
+<body>
+  <div class="aurora"><span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span><span class="b5"></span></div>
+
+  <div class="section-label">V3 · Aurora Glass</div>
+  <div class="section-sub">Verre liquide profond sur dégradés aurore · accent drapeau camerounais · style premium (Apple Vision)</div>
+
+  <!-- NAV -->
+  <nav class="bar glass">
+    <img src="logo-ipa.png" alt="API">
+    <div class="nav-links"><a class="active">Tableau de bord</a><a>Parapheur</a><a>Secrétariat DG</a><a>Personnel</a></div>
+    <div class="nav-right">
+      <div class="lang"><button class="on">FR</button><button>EN</button></div>
+      <div class="bell">🔔<span class="dot">3</span></div>
+      <div class="avatar">DG</div>
+    </div>
+  </nav>
+
+  <!-- LOGIN -->
+  <div class="login-stage">
+    <div class="login-card glass">
+      <div class="login-inner">
+        <img src="logo-ipa.png" alt="API Cameroun">
+        <div class="pill">Portail interne</div>
+        <h1>Connexion personnel</h1>
+        <p class="lead">Circuit interne pour le personnel de l'API Cameroun.</p>
+        <div class="field"><label>Identifiant</label><input value="admin"></div>
+        <div class="field"><label>Mot de passe</label><input type="password" value="admin"></div>
+        <button class="btn">🔐 Se connecter</button>
+        <p style="font-size:11px;color:var(--grey-400);margin-top:14px">Accès réservé · activité tracée</p>
+      </div>
+      <div class="flag-line" style="margin:0 0 0 0"></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="dash-head">
+      <div class="hello">Bonjour, Directeur Général</div>
+      <div class="role">Direction Générale · DG</div>
+    </div>
+    <div class="tiles">
+      <a class="tile glass"><div class="inner"><div class="ic">📥</div><h3>Parapheur DG</h3><p>Analyse &amp; dispatch des courriers entrants avec suggestion d'unité par l'IA.</p><div class="go">Ouvrir →</div></div></a>
+      <a class="tile glass"><div class="inner"><div class="ic">⏱️</div><h3>Secrétariat DG</h3><p>Suivi SLA 72h des dossiers chez le DG et dispatchés aux unités.</p><div class="go">Ouvrir →</div></div></a>
+      <a class="tile glass"><div class="inner"><div class="ic">📂</div><h3>Parapheur unité</h3><p>Dossiers affectés : prise en charge, délégation, co-avis, avis externe.</p><div class="go">Ouvrir →</div></div></a>
+    </div>
+
+    <div class="panel glass">
+      <div class="inner">
+        <h2>Dossiers en attente de décision</h2>
+        <div class="desc">Soumis par les Directeurs après traitement · triés par ancienneté</div>
+        <table>
+          <thead><tr><th>Référence</th><th class="hide-sm">Émetteur</th><th>Objet</th><th>SLA 72h</th><th></th></tr></thead>
+          <tbody>
+            <tr><td class="ref">CRR-2026-000148</td><td class="hide-sm">SARL Douala Invest</td><td>Demande d'agrément · régime spécial</td><td><div class="sla"><i style="width:40%;background:var(--flag-g)"></i></div></td><td><button class="mini-btn">Décider →</button></td></tr>
+            <tr><td class="ref">CRR-2026-000142</td><td class="hide-sm">M. Atangana</td><td>Partenariat zone industrielle Kribi</td><td><div class="sla"><i style="width:72%;background:var(--flag-y)"></i></div></td><td><button class="mini-btn">Décider →</button></td></tr>
+            <tr><td class="ref">CRR-2026-000139</td><td class="hide-sm">GIC AgroPlus</td><td>Réclamation · délai de traitement</td><td><div class="sla"><i style="width:100%;background:var(--flag-r)"></i></div></td><td><button class="mini-btn">Décider →</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-label" style="padding-top:30px">Composants</div>
+    <div class="panel glass"><div class="inner swatches">
+      <button class="btn">Action primaire</button>
+      <span class="badge blue">À analyser</span><span class="badge amber">En attente</span><span class="badge green">Validé</span>
+      <input style="flex:1;min-width:160px;padding:10px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.5)" placeholder="Champ de recherche…">
+    </div></div>
+  </div>
+
+  <footer>⚜ API Cameroun · République du Cameroun · Maquette V3</footer>
+</body>
+</html>
