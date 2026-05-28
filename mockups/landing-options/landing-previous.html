@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing PRÉCÉDENTE (commit 1bf81b5) · éditoriale</title>
+  <style>
+    :root {
+      --obsidian:#0d1822; --ink:#1a1612; --ink-2:#3c372d; --ink-3:#5b554a; --ink-4:#9c9485;
+      --gold-500:#d4a72c; --gold-600:#b8901f; --gold-700:#a37e1e;
+      --cmgreen-800:#0e6b2e; --cmred:#b22234; --line:#e8e3d6;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html, body { height:100%; }
+    body {
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      color:var(--ink);
+      display:flex; flex-direction:column; min-height:100vh;
+      position:relative; overflow:hidden;
+      background:linear-gradient(180deg,#fff 0%,#f3f8f5 55%,#e8f1ec 100%);
+    }
+    .glow, .grid { position:absolute; inset:0; pointer-events:none; }
+    .glow { background-image:
+      radial-gradient(ellipse 60% 40% at 85% 0%, rgba(193,151,63,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 50% at 0% 100%, rgba(0,107,58,0.08) 0%, transparent 55%); }
+    .grid { background-image:radial-gradient(rgba(12,18,32,0.03) 1px, transparent 1px); background-size:28px 28px; }
+    .serif { font-family:'Source Serif 4',Georgia,serif; }
+
+    .banner {
+      position:relative; z-index:10; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; gap:12px;
+      background:var(--obsidian); color:#fff; text-align:center;
+      padding:6px 16px; font-size:10px; font-weight:600;
+      letter-spacing:0.22em; text-transform:uppercase;
+    }
+    .banner .star { color:var(--gold-500); }
+
+    header {
+      position:relative; z-index:10; flex-shrink:0;
+      display:flex; align-items:center; justify-content:space-between;
+      border-bottom:1px solid var(--line); background:rgba(255,255,255,0.8);
+      padding:16px 56px; backdrop-filter:blur(6px);
+    }
+    .brand { display:flex; align-items:center; gap:14px; }
+    .brand img { height:44px; width:auto; display:block; }
+    .brand .titles { line-height:1.2; }
+    .brand .republic { font-size:10px; font-weight:600; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-3); }
+    .brand .org { font-family:'Source Serif 4',serif; font-size:17px; font-weight:700; color:var(--ink); }
+    .lang { display:inline-flex; border:1px solid var(--line); }
+    .lang button { background:#fff; border:none; padding:5px 10px; font-size:10.5px; font-weight:700; color:var(--ink-3); cursor:pointer; }
+    .lang button.active { background:var(--obsidian); color:var(--gold-500); }
+    .lang button + button { border-left:1px solid var(--line); }
+
+    main {
+      position:relative; z-index:10; flex:1;
+      display:flex; align-items:center; padding:32px 56px;
+    }
+    .grid-2 {
+      margin:0 auto; width:100%; max-width:1152px;
+      display:grid; grid-template-columns:1.5fr 0.6fr; gap:56px;
+    }
+    .left { display:flex; flex-direction:column; justify-content:center; }
+    .eyebrow { display:inline-flex; align-items:center; gap:12px; margin-bottom:16px;
+      font-size:10.5px; font-weight:700; letter-spacing:0.26em; text-transform:uppercase; color:var(--gold-700); }
+    .eyebrow .rule { height:1px; width:44px; background:var(--gold-600); }
+    h1 { font-family:'Source Serif 4',serif; font-size:clamp(36px,4.2vw,52px); font-weight:600;
+      line-height:1.08; letter-spacing:-0.02em; color:var(--ink); margin-bottom:20px; max-width:680px; }
+    .sub { font-size:15px; line-height:1.6; color:var(--ink-2); max-width:560px; margin-bottom:28px; }
+    .cta-row { display:flex; flex-wrap:wrap; align-items:center; gap:16px; }
+    .cta { display:inline-flex; align-items:center; gap:8px; border:2px solid var(--obsidian);
+      background:var(--obsidian); color:var(--gold-500); padding:12px 24px;
+      font-size:12px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;
+      text-decoration:none; transition:background 0.2s,gap 0.2s; }
+    .cta:hover { background:var(--ink); gap:12px; }
+    .restricted { font-size:10.5px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--cmred); }
+    .quote { font-family:'Source Serif 4',serif; display:inline-flex; align-items:center; gap:10px;
+      margin-top:32px; border-left:2px solid var(--gold-600); padding-left:16px;
+      font-size:13.5px; font-style:italic; color:var(--gold-700); }
+
+    aside { display:flex; flex-direction:column; justify-content:center; border-left:1px solid var(--line); padding-left:48px; }
+    .stat { padding:16px 0; }
+    .stat:not(:last-child) { border-bottom:1px solid var(--line); }
+    .stat .row { display:flex; align-items:baseline; gap:6px; }
+    .stat .num { font-family:'Source Serif 4',serif; font-size:40px; font-weight:600; line-height:1; letter-spacing:-0.02em; color:var(--cmgreen-800); }
+    .stat .unit { font-size:13px; font-weight:500; font-style:italic; color:var(--ink-4); }
+    .stat .label { margin-top:6px; font-size:10.5px; font-weight:600; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-3); }
+
+    footer {
+      position:relative; z-index:10; flex-shrink:0;
+      display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;
+      border-top:1px solid var(--line); background:var(--obsidian);
+      padding:12px 56px; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:rgba(255,255,255,0.65);
+    }
+    footer .star { color:var(--gold-500); }
+    footer .name { font-weight:700; color:#fff; }
+    footer .rep { margin-left:12px; color:rgba(255,255,255,0.45); }
+    footer .note { font-style:italic; text-transform:none; letter-spacing:normal; font-size:10.5px; color:rgba(255,255,255,0.55); }
+    footer .copy { color:rgba(255,255,255,0.45); }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="grid"></div>
+
+  <div class="banner">
+    <span class="star">⚜</span>Portail interne · Accès réservé au personnel<span class="star">⚜</span>
+  </div>
+
+  <header>
+    <div class="brand">
+      <img src="logo-ipa.png" alt="API Cameroun">
+      <div class="titles">
+        <div class="republic">République du Cameroun</div>
+        <div class="org">Agence de Promotion des Investissements</div>
+      </div>
+    </div>
+    <div class="lang">
+      <button class="active">FR</button>
+      <button>EN</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid-2">
+      <div class="left">
+        <div class="eyebrow">Portail interne <span class="rule"></span></div>
+        <h1>Le circuit officiel des dossiers d'investissement.</h1>
+        <p class="sub">Circuit interne pour le personnel de l'API Cameroun.</p>
+        <div class="cta-row">
+          <a href="#" class="cta">🔐 Connexion personnel <span>→</span></a>
+          <div class="restricted">⚠ Accès réservé · authentification requise · activité tracée</div>
+        </div>
+        <div class="quote">« Promouvoir l'investissement productif. »</div>
+      </div>
+
+      <aside>
+        <div class="stat">
+          <div class="row"><span class="num">7</span></div>
+          <div class="label">Phases du circuit</div>
+        </div>
+        <div class="stat">
+          <div class="row"><span class="num">37</span></div>
+          <div class="label">Rôles organigramme</div>
+        </div>
+        <div class="stat">
+          <div class="row"><span class="num">II</span> <span class="unit">langues</span></div>
+          <div class="label">Français · English</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <div>
+      <span class="star">⚜</span> <span class="name">API Cameroun</span> <span class="star">⚜</span>
+      <span class="rep">République du Cameroun</span>
+    </div>
+    <div class="note">Portail interne · usage strictement professionnel</div>
+    <div class="copy">© MMXXVI</div>
+  </footer>
+</body>
+</html>
