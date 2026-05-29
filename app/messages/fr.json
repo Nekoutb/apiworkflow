@@ -1,7 +1,7 @@
 {
   "Common": {
     "appName": "API Cameroun",
-    "appNameLong": "Agence de Promotion des Investissements",
+    "appNameLong": "Agence de Promotion des Investissements du Cameroun",
     "republic": "République du Cameroun",
     "officialPortal": "Portail officiel",
     "back": "Retour",
@@ -28,7 +28,7 @@
   "Home": {
     "officialBanner": "Portail interne · Accès réservé au personnel",
     "internalPortalBadge": "Portail interne",
-    "tagline": "Le circuit officiel des dossiers d'investissement.",
+    "tagline": "Circuit interne pour le personnel de l'API Cameroun",
     "subtitle": "Circuit interne pour le personnel de l'API Cameroun.",
     "ctaLogin": "Connexion personnel",
     "ctaLoginArrow": "Connexion personnel →",

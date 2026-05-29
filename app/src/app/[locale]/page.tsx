@@ -59,13 +59,9 @@ export default async function LandingPage({
               <span className="h-px w-11 bg-blue-600/60" />
             </div>
 
-            <h1 className="mb-5 max-w-[680px] text-[clamp(34px,4.4vw,52px)] font-bold leading-[1.07] tracking-[-0.02em] text-navy">
+            <h1 className="mb-8 max-w-[680px] text-[clamp(34px,4.4vw,52px)] font-bold leading-[1.07] tracking-[-0.02em] text-navy">
               {t('tagline')}
             </h1>
-
-            <p className="mb-7 max-w-[560px] text-[15px] leading-[1.6] text-ink-2">
-              {t('subtitle')}
-            </p>
 
             <div className="flex flex-wrap items-center gap-4">
               <Link
@@ -79,10 +75,6 @@ export default async function LandingPage({
               <div className="text-[10.5px] font-semibold uppercase tracking-[0.16em] text-cmred">
                 ⚠ {t('restrictedAccess')}
               </div>
-            </div>
-
-            <div className="mt-8 inline-flex items-center gap-2.5 border-l-2 border-blue-500/70 pl-4 text-[13.5px] italic text-ink-3">
-              « {t('quote')} »
             </div>
           </div>
 

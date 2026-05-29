@@ -1,7 +1,7 @@
 {
   "Common": {
     "appName": "Cameroon IPA",
-    "appNameLong": "Investment Promotion Agency",
+    "appNameLong": "Cameroon Investment Promotion Agency",
     "republic": "Republic of Cameroon",
     "officialPortal": "Official portal",
     "back": "Back",
@@ -28,7 +28,7 @@
   "Home": {
     "officialBanner": "Internal portal · Authorised personnel only",
     "internalPortalBadge": "Internal portal",
-    "tagline": "The official workflow for investment dossiers.",
+    "tagline": "Internal workflow for Cameroon IPA staff",
     "subtitle": "Internal workflow for Cameroon IPA Staff.",
     "ctaLogin": "Staff sign-in",
     "ctaLoginArrow": "Staff sign-in →",
