@@ -30,13 +30,17 @@
   .panel-head p{flex-basis:100%;font-size:12.5px;color:var(--ink3)}
   /* icon specimen strip */
   .strip{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
-  .spec{display:flex;flex-direction:column;align-items:center;gap:7px;width:96px}
-  .spec svg{width:72px;height:72px;display:block}
+  .spec{display:flex;flex-direction:column;align-items:center;gap:7px;width:96px;cursor:pointer}
+  .spec svg{width:72px;height:72px;display:block;transform-origin:center;transition:transform .26s cubic-bezier(.34,1.56,.64,1),filter .26s ease}
+  /* swell on hover (springy overshoot) + soft glow */
+  .spec:hover svg{transform:scale(1.16);filter:drop-shadow(0 6px 12px rgba(16,53,92,.22))}
   .spec .lbl{font-size:10.5px;font-weight:600;color:var(--ink3);text-align:center;line-height:1.3}
   /* dashboard tile context */
   .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
-  .tile{background:rgba(255,255,255,.55);backdrop-filter:blur(20px);border:1px solid var(--stroke);box-shadow:var(--shadow);border-radius:18px;padding:20px}
-  .tile svg{width:58px;height:58px;margin-bottom:12px}
+  .tile{background:rgba(255,255,255,.55);backdrop-filter:blur(20px);border:1px solid var(--stroke);box-shadow:var(--shadow);border-radius:18px;padding:20px;cursor:pointer;transition:transform .22s ease,box-shadow .22s ease}
+  .tile:hover{transform:translateY(-3px);box-shadow:0 6px 14px rgba(16,53,92,.10),0 24px 50px rgba(16,53,92,.18)}
+  .tile svg{width:58px;height:58px;margin-bottom:12px;transform-origin:left center;transition:transform .26s cubic-bezier(.34,1.56,.64,1)}
+  .tile:hover svg{transform:scale(1.13)}
   .tile h3{font-size:16px;font-weight:700;color:var(--navy)}
   .tile p{font-size:12.5px;color:var(--ink3);margin-top:5px;line-height:1.5}
   .tile .go{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}
@@ -52,7 +56,8 @@
     <h1>Icônes « badge sticker » — variations à valider</h1>
     <p>Inspiré de votre image : médaillon festonné, contour noir épais, aplats vifs.
        Décliné pour chaque fonction du portail, dans la palette du site (bleu / orange / teal + drapeau).
-       SVG vectoriel, léger, net à toute taille. <b>Aucune modification en production — revue d'abord.</b></p>
+       SVG vectoriel, léger, net à toute taille. <b>Survolez une icône</b> : elle gonfle légèrement (effet ressort).
+       <b>Aucune modification en production — revue d'abord.</b></p>
   </header>
 
   <div class="wrap">
