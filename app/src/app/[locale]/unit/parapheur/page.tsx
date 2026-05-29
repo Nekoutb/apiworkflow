@@ -1,302 +1,331 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
+import { setRequestLocale } from 'next-intl/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel, roleMeta } from '@/lib/roles';
-import type { StaffRole } from '@prisma/client';
+import type { StaffRole, DocumentStatus } from '@prisma/client';
+import { LogoutButton } from '@/components/LogoutButton';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AppLogo } from '@/components/AppLogo';
+import { Icon } from '@/components/Icon';
 
-export const metadata = { title: 'Parapheur de l\'unité · API Cameroun' };
+export const metadata = { title: "Parapheur de l'unité · API Cameroun" };
 export const dynamic = 'force-dynamic';
 
 // DG / DGA have their own /dg/parapheur — they don't belong here.
 const FORBIDDEN: StaffRole[] = ['DG', 'DGA'];
 
-const NATURE_SHORT: Record<string, string> = {
-  AGREMENT_REQUEST: "Demande d'agrément",
-  GENERAL_CORRESPONDENCE: 'Correspondance',
-  OFFICIAL_NOTIFICATION: 'Notification',
-  PARTNERSHIP_PROPOSAL: 'Partenariat',
-  COMPLAINT: 'Réclamation',
-  REPORT: 'Rapport',
-  OTHER: 'Autre',
-};
+const SLA_TOTAL_MS = 72 * 3_600_000;
+const SLA_AMBER_MS = 40 * 3_600_000;
+const SLA_RED_MS = 60 * 3_600_000;
 
-const STATUS_LABEL: Record<string, string> = {
-  ASSIGNED:     'À prendre en charge',
-  IN_TREATMENT: 'En traitement',
-};
+type FilterEntry = { key: string; label: string; dbStatus?: DocumentStatus };
+const STATUS_FILTERS: readonly FilterEntry[] = [
+  { key: '', label: 'Tous' },
+  { key: 'a-traiter', label: 'À traiter', dbStatus: 'ASSIGNED' },
+  { key: 'en-traitement', label: 'En traitement', dbStatus: 'IN_TREATMENT' },
+  { key: 'avis-externe', label: 'Avis externe', dbStatus: 'AWAITING_EXTERNAL_AVIS' },
+  { key: 'soumis-dg', label: 'Soumis au DG', dbStatus: 'AWAITING_DG_DECISION' },
+] as const;
 
-export default async function UnitParapheurPage() {
+function pillFromStatus(
+  status: DocumentStatus,
+  isAlert: boolean,
+): { label: string; cls: string } {
+  if (isAlert) return { label: 'À traiter · alerte', cls: 'alert' };
+  switch (status) {
+    case 'ASSIGNED':
+      return { label: 'À traiter', cls: 'new' };
+    case 'IN_TREATMENT':
+      return { label: 'En traitement', cls: 'in-treatment' };
+    case 'AWAITING_EXTERNAL_AVIS':
+      return { label: 'Avis externe', cls: 'ext-avis' };
+    case 'AWAITING_DG_DECISION':
+      return { label: 'Soumis au DG', cls: 'dg' };
+    default:
+      return { label: status, cls: '' };
+  }
+}
+
+function slaState(
+  assignedAt: Date,
+  docStatus: DocumentStatus,
+): { pct: number; cls: string; label: string } {
+  if (docStatus === 'AWAITING_EXTERNAL_AVIS') {
+    return { pct: 100, cls: 'paused', label: 'SLA suspendu' };
+  }
+  const elapsed = Date.now() - assignedAt.getTime();
+  const pct = Math.min(100, Math.max(2, Math.round((elapsed / SLA_TOTAL_MS) * 100)));
+  const remaining = SLA_TOTAL_MS - elapsed;
+  if (remaining < 0) {
+    return { pct, cls: 'red', label: `SLA dépassé · ${humanDuration(-remaining)}` };
+  }
+  if (elapsed > SLA_RED_MS) {
+    return { pct, cls: 'red', label: `${humanDuration(remaining)} restant` };
+  }
+  if (elapsed > SLA_AMBER_MS) {
+    return { pct, cls: 'amber', label: `${humanDuration(remaining)} restant` };
+  }
+  return { pct, cls: '', label: `${humanDuration(remaining)} restant` };
+}
+
+function humanDuration(ms: number): string {
+  const totalMin = Math.max(0, Math.floor(ms / 60_000));
+  const h = Math.floor(totalMin / 60);
+  if (h < 1) return `${totalMin} min`;
+  if (h < 24) {
+    const min = totalMin % 60;
+    return min === 0 ? `${h} h` : `${h} h ${String(min).padStart(2, '0')}`;
+  }
+  const d = Math.floor(h / 24);
+  return `${d} j`;
+}
+
+export default async function UnitParapheurPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { locale } = await params;
+  const { status: statusFilter } = await searchParams;
+  setRequestLocale(locale);
+
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || FORBIDDEN.includes(role)) redirect('/dashboard');
 
-  // ADMIN sees every active assignment; otherwise filter by the user's role.
-  const assignmentWhere =
-    role === 'ADMIN' ? { status: 'ACTIVE' as const } : { status: 'ACTIVE' as const, assignedToRole: role };
+  const isAdmin = role === 'ADMIN';
+  const baseWhere = isAdmin ? {} : { assignedToRole: role };
 
-  const [active, inTreatment, returnedTotal, completedTotal] = await Promise.all([
+  const filterEntry = STATUS_FILTERS.find((f) => f.key === statusFilter && f.dbStatus);
+
+  // Data + counts in one round-trip
+  const [active, counts] = await Promise.all([
     db.assignment.findMany({
-      where: assignmentWhere,
-      orderBy: { assignedAt: 'asc' }, // oldest first
+      where: {
+        status: 'ACTIVE',
+        ...baseWhere,
+        ...(filterEntry?.dbStatus ? { document: { status: filterEntry.dbStatus } } : {}),
+      },
+      orderBy: { assignedAt: 'asc' }, // oldest first → tightest SLA at top
       take: 100,
       select: {
         id: true,
         assignedAt: true,
         assignedToRole: true,
-        instructions: true,
         document: {
           select: {
             id: true,
             reference: true,
             subject: true,
-            nature: true,
             status: true,
-            submittedAt: true,
             submission: {
-              select: { senderName: true, senderEmail: true, senderOrganization: true },
+              select: { senderName: true, senderOrganization: true },
             },
           },
         },
-        assignedBy: { select: { name: true, email: true } },
       },
     }),
-    db.assignment.count({
-      where: {
-        ...assignmentWhere,
-        document: { status: 'IN_TREATMENT' },
-      },
-    }),
-    db.assignment.count({
-      where:
-        role === 'ADMIN'
-          ? { status: 'RETURNED' }
-          : { status: 'RETURNED', assignedToRole: role },
-    }),
-    db.assignment.count({
-      where:
-        role === 'ADMIN'
-          ? { status: 'COMPLETED' }
-          : { status: 'COMPLETED', assignedToRole: role },
-    }),
+    Promise.all(
+      STATUS_FILTERS.map((f) =>
+        f.dbStatus
+          ? db.assignment.count({
+              where: { status: 'ACTIVE', ...baseWhere, document: { status: f.dbStatus } },
+            })
+          : db.assignment.count({ where: { status: 'ACTIVE', ...baseWhere } }),
+      ),
+    ),
   ]);
 
-  const oldestWaiting = active.find((a) => a.document.status === 'ASSIGNED');
-  const oldestAgeMs = oldestWaiting ? Date.now() - oldestWaiting.assignedAt.getTime() : 0;
+  const totalActive = counts[0];
+  const oneDayAgo = Date.now() - 24 * 3_600_000;
+  const newCount = active.filter((a) => a.assignedAt.getTime() > oneDayAgo).length;
+  const alertCount = active.filter(
+    (a) =>
+      Date.now() - a.assignedAt.getTime() > SLA_RED_MS &&
+      a.document.status !== 'AWAITING_EXTERNAL_AVIS',
+  ).length;
 
   const myRoleMeta = roleMeta(role);
-  const headerLabel =
-    role === 'ADMIN'
-      ? 'Parapheur universel (vue admin · toutes les unités)'
-      : `Parapheur — ${myRoleMeta?.fr ?? roleLabel(role)}`;
+  const headerKicker = isAdmin
+    ? 'Parapheur universel · vue admin'
+    : myRoleMeta?.fr ?? roleLabel(role);
+  const roleFr = roleLabel(role);
 
   return (
-    <main className="min-h-screen bg-bgsoft">
-      <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        Portail interne <span className="mx-3 text-gold-500">⚜</span>
-        Unité <span className="mx-3 text-gold-500">⚜</span>
-        Parapheur
+    <main className="relative min-h-screen">
+      <div className="relative z-10 bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
+        <span className="text-gold-500">⚜</span> Portail interne · Parapheur unité{' '}
+        <span className="text-gold-500">⚜</span>
       </div>
 
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-7 py-4">
-          <AppLogo />
-          <div className="leading-tight">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              Portail interne · Unité
-            </div>
-            <div className="serif text-[17px] font-bold text-ink">{headerLabel}</div>
+      <header className="v4-chrome glass glass-hi">
+        <AppLogo asLink={false} />
+        <div className="min-w-0 leading-tight">
+          <div className="text-[9.5px] font-semibold uppercase tracking-[0.22em] text-ink-3">
+            République du Cameroun
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <NotificationBell />
-            <div className="text-right leading-tight">
-              <div className="text-[13px] font-semibold text-ink">
-                {session.user.name ?? session.user.email}
-              </div>
-              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
-                {roleLabel(role)}
-              </div>
-            </div>
+          <div
+            className="truncate text-[14.5px] font-bold text-navy"
+            style={{ fontFamily: "var(--font-display), 'Lexend', sans-serif" }}
+          >
+            Parapheur · {headerKicker}
           </div>
+        </div>
+        <nav className="ml-6 hidden gap-1 md:flex">
+          <Link
+            href="/dashboard"
+            className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy"
+          >
+            Tableau de bord
+          </Link>
+          <span className="rounded-lg bg-blue-600/12 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-navy">
+            Parapheur
+          </span>
+        </nav>
+        <div className="ml-auto flex items-center gap-3">
+          <LanguageSwitcher variant="editorial" />
+          <NotificationBell />
+          <div className="hidden text-right leading-tight sm:block">
+            <div className="text-[13px] font-semibold text-navy">
+              {session.user.name ?? session.user.email}
+            </div>
+            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
+          </div>
+          <LogoutButton />
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-7 py-10">
-        {/* Stats */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Affectations actives"  value={active.length} accent />
-          <Stat label="En traitement"          value={inTreatment} />
-          <Stat label="Doyen en file"          value={oldestWaiting ? humanAge(oldestAgeMs) : '—'} mono />
-          <Stat label="Renvoyés · clôturés"    value={`${returnedTotal} · ${completedTotal}`} mono />
+      <section className="relative z-10 mx-auto max-w-7xl px-5 py-6 sm:px-7 sm:py-10">
+        <div className="v4-page-head">
+          <div className="kicker">
+            <span className="dot" />
+            {headerKicker}
+          </div>
+          <h1>Parapheur de mon unité</h1>
+          <p>
+            {totalActive} dossier{totalActive === 1 ? '' : 's'} actif
+            {totalActive === 1 ? '' : 's'}
+            {newCount > 0 && ` · ${newCount} nouveau${newCount === 1 ? '' : 'x'} depuis hier`}
+            {alertCount > 0 &&
+              ` · ${alertCount} alerte${alertCount === 1 ? '' : 's'} SLA`}
+            . Ordre par défaut : le plus ancien en premier (SLA le plus tendu).
+          </p>
         </div>
 
-        <h2 className="serif mb-3 mt-12 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-          {role === 'ADMIN' ? 'Toutes les affectations actives' : 'Mes affectations actives'}
-        </h2>
-        <p className="serif mb-4 text-[12.5px] italic text-ink-3">
-          Documents dispatchés par le DG vers votre unité (via le Service du Courrier · règle B14.5).
-          Triés du plus ancien au plus récent. Cliquez pour ouvrir le détail et prendre en charge le
-          dossier ou le renvoyer au DG.
-        </p>
-
-        {active.length === 0 ? (
-          <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            {role === 'ADMIN'
-              ? 'Aucune affectation active dans aucune unité. Le parapheur se remplit dès qu\'un document est dispatché depuis le DG.'
-              : 'Aucune affectation active. Votre parapheur se remplira dès que le DG vous dispatchera un document.'}
+        {/* Filter chips wired to ?status=… */}
+        <div className="v4-toolbar glass">
+          <div className="filters" role="tablist" aria-label="Filtre par statut">
+            {STATUS_FILTERS.map((f, i) => {
+              const isActive =
+                (f.key === '' && !statusFilter) || (f.key !== '' && f.key === statusFilter);
+              const href =
+                f.key === '' ? '/unit/parapheur' : `/unit/parapheur?status=${f.key}`;
+              return (
+                <Link
+                  key={f.key || 'all'}
+                  href={href}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`v4-filter-chip ${isActive ? 'on' : ''}`}
+                >
+                  {f.label}
+                  <span className="num">{counts[i]}</span>
+                </Link>
+              );
+            })}
           </div>
-        ) : (
-          <div className="overflow-x-auto border border-line bg-white">
-            <table className="w-full">
-              <thead className="bg-bgsoft">
-                <tr className="text-left">
-                  <Th>Âge</Th>
-                  <Th>Référence</Th>
-                  <Th>Émetteur</Th>
-                  <Th>Objet</Th>
-                  <Th>Nature</Th>
-                  <Th>Statut</Th>
-                  {role === 'ADMIN' && <Th>Unité cible</Th>}
-                  <Th>Action</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {active.map((a) => {
-                  const ageMs = Date.now() - a.assignedAt.getTime();
-                  const ageClass =
-                    ageMs > 7 * 24 * 60 * 60 * 1000 ? 'text-cmred' :
-                    ageMs > 3 * 24 * 60 * 60 * 1000 ? 'text-gold-700' :
-                    'text-ink-3';
-                  const isInTreatment = a.document.status === 'IN_TREATMENT';
-                  return (
-                    <tr key={a.id} className="border-t border-line align-top">
-                      <td className={'px-4 py-3 font-mono text-[11px] font-semibold ' + ageClass}>
-                        {humanAge(ageMs)}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-[11.5px] font-semibold text-cmgreen-900">
-                        {a.document.reference}
-                      </td>
-                      <td className="px-4 py-3 text-[12.5px]">
-                        <div className="font-semibold text-ink">
-                          {a.document.submission?.senderName ?? '—'}
-                        </div>
-                        <div className="text-[11px] text-ink-3">
-                          {a.document.submission?.senderEmail}
-                        </div>
-                        {a.document.submission?.senderOrganization && (
-                          <div className="text-[10.5px] italic text-ink-4">
-                            {a.document.submission.senderOrganization}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-[12.5px] text-ink-2">
-                        <div className="max-w-md truncate" title={a.document.subject}>
-                          {a.document.subject}
-                        </div>
-                        {a.instructions && (
-                          <div
-                            className="mt-1 max-w-md truncate text-[10.5px] italic text-gold-700"
-                            title={a.instructions}
-                          >
-                            ⓘ {a.instructions}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-[11px] text-ink-3">
-                        {NATURE_SHORT[a.document.nature] ?? a.document.nature}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            'inline-block px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] ' +
-                            (isInTreatment
-                              ? 'bg-cmgreen-50 text-cmgreen-900'
-                              : 'bg-gold-50 text-gold-700')
-                          }
-                        >
-                          {STATUS_LABEL[a.document.status] ?? a.document.status}
-                        </span>
-                      </td>
-                      {role === 'ADMIN' && (
-                        <td className="px-4 py-3 text-[11px]">
-                          <div className="font-semibold text-ink-2">
-                            {roleMeta(a.assignedToRole)?.shortFr ?? a.assignedToRole}
-                          </div>
-                          <div className="font-mono text-[9.5px] text-ink-4">
-                            {a.assignedToRole}
-                          </div>
-                        </td>
-                      )}
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/unit/parapheur/${a.document.id}`}
-                          className="bg-blue-700 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
-                        >
-                          Ouvrir →
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+        </div>
 
-        <div className="mt-10">
-          <Link
-            href="/dashboard"
-            className="border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
-          >
-            ← Tableau de bord
-          </Link>
+        <div className="v4-table glass">
+          {active.length > 0 && (
+            <div className="v4-thead" role="row">
+              <div>Référence · Objet</div>
+              <div>Émetteur</div>
+              <div>Reçu le</div>
+              <div>Statut</div>
+              <div>SLA 72 h</div>
+              <div />
+            </div>
+          )}
+
+          {active.length === 0 ? (
+            <div className="px-6 py-14 text-center">
+              <p className="text-[13px] italic text-ink-3">
+                {filterEntry
+                  ? `Aucun dossier avec le statut « ${filterEntry.label.toLowerCase()} » pour le moment.`
+                  : isAdmin
+                    ? "Aucune affectation active. Le parapheur se remplit dès qu'un document est dispatché par le DG."
+                    : "Aucune affectation active. Votre parapheur se remplira dès que le DG vous dispatchera un document."}
+              </p>
+            </div>
+          ) : (
+            active.map((a) => {
+              const elapsed = Date.now() - a.assignedAt.getTime();
+              const isAlert =
+                elapsed > SLA_RED_MS && a.document.status !== 'AWAITING_EXTERNAL_AVIS';
+              const pill = pillFromStatus(a.document.status, isAlert);
+              const sla = slaState(a.assignedAt, a.document.status);
+              const dt = a.assignedAt;
+              const adminUnit =
+                isAdmin && roleMeta(a.assignedToRole)?.shortFr
+                  ? roleMeta(a.assignedToRole)?.shortFr
+                  : isAdmin
+                    ? a.assignedToRole
+                    : null;
+              return (
+                <Link
+                  key={a.id}
+                  href={`/unit/parapheur/${a.document.id}`}
+                  className="v4-row"
+                  role="row"
+                >
+                  <div className="obj">
+                    <div className="ref">{a.document.reference}</div>
+                    <div className="subj">{a.document.subject}</div>
+                    {adminUnit && (
+                      <div className="mt-1 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+                        → {adminUnit}
+                      </div>
+                    )}
+                  </div>
+                  <div className="sender">
+                    {a.document.submission?.senderName ?? '—'}
+                    {a.document.submission?.senderOrganization && (
+                      <span className="ent">{a.document.submission.senderOrganization}</span>
+                    )}
+                  </div>
+                  <div className="date">
+                    {dt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                    <span className="t">
+                      {dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="status">
+                    <span className={`status-pill ${pill.cls}`}>{pill.label}</span>
+                  </div>
+                  <div className={`v4-sla ${sla.cls}`}>
+                    <div className="bar">
+                      <div className="fill" style={{ width: `${sla.pct}%` }} />
+                    </div>
+                    <div className="label">{sla.label}</div>
+                  </div>
+                  <div className="actions">
+                    <span className="open-btn" aria-label="Ouvrir le dossier">
+                      <Icon name="arrow-right" />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </div>
       </section>
     </main>
-  );
-}
-
-// ----------------------------------------------------------------------------
-
-function humanAge(ms: number): string {
-  const min = Math.floor(ms / 60_000);
-  if (min < 60) return `${min} min`;
-  const h = Math.floor(min / 60);
-  if (h < 24)   return `${h} h`;
-  const d = Math.floor(h / 24);
-  if (d < 30)   return `${d} j`;
-  const mo = Math.floor(d / 30);
-  return `${mo} mois`;
-}
-
-function Stat({
-  label, value, accent, mono,
-}: {
-  label: string; value: number | string; accent?: boolean; mono?: boolean;
-}) {
-  return (
-    <div className={'border bg-white px-4 py-3.5 ' + (accent ? 'border-cmgreen-700' : 'border-line')}>
-      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3">{label}</div>
-      <div
-        className={
-          'mt-1 text-[24px] font-semibold ' +
-          (accent ? 'text-cmgreen-900' : 'text-ink') + ' ' +
-          (mono ? 'font-mono' : '')
-        }
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function Th({ children }: { children: React.ReactNode }) {
-  return (
-    <th className="px-4 py-2.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">
-      {children}
-    </th>
   );
 }
