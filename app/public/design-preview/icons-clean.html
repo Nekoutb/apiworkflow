@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Icônes — jeu trait fin (à valider)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#10355c;--blue:#2b7ec9;--blue-bright:#52a8ec;--cyan:#39c0d6;--ink:#16263a;--ink3:#51617a;--ink4:#8a99ad;
+    --glass:rgba(255,255,255,.5);--stroke:rgba(255,255,255,.62);--shadow:0 2px 6px rgba(16,53,92,.06),0 20px 50px rgba(16,53,92,.14)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .aurora{position:fixed;inset:0;z-index:-1;background:linear-gradient(160deg,#eef4fb,#e6eef8 55%,#eaf1fa)}
+  .aurora span{position:absolute;border-radius:50%;filter:blur(72px)}
+  .aurora .b1{width:46vw;height:46vw;background:#6fb6ef;top:-12vw;right:-8vw;opacity:.5}
+  .aurora .b2{width:40vw;height:40vw;background:#39c0d6;bottom:-14vw;left:-6vw;opacity:.38}
+  .aurora .b3{width:30vw;height:30vw;background:#a5c8f2;top:36%;left:44%;opacity:.3}
+  h1,h2,h3,.lex{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+  header{text-align:center;padding:42px 20px 8px;max-width:760px;margin:0 auto}
+  header h1{font-size:28px;font-weight:700;color:var(--navy)}
+  header p{color:var(--ink3);font-size:14px;margin-top:10px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:10px 20px 60px}
+  .panel{background:var(--glass);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);
+    border:1px solid var(--stroke);box-shadow:var(--shadow);border-radius:20px;padding:26px;margin-top:26px}
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid rgba(120,150,190,.2);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:6px}
+  .panel-head h2{font-size:18px;font-weight:700;color:var(--navy)}
+  .panel-head .tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);background:rgba(43,126,201,.12);padding:5px 11px;border-radius:999px}
+  .panel-head p{flex-basis:100%;font-size:12.5px;color:var(--ink3)}
+
+  /* ---- specimen strip (full set, navy stroke) ---- */
+  .strip{display:flex;flex-wrap:wrap;gap:14px}
+  .spec{display:flex;flex-direction:column;align-items:center;gap:9px;width:104px;padding:16px 6px;border-radius:14px;cursor:pointer;transition:background .2s ease}
+  .spec:hover{background:rgba(255,255,255,.5)}
+  .spec svg{width:42px;height:42px;stroke:var(--navy);stroke-width:1.7;fill:none;transform-origin:center;
+    transition:transform .26s cubic-bezier(.34,1.56,.64,1)}
+  .spec:hover svg{transform:scale(1.18)}          /* swell */
+  .spec .lbl{font-size:10.5px;font-weight:600;color:var(--ink3);text-align:center;line-height:1.3}
+
+  /* ---- dashboard tile context ---- */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .tile{background:rgba(255,255,255,.55);backdrop-filter:blur(20px);border:1px solid var(--stroke);box-shadow:var(--shadow);
+    border-radius:18px;padding:22px;cursor:pointer;transition:transform .22s ease,box-shadow .22s ease}
+  .tile:hover{transform:translateY(-4px);box-shadow:0 6px 14px rgba(16,53,92,.10),0 24px 50px rgba(16,53,92,.18)}
+  .tile h3{font-size:16px;font-weight:700;color:var(--navy)}
+  .tile p{font-size:12.5px;color:var(--ink3);margin-top:6px;line-height:1.5}
+  .tile .go{margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}
+  .tile .go.red{color:#c8102e}
+
+  /* framing A — line glyph (white) on the site's gradient chip */
+  .chip{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 16px rgba(43,126,201,.32);margin-bottom:15px}
+  .chip svg{width:27px;height:27px;stroke:#fff;stroke-width:1.7;fill:none;transform-origin:center;
+    transition:transform .26s cubic-bezier(.34,1.56,.64,1)}
+  .tile:hover .chip svg{transform:scale(1.15)}    /* swell */
+
+  /* framing B — bare blue glyph, no chip (more minimal) */
+  .bare{width:46px;height:46px;margin-bottom:14px;display:block;stroke:var(--blue);stroke-width:1.7;fill:none;
+    transform-origin:left center;transition:transform .26s cubic-bezier(.34,1.56,.64,1)}
+  .bare.red{stroke:#c8102e}
+  .tile:hover .bare{transform:scale(1.14)}         /* swell */
+
+  .note{margin-top:30px;text-align:center;color:var(--ink3);font-size:13px;line-height:1.7}
+  .note b{color:var(--navy)}
+  @media(max-width:720px){.tiles{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="aurora"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+  <header>
+    <h1>Icônes — jeu « trait fin » institutionnel</h1>
+    <p>Une seule épaisseur de trait, sans aplats ni festons : sobre et professionnel, dans l'esprit
+       des sites de référence (Banque mondiale, ACCA), et net aux petites tailles.
+       Palette du site (bleu / marine). <b>Survolez une icône</b> : elle gonfle légèrement (effet ressort, conservé).
+       <b>Aucune modification en production — revue d'abord.</b></p>
+  </header>
+
+  <div class="wrap">
+
+    <!-- FULL SET -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Le jeu complet</h2>
+        <span class="tag">Trait fin · marine</span>
+        <p>Toutes les fonctions du portail, dessinées sur une même grille. SVG vectoriel, léger, net à toute taille.</p>
+      </div>
+      <div class="strip" id="strip"></div>
+    </div>
+
+    <!-- FRAMING A -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Cadre A — pastille dégradée (comme le site actuel)</h2>
+        <span class="tag">Recommandé · cohérent</span>
+        <p>Le glyphe en blanc dans la pastille dégradée déjà utilisée sur le tableau de bord. Changement minimal :
+           on remplace seulement l'emoji par l'icône trait fin.</p>
+      </div>
+      <div class="tiles" id="tilesA"></div>
+    </div>
+
+    <!-- FRAMING B -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Cadre B — glyphe bleu, sans pastille (plus minimal)</h2>
+        <span class="tag">Plus épuré</span>
+        <p>Le glyphe bleu posé directement sur la tuile en verre, sans pastille colorée. Look plus aéré, très
+           « rapport institutionnel ».</p>
+      </div>
+      <div class="tiles" id="tilesB"></div>
+    </div>
+
+    <div class="note">
+      Dites-moi le cadre — <b>A</b> (pastille) ou <b>B</b> (sans pastille) — et tout ajustement
+      (épaisseur du trait, couleur, un glyphe à revoir).<br>
+      J'intègre ensuite le jeu en composant <b>&lt;Icon/&gt;</b> dans le site (tuiles + en-têtes), puis je déploie.
+    </div>
+  </div>
+
+<script>
+// ---- line-glyph library — single weight, 24-grid, fill:none (stroke set via CSS) ----
+const G = {
+  inbox:  '<path d="M22 12h-5.5l-2 3h-5l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  timer:  '<line x1="10" y1="2.6" x2="14" y2="2.6"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/>',
+  folder: '<path d="M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4.6a2 2 0 0 1 1.41.59L12 6h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/>',
+  envIn:  '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M3.4 9.4 12 15l8.6-5.6"/><path d="M12 1.6v4.2"/><path d="m9.9 3.9 2.1 2.1 2.1-2.1"/>',
+  depart: '<path d="M22 2 11 13"/><path d="M22 2 15 21l-3.8-8.2L3 9z"/>',
+  archive:'<rect x="2.5" y="3.5" width="19" height="5" rx="1.2"/><path d="M4 8.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5"/><path d="M10 12.5h4"/>',
+  users:  '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  chart:  '<path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-3"/>',
+  bell:   '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  check:  '<circle cx="12" cy="12" r="9"/><path d="m8.4 12 2.6 2.6 4.6-5"/>'
+};
+function svg(g){
+  return `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">${G[g]}</svg>`;
+}
+
+const ITEMS = [
+  ['inbox','Parapheur DG'],['timer','Secrétariat 72h'],['folder','Parapheur unité'],
+  ['envIn','Bureau Arrivée'],['depart','Bureau Départ'],['archive','Archives'],
+  ['users','Personnel'],['chart','Base de données'],['bell','Notifications'],['check','Validé']
+];
+// [glyph, title, desc, accent]
+const TILES = [
+  ['inbox','Parapheur DG','Analyse & dispatch des courriers entrants.',''],
+  ['timer','Secrétariat DG','Suivi SLA 72h des dossiers chez le DG.','red'],
+  ['folder','Parapheur de mon unité','Dossiers dispatchés vers votre unité.','']
+];
+const GRAD = {'' :'linear-gradient(135deg,#52a8ec,#2b7ec9)', red:'linear-gradient(135deg,#e06a7a,#c8102e)'};
+
+// full specimen strip
+const strip = document.getElementById('strip');
+ITEMS.forEach(([g,l])=>{
+  const d=document.createElement('div'); d.className='spec';
+  d.innerHTML = svg(g)+`<div class="lbl">${l}</div>`;
+  strip.appendChild(d);
+});
+
+// framing A — chip
+const tA = document.getElementById('tilesA');
+TILES.forEach(([g,t,p,a])=>{
+  const d=document.createElement('div'); d.className='tile';
+  d.innerHTML =
+    `<div class="chip" style="background:${GRAD[a]}">${svg(g)}</div>`+
+    `<h3>${t}</h3><p>${p}</p><div class="go ${a}">Ouvrir →</div>`;
+  tA.appendChild(d);
+});
+
+// framing B — bare glyph
+const tB = document.getElementById('tilesB');
+TILES.forEach(([g,t,p,a])=>{
+  const d=document.createElement('div'); d.className='tile';
+  const s = svg(g).replace('<svg ', `<svg class="bare ${a}" `);
+  d.innerHTML = s+`<h3>${t}</h3><p>${p}</p><div class="go ${a}">Ouvrir →</div>`;
+  tB.appendChild(d);
+});
+</script>
+</body>
+</html>
