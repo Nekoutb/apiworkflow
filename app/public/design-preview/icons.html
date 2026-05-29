@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Icônes badge — variations à valider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#10355c;--blue:#2b7ec9;--blue-bright:#52a8ec;--ink:#16263a;--ink3:#51617a;--ink4:#8a99ad;
+    --glass:rgba(255,255,255,.5);--stroke:rgba(255,255,255,.62);--shadow:0 2px 6px rgba(16,53,92,.06),0 20px 50px rgba(16,53,92,.14)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  .aurora{position:fixed;inset:0;z-index:-1;background:linear-gradient(160deg,#eef4fb,#e6eef8 55%,#eaf1fa)}
+  .aurora span{position:absolute;border-radius:50%;filter:blur(72px)}
+  .aurora .b1{width:46vw;height:46vw;background:#6fb6ef;top:-12vw;right:-8vw;opacity:.5}
+  .aurora .b2{width:40vw;height:40vw;background:#39c0d6;bottom:-14vw;left:-6vw;opacity:.38}
+  .aurora .b3{width:30vw;height:30vw;background:#a5c8f2;top:36%;left:44%;opacity:.3}
+  h1,h2,h3,.lex{font-family:'Lexend',sans-serif;letter-spacing:-.01em}
+  header{text-align:center;padding:42px 20px 8px;max-width:760px;margin:0 auto}
+  header h1{font-size:28px;font-weight:700;color:var(--navy)}
+  header p{color:var(--ink3);font-size:14px;margin-top:10px;line-height:1.6}
+  .wrap{max-width:1080px;margin:0 auto;padding:10px 20px 60px}
+  .panel{background:var(--glass);backdrop-filter:blur(22px) saturate(150%);-webkit-backdrop-filter:blur(22px) saturate(150%);
+    border:1px solid var(--stroke);box-shadow:var(--shadow);border-radius:20px;padding:26px;margin-top:26px}
+  .panel-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid rgba(120,150,190,.2);padding-bottom:14px;margin-bottom:20px;flex-wrap:wrap;gap:6px}
+  .panel-head h2{font-size:18px;font-weight:700;color:var(--navy)}
+  .panel-head .tag{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);background:rgba(43,126,201,.12);padding:5px 11px;border-radius:999px}
+  .panel-head p{flex-basis:100%;font-size:12.5px;color:var(--ink3)}
+  /* icon specimen strip */
+  .strip{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+  .spec{display:flex;flex-direction:column;align-items:center;gap:7px;width:96px}
+  .spec svg{width:72px;height:72px;display:block}
+  .spec .lbl{font-size:10.5px;font-weight:600;color:var(--ink3);text-align:center;line-height:1.3}
+  /* dashboard tile context */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+  .tile{background:rgba(255,255,255,.55);backdrop-filter:blur(20px);border:1px solid var(--stroke);box-shadow:var(--shadow);border-radius:18px;padding:20px}
+  .tile svg{width:58px;height:58px;margin-bottom:12px}
+  .tile h3{font-size:16px;font-weight:700;color:var(--navy)}
+  .tile p{font-size:12.5px;color:var(--ink3);margin-top:5px;line-height:1.5}
+  .tile .go{margin-top:12px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)}
+  .note{margin-top:30px;text-align:center;color:var(--ink3);font-size:13px;line-height:1.7}
+  .note b{color:var(--navy)}
+  @media(max-width:720px){.tiles{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="aurora"><span class="b1"></span><span class="b2"></span><span class="b3"></span></div>
+
+  <header>
+    <h1>Icônes « badge sticker » — variations à valider</h1>
+    <p>Inspiré de votre image : médaillon festonné, contour noir épais, aplats vifs.
+       Décliné pour chaque fonction du portail, dans la palette du site (bleu / orange / teal + drapeau).
+       SVG vectoriel, léger, net à toute taille. <b>Aucune modification en production — revue d'abord.</b></p>
+  </header>
+
+  <div class="wrap">
+    <!-- STYLE A -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Style A — Sticker complet (badge + ruban)</h2>
+        <span class="tag">Le plus proche de votre image</span>
+        <p>Médaillon festonné orange + ruban teal + disque bleu clair + glyphe. Look « autocollant » assumé, ludique.</p>
+      </div>
+      <div class="strip" id="stripA"></div>
+      <div class="tiles" id="tilesA"></div>
+    </div>
+
+    <!-- STYLE B -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Style B — Médaillon festonné (sans ruban)</h2>
+        <span class="tag">Recommandé · institutionnel</span>
+        <p>Même médaillon festonné et contour épais, sans le ruban. Plus sobre, garde le caractère « sceau officiel ».</p>
+      </div>
+      <div class="strip" id="stripB"></div>
+      <div class="tiles" id="tilesB"></div>
+    </div>
+
+    <!-- STYLE C -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Style C — Pastille (contour épais, sans festons)</h2>
+        <span class="tag">Le plus net en petit</span>
+        <p>Disque simple à contour noir épais et aplats vifs. Le plus lisible aux petites tailles (listes, tableaux).</p>
+      </div>
+      <div class="strip" id="stripC"></div>
+      <div class="tiles" id="tilesC"></div>
+    </div>
+
+    <div class="note">
+      Répondez par le style — <b>A</b>, <b>B</b> ou <b>C</b> — (et tout ajustement : couleurs, retirer le drapeau, etc.).<br>
+      J'intègre ensuite le jeu d'icônes choisi en SVG dans le site (tuiles du tableau de bord + en-têtes), puis déploie.
+    </div>
+  </div>
+
+<script>
+const OUTLINE = '#12222e';
+// ---- scalloped medal path (JS = reliable geometry) ----
+function scallop(cx, cy, R, bumps){
+  const pts = [];
+  for(let i=0;i<bumps;i++){
+    const a = (i/bumps)*2*Math.PI - Math.PI/2;
+    pts.push([cx+R*Math.cos(a), cy+R*Math.sin(a)]);
+  }
+  const r = R*Math.sin(Math.PI/bumps)*1.05;
+  let d = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+  for(let i=1;i<=bumps;i++){
+    const p = pts[i%bumps];
+    d += ` A ${r.toFixed(2)} ${r.toFixed(2)} 0 0 1 ${p[0].toFixed(2)} ${p[1].toFixed(2)}`;
+  }
+  return d + ' Z';
+}
+
+// ---- glyph library (centred ~ x,y in [33,67]) ----
+const G = {
+  thumbsup:`<path d="M40 51 h-6 a2 2 0 0 0 -2 2 v11 a2 2 0 0 0 2 2 h6 z" fill="#ef4444"/>
+    <path d="M40 51 l6 -12 a4 4 0 0 1 7.5 3 l-1.4 7 h9 a3.2 3.2 0 0 1 3.1 4 l-2.7 10 a4 4 0 0 1 -4 3 H40 z" fill="#f6e3c1"/>`,
+  inbox:`<path d="M34 56 l4 -17 h24 l4 17 v6 a3 3 0 0 1 -3 3 H37 a3 3 0 0 1 -3 -3 z" fill="#4f97d8"/>
+    <path d="M44 56 h12 v2.5 a2.5 2.5 0 0 1 -2.5 2.5 h-7 a2.5 2.5 0 0 1 -2.5 -2.5 z" fill="#fff"/>
+    <path d="M50 34 v10 m-4 -4 4 4 4 -4" fill="none"/>`,
+  clock:`<circle cx="50" cy="50" r="15" fill="#eaf4fc"/>
+    <path d="M50 50 V40 M50 50 l7 4" fill="none"/>
+    <circle cx="50" cy="50" r="1.8" fill="${OUTLINE}"/>`,
+  folder:`<path d="M34 42 h9 l4 4 h19 a2.5 2.5 0 0 1 2.5 2.5 V64 a2.5 2.5 0 0 1 -2.5 2.5 H34 a2.5 2.5 0 0 1 -2.5 -2.5 V44.5 A2.5 2.5 0 0 1 34 42 z" fill="#f6b73c"/>`,
+  envIn:`<rect x="33" y="42" width="34" height="23" rx="3" fill="#4f97d8"/>
+    <path d="M34 44 l16 12 16 -12" fill="none" stroke="#fff"/>`,
+  envOut:`<rect x="33" y="44" width="30" height="21" rx="3" fill="#5bb98a"/>
+    <path d="M34 46 l14 10 14 -10" fill="none" stroke="#fff"/>
+    <path d="M60 38 l8 4 -8 4 2 -4 z" fill="#ef4444"/>`,
+  archive:`<rect x="34" y="44" width="32" height="22" rx="2.5" fill="#c9a26a"/>
+    <rect x="32" y="38" width="36" height="8" rx="2.5" fill="#f6b73c"/>
+    <path d="M45 53 h10" fill="none"/>`,
+  people:`<circle cx="43" cy="44" r="6" fill="#f6e3c1"/>
+    <circle cx="58" cy="45" r="5" fill="#f6e3c1"/>
+    <path d="M33 66 a10 10 0 0 1 20 0 z" fill="#4f97d8"/>
+    <path d="M52 66 a8 8 0 0 1 15 0 z" fill="#52a8ec"/>`,
+  chart:`<path d="M34 64 h32" fill="none"/>
+    <rect x="37" y="50" width="7" height="14" rx="2" fill="#52a8ec"/>
+    <rect x="47" y="42" width="7" height="22" rx="2" fill="#ef4444"/>
+    <rect x="57" y="46" width="7" height="18" rx="2" fill="#5bb98a"/>`,
+  decision:`<path d="M50 36 l3.5 9 9.5 .6 -7.4 6 2.6 9.2 -8.2 -5.2 -8.2 5.2 2.6 -9.2 -7.4 -6 9.5 -.6 z" fill="#f6c344"/>`
+};
+
+// ---- render one icon ----
+function icon(style, glyph){
+  const flag = (style!=='C')
+    ? `<rect x="33" y="78" width="34" height="4" rx="2" fill="none"/>
+       <rect x="33" y="78" width="11.3" height="4" fill="#0a8a3e"/>
+       <rect x="44.3" y="78" width="11.3" height="4" fill="#f4c20d"/>
+       <rect x="55.6" y="78" width="11.4" height="4" fill="#c8102e"/>` : '';
+  let frame = '';
+  if(style==='A'){
+    frame = `
+      <path d="M6 50 L40 50 L40 73 L6 73 L14 61.5 Z" fill="#29c1d4"/>
+      <path d="M94 50 L60 50 L60 73 L94 73 L86 61.5 Z" fill="#29c1d4"/>
+      <path d="${scallop(50,48,33,13)}" fill="#f6a323"/>
+      <circle cx="50" cy="48" r="24" fill="#dcecf8"/>
+      <circle cx="50" cy="48" r="24" fill="url(#hi)" stroke="none"/>`;
+  } else if(style==='B'){
+    frame = `
+      <path d="${scallop(50,50,34,13)}" fill="#f6a323"/>
+      <circle cx="50" cy="50" r="25" fill="#dcecf8"/>
+      <circle cx="50" cy="50" r="25" fill="url(#hi)" stroke="none"/>`;
+  } else {
+    frame = `
+      <circle cx="50" cy="50" r="33" fill="#f6a323"/>
+      <circle cx="50" cy="50" r="26" fill="#dcecf8"/>
+      <circle cx="50" cy="50" r="26" fill="url(#hi)" stroke="none"/>`;
+  }
+  // shift glyph up a touch in style A (badge centred at y48)
+  const gy = style==='A' ? 'transform="translate(0,-2)"' : '';
+  return `<svg viewBox="0 0 100 ${style==='A'?'88':'100'}" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="hi" cx="38%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".85"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient></defs>
+    <g stroke="${OUTLINE}" stroke-width="3.1" stroke-linejoin="round" stroke-linecap="round" fill="none">
+      ${frame}
+      <g ${gy}>${G[glyph]}</g>
+      ${flag}
+    </g>
+  </svg>`;
+}
+
+const ITEMS = [
+  ['inbox','Parapheur DG'],
+  ['decision','Décision'],
+  ['clock','Secrétariat 72h'],
+  ['folder','Parapheur unité'],
+  ['envIn','Bureau Arrivée'],
+  ['envOut','Bureau Départ'],
+  ['archive','Archives'],
+  ['people','Personnel'],
+  ['chart','Données'],
+  ['thumbsup','Validé'],
+];
+const TILES = [
+  ['inbox','Parapheur DG','Analyse & dispatch des courriers entrants.'],
+  ['clock','Secrétariat DG','Suivi SLA 72h des dossiers chez le DG.'],
+  ['folder','Parapheur de mon unité','Dossiers dispatchés vers votre unité.'],
+];
+
+function build(style){
+  const strip = document.getElementById('strip'+style);
+  ITEMS.forEach(([g,l])=>{
+    const d=document.createElement('div'); d.className='spec';
+    d.innerHTML = icon(style,g)+`<div class="lbl">${l}</div>`;
+    strip.appendChild(d);
+  });
+  const tiles = document.getElementById('tiles'+style);
+  TILES.forEach(([g,t,p])=>{
+    const d=document.createElement('div'); d.className='tile';
+    d.innerHTML = icon(style,g)+`<h3>${t}</h3><p>${p}</p><div class="go">Ouvrir →</div>`;
+    tiles.appendChild(d);
+  });
+}
+['A','B','C'].forEach(build);
+</script>
+</body>
+</html>
