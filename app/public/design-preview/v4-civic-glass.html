@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Cameroun — UI V4 « Civic Glass » (revue avant intégration)</title>
+<meta name="description" content="Évolution du design système V3 — tableau de bord + parapheur unité, à valider avant intégration.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#10355c; --navy-2:#1c4570;
+    --blue:#2b7ec9; --blue-bright:#52a8ec; --blue-50:#eef5fc;
+    --cyan:#39c0d6; --gold:#d4af37;
+    --red:#c8102e; --amber:#d97706; --green:#15803d;
+    --ink:#16263a; --ink-2:#33455d; --ink-3:#51617a; --ink-4:#8a99ad;
+    --glass:rgba(255,255,255,.5); --glass-strong:rgba(255,255,255,.72);
+    --stroke:rgba(255,255,255,.62);
+    --obsidian:#0a1320;
+    --shadow-glass:0 1px 2px rgba(16,53,92,.06), 0 18px 44px rgba(16,53,92,.13);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',sans-serif;color:var(--ink);min-height:100vh;
+    position:relative;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+    font-size:14px;line-height:1.5}
+  h1,h2,h3,h4{font-family:'Lexend',sans-serif;letter-spacing:-.012em;color:var(--navy)}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer}
+  button:focus-visible, a:focus-visible, .filter-chip:focus-visible, [tabindex]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+  /* aurora bg — fixed, 4 blobs */
+  .aurora{position:fixed;inset:0;z-index:-1;background:linear-gradient(160deg,#f3f7fc,#e9f0f9 50%,#eef4fb)}
+  .aurora span{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+  .aurora .b1{width:46vw;height:46vw;background:#7bbcf2;top:-14vw;right:-10vw;opacity:.42}
+  .aurora .b2{width:42vw;height:42vw;background:#5fc7d8;bottom:-16vw;left:-8vw;opacity:.32}
+  .aurora .b3{width:30vw;height:30vw;background:#b3ceeb;top:36%;left:42%;opacity:.28}
+  .aurora .b4{width:22vw;height:22vw;background:#a9d4c8;top:62%;right:8vw;opacity:.22}
+
+  /* glass primitives */
+  .glass{background:var(--glass);backdrop-filter:blur(22px) saturate(150%);
+    -webkit-backdrop-filter:blur(22px) saturate(150%);
+    border:1px solid var(--stroke);box-shadow:var(--shadow-glass);border-radius:18px}
+  .glass-strong{background:var(--glass-strong);backdrop-filter:blur(28px) saturate(160%);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    border:1px solid var(--stroke);box-shadow:var(--shadow-glass);border-radius:18px}
+
+  /* layout */
+  .shell{max-width:1280px;margin:0 auto;padding:0 16px}
+  @media(min-width:720px){.shell{padding:0 24px}}
+  .col-2{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:1000px){.col-2{grid-template-columns:1.7fr .85fr}}
+
+  /* review meta-banner */
+  .review{position:sticky;top:0;z-index:50;background:var(--obsidian);color:#fff;padding:9px 16px;font-size:11.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .review .star{color:var(--gold)}
+  .review b{font-weight:700;font-family:'Lexend'}
+  .review .sep{color:rgba(255,255,255,.35);margin:0 4px}
+  .review .jump{margin-left:auto;display:flex;gap:6px}
+  .review .jump a{color:#fff;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;transition:.15s}
+  .review .jump a:hover{background:rgba(255,255,255,.22)}
+
+  /* obsidian gold banner (used on each screen mockup) */
+  .banner{background:var(--obsidian);color:#fff;padding:7px 24px;font-size:10.5px;font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;text-align:center;border-radius:10px;margin-top:12px}
+  .banner .star{color:var(--gold);margin:0 12px}
+
+  /* chrome (sticky-style header — non-sticky in mockup so both screens are visible) */
+  .chrome{margin:12px 0 0;padding:11px 16px;display:flex;align-items:center;gap:12px;border-radius:14px}
+  .chrome .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#52a8ec,#10355c);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:'Lexend';font-size:15px;letter-spacing:-.02em}
+  .chrome .titles{line-height:1.15;min-width:0}
+  .chrome .titles .republic{font-size:9.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3)}
+  .chrome .titles .name{font-size:14.5px;font-weight:700;color:var(--navy);font-family:'Lexend';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw}
+  .chrome nav{display:none;margin-left:18px;gap:2px}
+  @media(min-width:880px){.chrome nav{display:flex}}
+  .chrome nav a{padding:7px 13px;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border-radius:9px;transition:.16s}
+  .chrome nav a.active{background:rgba(43,126,201,.13);color:var(--navy)}
+  .chrome nav a:hover{color:var(--navy);background:rgba(43,126,201,.08)}
+  .chrome .right{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .chrome .lang{font-size:10.5px;font-weight:600;color:var(--ink-3);padding:6px 9px;border-radius:8px;border:1px solid rgba(43,126,201,.18);background:rgba(255,255,255,.4)}
+  .chrome .lang .sep{margin:0 6px;color:var(--ink-4)}
+  .chrome .lang .on{color:var(--navy);font-weight:700}
+  .chrome .bell{position:relative;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.55);border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+  .chrome .bell .badge{position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#f0b400;border:2px solid #fff}
+  .chrome .user{display:none;text-align:right;line-height:1.1;padding:0 4px}
+  @media(min-width:640px){.chrome .user{display:block}}
+  .chrome .user .name{font-size:12.5px;font-weight:700;color:var(--navy);font-family:'Lexend'}
+  .chrome .user .role{font-size:9.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin-top:1px}
+  .chrome .logout{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.55);border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center;color:var(--ink-3)}
+
+  /* universal icon */
+  .icon{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  .icon-lg{width:22px;height:22px}
+  .icon-sm{width:14px;height:14px}
+
+  /* page heading */
+  .page-heading{padding:22px 0 16px}
+  .page-heading .kicker{display:inline-flex;align-items:center;gap:8px;font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
+  .page-heading .kicker .dot{width:5px;height:5px;border-radius:50%;background:var(--blue)}
+  .page-heading h1{font-size:clamp(22px,3vw,30px);line-height:1.12;font-weight:700;letter-spacing:-.018em}
+  .page-heading p{margin-top:8px;color:var(--ink-3);font-size:13.5px;max-width:64ch;line-height:1.55}
+
+  /* KPI strip */
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+  @media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}}
+  .kpi{padding:14px 16px;border-radius:14px}
+  .kpi .label{font-size:9.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3)}
+  .kpi .num{font-family:'Lexend';font-size:28px;font-weight:700;color:var(--navy);margin-top:4px;line-height:1;letter-spacing:-.02em}
+  .kpi .delta{font-size:11px;color:var(--ink-3);margin-top:6px;display:flex;align-items:center;gap:5px}
+  .kpi .delta.alert{color:var(--red);font-weight:600}
+  .kpi .delta.up{color:var(--green);font-weight:600}
+
+  /* tile grid */
+  .tiles{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{padding:16px 16px 14px;border-radius:16px;transition:.22s;display:block}
+  .tile:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(16,53,92,.10),0 22px 48px rgba(16,53,92,.16)}
+  .tile .head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+  .tile .chip{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#52a8ec,#2b7ec9);box-shadow:0 4px 12px rgba(43,126,201,.32);flex-shrink:0}
+  .tile .chip.red{background:linear-gradient(135deg,#e06a7a,#c8102e);box-shadow:0 4px 12px rgba(200,16,46,.28)}
+  .tile .chip.cyan{background:linear-gradient(135deg,#7dd6e6,#2098b0);box-shadow:0 4px 12px rgba(32,152,176,.28)}
+  .tile .chip.navy{background:linear-gradient(135deg,#4c7ba6,#10355c);box-shadow:0 4px 12px rgba(16,53,92,.28)}
+  .tile .chip .icon{stroke:#fff;width:22px;height:22px;stroke-width:1.8}
+  .tile .meta{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .tile .name{font-size:14.5px;font-weight:700;font-family:'Lexend';color:var(--navy);line-height:1.2}
+  .tile .role{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+  .tile .count{font-size:11.5px;font-weight:700;color:var(--navy);padding:2px 8px;border-radius:7px;background:rgba(43,126,201,.13);align-self:flex-start}
+  .tile .count.alert{color:#fff;background:var(--red)}
+  .tile p{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .tile .open{margin-top:12px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);display:flex;align-items:center;gap:5px}
+  .tile .open.alert{color:var(--red)}
+  .tile:hover .open .icon{transform:translateX(2px);transition:.16s}
+
+  /* activity feed */
+  .feed{padding:16px;border-radius:16px}
+  .feed h2{font-size:14px;font-weight:700;font-family:'Lexend';margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+  .feed h2 .see-all{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);cursor:pointer}
+  .feed .item{display:flex;gap:10px;padding:10px 0;border-top:1px solid rgba(120,150,190,.18)}
+  .feed .item:first-of-type{border-top:0;padding-top:4px}
+  .feed .item .dot{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px;flex-shrink:0;box-shadow:0 0 0 3px rgba(43,126,201,.16)}
+  .feed .item.alert .dot{background:var(--red);box-shadow:0 0 0 3px rgba(200,16,46,.16)}
+  .feed .item.warn .dot{background:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.16)}
+  .feed .item.ok .dot{background:var(--green);box-shadow:0 0 0 3px rgba(21,128,61,.16)}
+  .feed .item .body{flex:1;min-width:0}
+  .feed .item .title{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+  .feed .item .title b{font-weight:700;color:var(--navy)}
+  .feed .item .time{font-size:10.5px;color:var(--ink-4);margin-top:2px;font-variant-numeric:tabular-nums}
+
+  /* toolbar — parapheur */
+  .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;margin-bottom:14px}
+  .toolbar .filters{display:flex;flex-wrap:wrap;gap:5px}
+  .filter-chip{padding:6px 11px;font-size:11.5px;font-weight:600;color:var(--ink-2);border-radius:999px;background:rgba(255,255,255,.4);border:1px solid rgba(43,126,201,.15);transition:.16s;font-family:inherit}
+  .filter-chip:hover{background:rgba(82,168,236,.16);color:var(--navy)}
+  .filter-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .filter-chip .num{margin-left:5px;opacity:.65;font-weight:700}
+  .filter-chip.on .num{opacity:.85}
+  .toolbar .search{flex:1;min-width:160px;max-width:280px;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:9px;background:rgba(255,255,255,.55);border:1px solid rgba(43,126,201,.15)}
+  .toolbar .search input{flex:1;border:0;background:transparent;font-family:inherit;font-size:12.5px;color:var(--ink);outline:none}
+  .toolbar .search input::placeholder{color:var(--ink-4)}
+  .toolbar .search .icon{color:var(--ink-4);width:14px;height:14px}
+
+  /* table (desktop grid) */
+  .table{padding:0;border-radius:16px;overflow:hidden}
+  .thead{display:grid;grid-template-columns:30px 1.55fr 1fr 110px 145px 140px 50px;
+    gap:14px;padding:11px 18px;background:rgba(255,255,255,.32);
+    font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+    border-bottom:1px solid rgba(120,150,190,.2)}
+  .row{display:grid;grid-template-columns:30px 1.55fr 1fr 110px 145px 140px 50px;
+    gap:14px;padding:14px 18px;align-items:center;
+    border-bottom:1px solid rgba(120,150,190,.14);transition:.16s}
+  .row:hover{background:rgba(82,168,236,.06)}
+  .row.expanded{background:rgba(82,168,236,.07)}
+  .row .check{width:16px;height:16px;border:1.5px solid rgba(43,126,201,.4);border-radius:5px;background:rgba(255,255,255,.6)}
+  .row .obj{min-width:0}
+  .row .obj .ref{font-size:10.5px;font-weight:700;font-family:'Lexend';color:var(--blue);letter-spacing:.04em}
+  .row .obj .subj{font-size:13.5px;color:var(--ink);margin-top:2px;line-height:1.35;font-weight:500}
+  .row .sender{font-size:12.5px;color:var(--ink-2);min-width:0;font-weight:500}
+  .row .sender .ent{display:block;font-size:10.5px;color:var(--ink-4);margin-top:1px;font-weight:400}
+  .row .date{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;font-weight:600}
+  .row .date .t{display:block;color:var(--ink-4);font-size:10px;margin-top:1px;font-weight:400}
+
+  /* status pills */
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(43,126,201,.12);color:var(--navy);white-space:nowrap}
+  .pill.new{background:#dcefff;color:#1a5db3}
+  .pill.in-treatment{background:#ece1ff;color:#5c3aa3}
+  .pill.co-avis{background:#fde6d0;color:#9c4a13}
+  .pill.ext-avis{background:#d5f0e1;color:#136c39}
+  .pill.dg{background:#ffe1d2;color:#a8350f}
+  .pill.alert{background:#fdd6da;color:var(--red)}
+
+  /* SLA bar */
+  .sla{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .sla .bar{height:5px;border-radius:4px;background:rgba(120,150,190,.18);overflow:hidden}
+  .sla .fill{height:100%;background:linear-gradient(90deg,#5dd39e,#15803d);border-radius:4px}
+  .sla.amber .fill{background:linear-gradient(90deg,#fbbf24,#d97706)}
+  .sla.red .fill{background:linear-gradient(90deg,#e06a7a,#c8102e)}
+  .sla.paused .fill{background:repeating-linear-gradient(45deg,rgba(120,150,190,.5) 0 4px,rgba(120,150,190,.25) 4px 8px)}
+  .sla .label{font-size:10.5px;color:var(--ink-3);font-weight:600;font-variant-numeric:tabular-nums}
+  .sla.red .label{color:var(--red);font-weight:700}
+  .sla.amber .label{color:var(--amber);font-weight:700}
+
+  .row .actions{display:flex;align-items:center;justify-content:flex-end;color:var(--ink-3)}
+  .row .actions button{width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:inherit;display:flex;align-items:center;justify-content:center;transition:.14s}
+  .row .actions button:hover{background:rgba(43,126,201,.13);color:var(--navy)}
+
+  /* expanded detail */
+  .detail{grid-column:1/-1;padding:16px 0 6px;display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:900px){.detail{grid-template-columns:1.4fr .9fr}}
+  .detail .ai{padding:14px 16px;border-radius:12px;background:linear-gradient(135deg,rgba(238,245,252,.85),rgba(255,255,255,.7));border:1px solid rgba(43,126,201,.22)}
+  .detail .ai h3{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .detail .ai h3 .badge{font-size:9px;padding:1.5px 6px;border-radius:4px;background:var(--blue);color:#fff;letter-spacing:.1em;font-weight:700}
+  .detail .ai p{font-size:12.5px;line-height:1.55;color:var(--ink-2)}
+  .detail .ai .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .detail .ai .tags span{font-size:10.5px;padding:3px 8px;border-radius:6px;background:#dceaf7;color:var(--navy);font-weight:600}
+  .detail .history{padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.4);border:1px solid rgba(43,126,201,.12)}
+  .detail .history h3{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+  .detail .history .step{display:flex;gap:10px;padding:5px 0}
+  .detail .history .when{font-size:10.5px;color:var(--ink-4);min-width:80px;font-variant-numeric:tabular-nums;font-weight:600}
+  .detail .history .what{font-size:12px;color:var(--ink-2);line-height:1.4}
+  .detail .history .what b{color:var(--navy);font-weight:700}
+  .detail-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;padding-top:14px;border-top:1px solid rgba(120,150,190,.2);margin-top:4px}
+  .btn{font-family:inherit;font-size:12.5px;font-weight:600;padding:8px 13px;border-radius:9px;border:1px solid rgba(43,126,201,.22);background:rgba(255,255,255,.65);color:var(--navy);display:inline-flex;align-items:center;gap:6px;transition:.16s}
+  .btn:hover{background:rgba(82,168,236,.18);border-color:var(--blue)}
+  .btn.primary{background:linear-gradient(180deg,#52a8ec,#2b7ec9);color:#fff;border-color:var(--blue);box-shadow:0 4px 12px rgba(43,126,201,.28);margin-left:auto}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn .icon{width:14px;height:14px;stroke-width:1.85}
+
+  /* mobile: convert table to cards */
+  @media(max-width:880px){
+    .thead{display:none}
+    .row{grid-template-columns:1fr auto;grid-template-rows:auto auto auto auto;gap:8px 10px;padding:14px}
+    .row .check{display:none}
+    .row .obj{grid-column:1;grid-row:1}
+    .row .actions{grid-column:2;grid-row:1;align-self:start}
+    .row .sender{grid-column:1 / span 2;grid-row:2;font-size:11.5px}
+    .row .date{grid-column:1;grid-row:3;font-size:10.5px}
+    .row .date .t{display:inline;margin-left:4px}
+    .row .status{grid-column:2;grid-row:3;justify-self:end}
+    .row .sla{grid-column:1 / span 2;grid-row:4;flex-direction:row;align-items:center;gap:10px}
+    .row .sla .bar{flex:1}
+    .row .sla .label{font-size:10.5px;flex-shrink:0}
+    .detail{grid-column:1 / -1}
+    .btn.primary{margin-left:0;width:100%;justify-content:center}
+  }
+
+  /* tokens */
+  .tokens-grid{display:grid;grid-template-columns:1fr;gap:18px;padding:18px}
+  @media(min-width:760px){.tokens-grid{grid-template-columns:1.2fr .9fr 1fr}}
+  .tokens h3{font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);margin-bottom:12px}
+  .swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .swatch{display:flex;flex-direction:column;gap:4px}
+  .swatch .sw{height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.15)}
+  .swatch .nm{font-size:10.5px;font-weight:600;color:var(--ink-2);line-height:1.2}
+  .swatch .vl{font-size:9px;color:var(--ink-4);font-family:ui-monospace,SFMono-Regular,monospace}
+  .type-sample .ds{font-family:'Lexend';font-weight:700;color:var(--navy);font-size:26px;line-height:1;letter-spacing:-.02em}
+  .type-sample .h{font-family:'Lexend';font-weight:700;color:var(--navy);font-size:16px;margin-top:10px}
+  .type-sample .b{font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.5}
+  .type-sample .c{font-size:9.5px;color:var(--ink-3);font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-top:10px}
+  .icon-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+  .icon-strip .it{aspect-ratio:1;border-radius:11px;background:rgba(255,255,255,.5);border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center;color:var(--navy)}
+  .icon-strip .it .icon{width:20px;height:20px;stroke-width:1.7}
+
+  /* sections */
+  .screen{padding:0 0 50px}
+  .screen-label{padding:36px 16px 8px;display:flex;align-items:baseline;gap:12px;justify-content:space-between;flex-wrap:wrap;max-width:1280px;margin:0 auto}
+  .screen-label h2{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);font-family:'Lexend'}
+  .screen-label h2 .num{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;border-radius:50%;background:var(--navy);color:#fff;margin-right:8px;font-size:11px;letter-spacing:0}
+  .screen-label .frame{font-size:10.5px;color:var(--ink-4);font-weight:600}
+
+  /* footer */
+  .endnote{padding:30px 20px 60px;text-align:center;color:var(--ink-3);font-size:12.5px}
+  .endnote .box{max-width:680px;margin:0 auto;padding:18px 22px;border-radius:14px;line-height:1.7}
+  .endnote .box b{color:var(--navy);font-family:'Lexend'}
+  .endnote code{font-family:ui-monospace,SFMono-Regular,monospace;font-size:11.5px;background:rgba(43,126,201,.1);padding:1px 6px;border-radius:5px;color:var(--navy)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none!important;animation:none!important}
+    .tile:hover{transform:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- Icon sprite (single source for all glyphs) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-5.5l-2 3h-5l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" y1="2.6" x2="14" y2="2.6"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 20a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4.6a2 2 0 0 1 1.41.59L12 6h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/></symbol>
+    <symbol id="i-mail-in" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M3.4 9.4 12 15l8.6-5.6"/><path d="M12 1.6v4.2"/><path d="m9.9 3.9 2.1 2.1 2.1-2.1"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 21l-3.8-8.2L3 9z"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="2.5" y="3.5" width="19" height="5" rx="1.2"/><path d="M4 8.5V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8.5"/><path d="M10 12.5h4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M8 17v-5"/><path d="M13 17V8"/><path d="M18 17v-3"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.4 12 2.6 2.6 4.6-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="6" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="18" r="1.3"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 5 7 7-7 7"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M19 14v3"/><path d="M19 20v1"/><path d="M5 14v3"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-handshake" viewBox="0 0 24 24"><path d="M11 17a2 2 0 0 1-2 2H6l-4-4 4-4h3"/><path d="M13 17a2 2 0 0 0 2 2h3l4-4-4-4h-3"/><path d="m8 10 3-3 3 3"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-2"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 9v5"/><path d="M12 18v.5"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></symbol>
+  </defs>
+</svg>
+
+<div class="aurora" aria-hidden="true">
+  <span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b4"></span>
+</div>
+
+<!-- Review banner -->
+<div class="review">
+  <span class="star">✦</span>
+  <b>UI V4 · Civic Glass</b>
+  <span class="sep">·</span>
+  Revue avant intégration — évolution du système V3, pas de modification en production
+  <span class="jump">
+    <a href="#tokens">Tokens</a>
+    <a href="#dashboard">Tableau de bord</a>
+    <a href="#parapheur">Parapheur</a>
+  </span>
+</div>
+
+<!-- ====================================================================== -->
+<!-- 1. DESIGN TOKENS                                                       -->
+<!-- ====================================================================== -->
+<section id="tokens" class="screen">
+  <div class="screen-label">
+    <h2><span class="num">1</span>Design tokens</h2>
+    <span class="frame">palette · typographie · icônes — la base du système</span>
+  </div>
+  <div class="shell">
+    <div class="glass tokens">
+      <div class="tokens-grid">
+        <div>
+          <h3>Palette</h3>
+          <div class="swatches">
+            <div class="swatch"><div class="sw" style="background:#10355c"></div><span class="nm">Navy</span><span class="vl">#10355c</span></div>
+            <div class="swatch"><div class="sw" style="background:#2b7ec9"></div><span class="nm">Blue</span><span class="vl">#2b7ec9</span></div>
+            <div class="swatch"><div class="sw" style="background:#52a8ec"></div><span class="nm">Bright</span><span class="vl">#52a8ec</span></div>
+            <div class="swatch"><div class="sw" style="background:#39c0d6"></div><span class="nm">Cyan</span><span class="vl">#39c0d6</span></div>
+            <div class="swatch"><div class="sw" style="background:#d4af37"></div><span class="nm">Gold</span><span class="vl">#d4af37</span></div>
+            <div class="swatch"><div class="sw" style="background:#c8102e"></div><span class="nm">Alert</span><span class="vl">#c8102e</span></div>
+            <div class="swatch"><div class="sw" style="background:#d97706"></div><span class="nm">Warn</span><span class="vl">#d97706</span></div>
+            <div class="swatch"><div class="sw" style="background:#15803d"></div><span class="nm">OK</span><span class="vl">#15803d</span></div>
+            <div class="swatch"><div class="sw" style="background:#0a1320"></div><span class="nm">Obsidian</span><span class="vl">#0a1320</span></div>
+          </div>
+        </div>
+        <div class="type-sample">
+          <h3>Typographie</h3>
+          <div class="ds">Lexend Display</div>
+          <div class="h">Lexend Heading</div>
+          <div class="b">Inter — Circuit officiel de traitement des dossiers d'investissement. Lisible aux petites tailles et sur mobile, contraste WCAG AA respecté sur fond verre.</div>
+          <div class="c">Inter caps · 0.18em</div>
+        </div>
+        <div>
+          <h3>Icônes · jeu trait fin</h3>
+          <div class="icon-strip">
+            <div class="it" title="Parapheur DG"><svg class="icon"><use href="#i-inbox"/></svg></div>
+            <div class="it" title="SLA 72h"><svg class="icon"><use href="#i-timer"/></svg></div>
+            <div class="it" title="Parapheur unité"><svg class="icon"><use href="#i-folder"/></svg></div>
+            <div class="it" title="Bureau Arrivée"><svg class="icon"><use href="#i-mail-in"/></svg></div>
+            <div class="it" title="Bureau Départ"><svg class="icon"><use href="#i-send"/></svg></div>
+            <div class="it" title="Archives"><svg class="icon"><use href="#i-archive"/></svg></div>
+            <div class="it" title="Personnel"><svg class="icon"><use href="#i-users"/></svg></div>
+            <div class="it" title="Données"><svg class="icon"><use href="#i-chart"/></svg></div>
+            <div class="it" title="Notifications"><svg class="icon"><use href="#i-bell"/></svg></div>
+            <div class="it" title="Validé"><svg class="icon"><use href="#i-check"/></svg></div>
+            <div class="it" title="Co-avis"><svg class="icon"><use href="#i-handshake"/></svg></div>
+            <div class="it" title="Avis externe"><svg class="icon"><use href="#i-external"/></svg></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- 2. DASHBOARD (DG)                                                      -->
+<!-- ====================================================================== -->
+<section id="dashboard" class="screen">
+  <div class="screen-label">
+    <h2><span class="num">2</span>Tableau de bord (rôle DG)</h2>
+    <span class="frame">vue : Directeur Général · responsive : tuiles 1/2/2 col</span>
+  </div>
+  <div class="shell">
+    <div class="banner">
+      <span class="star">⚜</span> Portail interne · Accès réservé au personnel <span class="star">⚜</span>
+    </div>
+    <header class="chrome glass">
+      <div class="logo" aria-hidden="true">A</div>
+      <div class="titles">
+        <div class="republic">République du Cameroun</div>
+        <div class="name">Cameroon Investment Promotion Agency</div>
+      </div>
+      <nav aria-label="Navigation principale">
+        <a class="active" href="#">Tableau de bord</a>
+        <a href="#">Parapheur</a>
+        <a href="#">Secrétariat</a>
+        <a href="#">Données</a>
+      </nav>
+      <div class="right">
+        <div class="lang" role="button" tabindex="0" aria-label="Changer la langue">
+          <span class="on">FR</span><span class="sep">·</span><span>EN</span>
+        </div>
+        <button class="bell" aria-label="Notifications (3 nouvelles)">
+          <svg class="icon"><use href="#i-bell"/></svg>
+          <span class="badge" aria-hidden="true"></span>
+        </button>
+        <div class="user">
+          <div class="name">Marie Etoundi</div>
+          <div class="role">Directeur Général</div>
+        </div>
+        <button class="logout" aria-label="Se déconnecter"><svg class="icon"><use href="#i-logout"/></svg></button>
+      </div>
+    </header>
+
+    <div class="page-heading">
+      <div class="kicker"><span class="dot"></span>Directeur Général · Lundi 1 juin 2026</div>
+      <h1>Bonjour, Marie Etoundi</h1>
+      <p>7 dossiers attendent votre décision. 2 approchent du SLA 72h fixé par l'État. Circuit officiel : Service du Courrier → DG → Organigramme → Réponse.</p>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi glass">
+        <div class="label">Dossiers actifs</div>
+        <div class="num">23</div>
+        <div class="delta up">↑ +4 cette semaine</div>
+      </div>
+      <div class="kpi glass">
+        <div class="label">Chez le DG</div>
+        <div class="num">7</div>
+        <div class="delta">2 proches du SLA</div>
+      </div>
+      <div class="kpi glass">
+        <div class="label">Alertes SLA</div>
+        <div class="num" style="color:var(--red)">2</div>
+        <div class="delta alert"><svg class="icon icon-sm"><use href="#i-warn"/></svg>&lt; 12 h restant</div>
+      </div>
+      <div class="kpi glass">
+        <div class="label">Respect 72h · mai</div>
+        <div class="num">91 %</div>
+        <div class="delta up">↑ +6 pts vs avril</div>
+      </div>
+    </div>
+
+    <div class="col-2">
+      <div class="tiles">
+        <a class="tile glass" href="#">
+          <div class="head">
+            <div class="chip"><svg class="icon"><use href="#i-inbox"/></svg></div>
+            <div class="meta">
+              <div class="name">Parapheur DG</div>
+              <div class="role">À analyser & dispatcher</div>
+            </div>
+            <div class="count">7</div>
+          </div>
+          <p>Suggestion d'unité par Claude · décision finale du DG.</p>
+          <div class="open">Ouvrir <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></div>
+        </a>
+        <a class="tile glass" href="#">
+          <div class="head">
+            <div class="chip red"><svg class="icon"><use href="#i-timer"/></svg></div>
+            <div class="meta">
+              <div class="name">Secrétariat DG</div>
+              <div class="role">Suivi SLA 72 h</div>
+            </div>
+            <div class="count alert">2</div>
+          </div>
+          <p>Monitoring des dossiers chez le DG et dispatchés. Rappels manuels.</p>
+          <div class="open alert">Voir alertes <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></div>
+        </a>
+        <a class="tile glass" href="#">
+          <div class="head">
+            <div class="chip"><svg class="icon"><use href="#i-folder"/></svg></div>
+            <div class="meta">
+              <div class="name">Parapheur de mon unité</div>
+              <div class="role">Direction Législation</div>
+            </div>
+            <div class="count">5</div>
+          </div>
+          <p>Dossiers dispatchés vers votre unité. Délégation et co-avis.</p>
+          <div class="open">Ouvrir <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></div>
+        </a>
+        <a class="tile glass" href="#">
+          <div class="head">
+            <div class="chip cyan"><svg class="icon"><use href="#i-mail-in"/></svg></div>
+            <div class="meta">
+              <div class="name">Bureau Arrivée</div>
+              <div class="role">Courrier entrant</div>
+            </div>
+          </div>
+          <p>Enregistrement OCR + synopsis IA · récépissé officiel.</p>
+          <div class="open">Ouvrir <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></div>
+        </a>
+        <a class="tile glass" href="#">
+          <div class="head">
+            <div class="chip cyan"><svg class="icon"><use href="#i-send"/></svg></div>
+            <div class="meta">
+              <div class="name">Bureau Départ</div>
+              <div class="role">Réponses officielles</div>
+            </div>
+          </div>
+          <p>Composition et expédition après décision du DG.</p>
+          <div class="open">Ouvrir <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></div>
+        </a>
+        <a class="tile glass" href="#">
+          <div class="head">
+            <div class="chip navy"><svg class="icon"><use href="#i-archive"/></svg></div>
+            <div class="meta">
+              <div class="name">Archives</div>
+              <div class="role">Clôture & recherche</div>
+            </div>
+          </div>
+          <p>Recherche par référence, émetteur, année.</p>
+          <div class="open">Ouvrir <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></div>
+        </a>
+      </div>
+
+      <aside class="feed glass" aria-labelledby="feed-title">
+        <h2 id="feed-title">Activité récente <span class="see-all">Tout voir</span></h2>
+        <div class="item alert"><div class="dot"></div><div class="body"><div class="title"><b>SLA 4 h restant</b> · Convention modifiée APM Terminals · Dir. Législation</div><div class="time">il y a 18 min</div></div></div>
+        <div class="item"><div class="dot"></div><div class="body"><div class="title"><b>Nouveau dossier</b> arrivé du Bureau Arrivée · Demande agrément ZES SARL Etoundi</div><div class="time">il y a 1 h</div></div></div>
+        <div class="item ok"><div class="dot"></div><div class="body"><div class="title"><b>Décision approuvée</b> · Renouvellement Tropic Agro · transmis au Bureau Départ</div><div class="time">il y a 3 h</div></div></div>
+        <div class="item warn"><div class="dot"></div><div class="body"><div class="title"><b>Rappel envoyé</b> par Secrétariat DG à Dir. Économique</div><div class="time">il y a 5 h</div></div></div>
+        <div class="item"><div class="dot"></div><div class="body"><div class="title"><b>Avis externe reçu</b> · Min. Finances · projet hôtelier Kribi phase II</div><div class="time">hier · 17:42</div></div></div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ====================================================================== -->
+<!-- 3. PARAPHEUR UNITÉ (workflow workhorse)                                -->
+<!-- ====================================================================== -->
+<section id="parapheur" class="screen">
+  <div class="screen-label">
+    <h2><span class="num">3</span>Parapheur de mon unité (workflow)</h2>
+    <span class="frame">vue : Directeur Législation · table desktop · cartes mobile</span>
+  </div>
+  <div class="shell">
+    <div class="banner">
+      <span class="star">⚜</span> Portail interne · Accès réservé au personnel <span class="star">⚜</span>
+    </div>
+    <header class="chrome glass">
+      <div class="logo" aria-hidden="true">A</div>
+      <div class="titles">
+        <div class="republic">République du Cameroun</div>
+        <div class="name">Parapheur · Direction Législation & Réglementation</div>
+      </div>
+      <nav aria-label="Navigation principale">
+        <a href="#">Tableau de bord</a>
+        <a class="active" href="#">Parapheur</a>
+        <a href="#">Données</a>
+      </nav>
+      <div class="right">
+        <div class="lang" role="button" tabindex="0"><span class="on">FR</span><span class="sep">·</span><span>EN</span></div>
+        <button class="bell" aria-label="Notifications">
+          <svg class="icon"><use href="#i-bell"/></svg><span class="badge" aria-hidden="true"></span>
+        </button>
+        <div class="user">
+          <div class="name">Joseph Ngono</div>
+          <div class="role">Directeur Législation</div>
+        </div>
+        <button class="logout" aria-label="Se déconnecter"><svg class="icon"><use href="#i-logout"/></svg></button>
+      </div>
+    </header>
+
+    <div class="page-heading">
+      <div class="kicker"><span class="dot"></span>Direction Législation & Réglementation</div>
+      <h1>Parapheur de mon unité</h1>
+      <p>12 dossiers actifs · 3 nouveaux depuis hier · 1 alerte SLA &lt; 6 h. Ordre par défaut : SLA le plus tendu en premier.</p>
+    </div>
+
+    <div class="toolbar glass">
+      <div class="filters" role="tablist" aria-label="Filtre par statut">
+        <button class="filter-chip on" role="tab" aria-selected="true">Tous <span class="num">12</span></button>
+        <button class="filter-chip" role="tab">À traiter <span class="num">3</span></button>
+        <button class="filter-chip" role="tab">En traitement <span class="num">5</span></button>
+        <button class="filter-chip" role="tab">Co-avis <span class="num">1</span></button>
+        <button class="filter-chip" role="tab">Avis externe <span class="num">2</span></button>
+        <button class="filter-chip" role="tab">Soumis au DG <span class="num">1</span></button>
+      </div>
+      <label class="search">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input type="search" placeholder="Référence, objet, émetteur…" aria-label="Rechercher dans le parapheur" />
+      </label>
+    </div>
+
+    <div class="table glass" role="table" aria-label="Dossiers de l'unité">
+      <div class="thead" role="row">
+        <div></div>
+        <div>Référence · Objet</div>
+        <div>Émetteur</div>
+        <div>Reçu le</div>
+        <div>Statut</div>
+        <div>SLA 72 h</div>
+        <div></div>
+      </div>
+
+      <div class="row" role="row">
+        <div class="check" aria-hidden="true"></div>
+        <div class="obj">
+          <div class="ref">API-2026-0142</div>
+          <div class="subj">Convention modifiée · APM Terminals — clauses douanières art. 47</div>
+        </div>
+        <div class="sender">Olivier Mbah <span class="ent">APM Terminals Cameroun</span></div>
+        <div class="date">29 mai<span class="t">09:12</span></div>
+        <div class="status"><span class="pill alert">À traiter · alerte</span></div>
+        <div class="sla red">
+          <div class="bar"><div class="fill" style="width:94%"></div></div>
+          <div class="label">4 h 12 restant</div>
+        </div>
+        <div class="actions"><button aria-label="Actions du dossier API-2026-0142"><svg class="icon"><use href="#i-more"/></svg></button></div>
+      </div>
+
+      <div class="row" role="row">
+        <div class="check" aria-hidden="true"></div>
+        <div class="obj">
+          <div class="ref">API-2026-0147</div>
+          <div class="subj">Convention investissement · Cameroon Steel — implantation Douala</div>
+        </div>
+        <div class="sender">Aïssatou Diallo <span class="ent">Cameroon Steel SA</span></div>
+        <div class="date">29 mai<span class="t">11:48</span></div>
+        <div class="status"><span class="pill new">À traiter</span></div>
+        <div class="sla">
+          <div class="bar"><div class="fill" style="width:6%"></div></div>
+          <div class="label">67 h 30 restant</div>
+        </div>
+        <div class="actions"><button aria-label="Actions"><svg class="icon"><use href="#i-more"/></svg></button></div>
+      </div>
+
+      <!-- Row expanded with AI synopsis + history + actions -->
+      <div class="row expanded" role="row">
+        <div class="check" aria-hidden="true"></div>
+        <div class="obj">
+          <div class="ref">API-2026-0138</div>
+          <div class="subj">Demande agrément régime ZES · SARL Etoundi — secteur agro-industriel</div>
+        </div>
+        <div class="sender">Marie Etoundi <span class="ent">SARL Etoundi</span></div>
+        <div class="date">28 mai<span class="t">14:05</span></div>
+        <div class="status"><span class="pill in-treatment">En traitement</span></div>
+        <div class="sla amber">
+          <div class="bar"><div class="fill" style="width:53%"></div></div>
+          <div class="label">38 h restant</div>
+        </div>
+        <div class="actions"><button aria-label="Actions"><svg class="icon"><use href="#i-more"/></svg></button></div>
+
+        <div class="detail">
+          <div class="ai">
+            <h3><svg class="icon icon-sm"><use href="#i-sparkles"/></svg>Synthèse Claude <span class="badge">IA</span></h3>
+            <p>Demande d'agrément au régime de Zone Économique Spéciale pour une unité agro-industrielle (transformation de cacao) à Edéa. Capacité : 12 000 t/an. Investissement : 4,8 Mds FCFA. Emplois projetés : 187 directs. Conformité Ordonnance 2025-002 : dossier complet ; pièces fiscales OK ; étude d'impact à compléter (art. 14).</p>
+            <div class="tags"><span>Régime ZES</span><span>Agro-industrie</span><span>Edéa</span><span>4,8 Mds FCFA</span><span>187 emplois</span></div>
+          </div>
+          <div class="history">
+            <h3>Historique</h3>
+            <div class="step"><div class="when">28 mai · 14:05</div><div class="what"><b>Bureau Arrivée</b> a enregistré le dossier (récépissé API-2026-0138)</div></div>
+            <div class="step"><div class="when">28 mai · 14:38</div><div class="what"><b>DG</b> a dispatché vers Dir. Législation — suggestion IA acceptée</div></div>
+            <div class="step"><div class="when">29 mai · 08:20</div><div class="what">Vous avez pris le dossier <b>en traitement</b></div></div>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn"><svg class="icon"><use href="#i-users"/></svg>Déléguer (interne)</button>
+          <button class="btn"><svg class="icon"><use href="#i-handshake"/></svg>Co-avis (pair)</button>
+          <button class="btn"><svg class="icon"><use href="#i-external"/></svg>Avis externe</button>
+          <button class="btn"><svg class="icon"><use href="#i-undo"/></svg>Retourner au superviseur</button>
+          <button class="btn primary"><svg class="icon"><use href="#i-check"/></svg>Soumettre au DG pour décision</button>
+        </div>
+      </div>
+
+      <div class="row" role="row">
+        <div class="check" aria-hidden="true"></div>
+        <div class="obj">
+          <div class="ref">API-2026-0131</div>
+          <div class="subj">Demande exonération douanière · Globax — équipements industriels</div>
+        </div>
+        <div class="sender">Globax Logistics <span class="ent">via Min. Industrie</span></div>
+        <div class="date">27 mai<span class="t">16:22</span></div>
+        <div class="status"><span class="pill co-avis">Co-avis · Dir. Économique</span></div>
+        <div class="sla amber">
+          <div class="bar"><div class="fill" style="width:72%"></div></div>
+          <div class="label">22 h restant</div>
+        </div>
+        <div class="actions"><button aria-label="Actions"><svg class="icon"><use href="#i-more"/></svg></button></div>
+      </div>
+
+      <div class="row" role="row">
+        <div class="check" aria-hidden="true"></div>
+        <div class="obj">
+          <div class="ref">API-2026-0126</div>
+          <div class="subj">Convention investissement · projet hôtelier Kribi — phase II</div>
+        </div>
+        <div class="sender">Kribi Resort Devt <span class="ent">via promoteur Mendomo</span></div>
+        <div class="date">26 mai<span class="t">10:08</span></div>
+        <div class="status"><span class="pill ext-avis">Avis Min. Finances</span></div>
+        <div class="sla paused">
+          <div class="bar"><div class="fill" style="width:100%"></div></div>
+          <div class="label">SLA suspendu</div>
+        </div>
+        <div class="actions"><button aria-label="Actions"><svg class="icon"><use href="#i-more"/></svg></button></div>
+      </div>
+
+      <div class="row" role="row">
+        <div class="check" aria-hidden="true"></div>
+        <div class="obj">
+          <div class="ref">API-2026-0119</div>
+          <div class="subj">Renouvellement régime · Tropic Agro — extension durée 5 ans</div>
+        </div>
+        <div class="sender">Tropic Agro Cameroun <span class="ent">SA, Edéa</span></div>
+        <div class="date">25 mai<span class="t">09:55</span></div>
+        <div class="status"><span class="pill dg">Soumis au DG</span></div>
+        <div class="sla">
+          <div class="bar"><div class="fill" style="width:30%"></div></div>
+          <div class="label">en attente décision</div>
+        </div>
+        <div class="actions"><button aria-label="Actions"><svg class="icon"><use href="#i-more"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="endnote">
+  <div class="box glass-strong">
+    <b>Réponse attendue</b> · OK pour intégrer · ou ajustements (densité, libellés, couleurs, ordre des actions, glyphes spécifiques)<br>
+    Intégration cible : <code>app/src/app/[locale]/dashboard</code> et <code>/unit/parapheur</code> · fond aurora conservé · emoji remplacés par les icônes du jeu · accessibilité WCAG AA · responsive 375 / 768 / 1280
+  </div>
+</footer>
+
+</body>
+</html>
