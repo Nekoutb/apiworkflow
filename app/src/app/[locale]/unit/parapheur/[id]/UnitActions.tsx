@@ -376,7 +376,7 @@ export function UnitActions({
               <button
                 type="submit"
                 disabled={delegatePending}
-                className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+                className="flex-1 bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 {delegatePending ? 'Envoi…' : 'Déléguer →'}
               </button>
@@ -460,7 +460,7 @@ export function UnitActions({
               <button
                 type="submit"
                 disabled={returnUpPending}
-                className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+                className="flex-1 bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 {returnUpPending ? 'Envoi…' : `Renvoyer à ${parentMeta?.shortFr ?? '…'} →`}
               </button>
@@ -544,7 +544,7 @@ export function UnitActions({
               <button
                 type="submit"
                 disabled={submitDgPending}
-                className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+                className="flex-1 bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 {submitDgPending ? 'Soumission…' : '⬆ Soumettre au DG →'}
               </button>
@@ -811,7 +811,7 @@ export function UnitActions({
               <button
                 type="submit"
                 disabled={recExtPending}
-                className="flex-1 bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+                className="flex-1 bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
               >
                 {recExtPending ? 'Enregistrement…' : 'Enregistrer l\'avis →'}
               </button>
@@ -1225,7 +1225,7 @@ export function UnitActions({
             <button
               type="button"
               onClick={() => setView('recording-external')}
-              className="w-full bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+              className="w-full bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
             >
               ✓ Enregistrer la réponse reçue →
             </button>
@@ -1317,7 +1317,7 @@ export function UnitActions({
             type="button"
             onClick={handleTake}
             disabled={takePending}
-            className="mt-4 w-full bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+            className="mt-4 w-full bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
           >
             {takePending ? 'Mise à jour…' : 'Marquer en traitement →'}
           </button>
@@ -1341,7 +1341,7 @@ export function UnitActions({
           <button
             type="button"
             onClick={() => setView('submitting-dg')}
-            className="mt-4 w-full bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+            className="mt-4 w-full bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
           >
             ⬆ Rédiger la recommandation…
           </button>
@@ -1385,7 +1385,7 @@ export function UnitActions({
           <button
             type="button"
             onClick={() => setView('delegating')}
-            className="mt-4 w-full bg-cmgreen-800 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+            className="mt-4 w-full bg-blue-700 px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
           >
             ⬇ Choisir un subordonné…
           </button>
@@ -1409,7 +1409,7 @@ export function UnitActions({
           <button
             type="button"
             onClick={() => setView('returning-up')}
-            className="mt-4 w-full border border-cmgreen-800 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 transition hover:bg-cmgreen-800 hover:text-white"
+            className="mt-4 w-full border border-cmgreen-800 bg-white px-4 py-2.5 text-[11.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 transition hover:bg-blue-800 hover:text-white"
           >
             ⬆ Renvoyer avec avis…
           </button>
@@ -1639,7 +1639,7 @@ function SuccessCard({
         <p className="serif mt-2 text-[12.5px] italic text-cmgreen-900/80">{content.body}</p>
         <a
           href={backHref}
-          className="mt-4 inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white"
+          className="mt-4 inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-blue-800 hover:text-white"
         >
           ← Retour à mon parapheur
         </a>

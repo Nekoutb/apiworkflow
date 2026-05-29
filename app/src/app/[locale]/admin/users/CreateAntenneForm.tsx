@@ -51,7 +51,7 @@ export function CreateAntenneForm() {
         <button
           type="submit"
           disabled={pending}
-          className="bg-cmgreen-800 px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+          className="bg-blue-700 px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
         >
           {pending ? 'Création…' : 'Créer'}
         </button>

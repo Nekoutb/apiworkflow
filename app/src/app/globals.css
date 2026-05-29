@@ -5,27 +5,42 @@
 @layer base {
   :root {
     --bg: #ffffff;
-    --bg-soft: #fafafa;
-    --ink: #0c1220;
+    --bg-soft: #eaf1fa;
+    --ink: #16263a;
     --ink-2: #1f2937;
     --ink-3: #475569;
     --emerald-800: #006b3a;
     --gold-600: #c1973f;
     --gold-700: #a47e2c;
+    /* V3 Aurora Glass tokens */
+    --navy: #10355c;
+    --blue: #2b7ec9;
+    --blue-bright: #52a8ec;
+    --cyan: #39c0d6;
+    --glass: rgba(255, 255, 255, 0.5);
+    --glass-strong: rgba(255, 255, 255, 0.72);
+    --glass-stroke: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 2px 6px rgba(16, 53, 92, 0.06), 0 20px 50px rgba(16, 53, 92, 0.14);
   }
 
   html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
   body {
-    background: var(--bg-soft);
+    background: transparent; /* the fixed .aurora-bg layer provides the backdrop */
     color: var(--ink);
     font-size: 15px;
     line-height: 1.6;
     letter-spacing: -0.003em;
   }
 
+  /* Headings → Lexend (humanist, institutional). Body stays Inter. */
+  h1, h2, h3, h4, .serif {
+    font-family: var(--font-display), 'Lexend', sans-serif;
+    letter-spacing: -0.01em;
+  }
+
   *:focus-visible {
-    outline: 2px solid var(--emerald-800);
+    outline: 2px solid var(--blue);
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -33,17 +48,22 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition;
-    letter-spacing: 0.04em;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold transition;
+    letter-spacing: 0.01em;
   }
+  /* Primary action is now blue (V3). Gradient + soft blue glow. */
   .btn-primary {
-    @apply btn bg-cmgreen-800 text-white hover:bg-cmgreen-900;
+    @apply btn text-white;
+    background: linear-gradient(180deg, var(--blue-bright), var(--blue));
+    box-shadow: 0 6px 16px rgba(43, 126, 201, 0.3);
   }
+  .btn-primary:hover { filter: brightness(1.05); }
   .btn-gold {
     @apply btn bg-gold-600 text-obsidian hover:bg-gold-500;
   }
   .btn-outline {
-    @apply btn border border-line-2 bg-white text-ink hover:bg-surface-2;
+    @apply btn border border-line-2 text-ink hover:bg-surface-2;
+    background: var(--glass-strong);
   }
   .btn-ghost {
     @apply btn text-ink-3 hover:text-ink hover:bg-surface-2;
@@ -72,9 +92,48 @@
 }
 
 @layer utilities {
-  .serif { font-family: var(--font-serif), Georgia, serif; letter-spacing: -0.005em; }
+  .serif { letter-spacing: -0.01em; }
   .tabular { font-variant-numeric: tabular-nums; }
   .smallcaps {
     font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.2em; font-weight: 600;
+  }
+
+  /* ---------- V3 Aurora Glass ---------- */
+  .aurora-bg {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    background: linear-gradient(160deg, #eef4fb 0%, #e6eef8 55%, #eaf1fa 100%);
+  }
+  .aurora-bg span { position: absolute; border-radius: 50%; filter: blur(72px); }
+  .aurora-b1 { width: 46vw; height: 46vw; background: #6fb6ef; top: -12vw; right: -8vw; opacity: 0.5; }
+  .aurora-b2 { width: 40vw; height: 40vw; background: #39c0d6; bottom: -14vw; left: -6vw; opacity: 0.38; }
+  .aurora-b3 { width: 30vw; height: 30vw; background: #a5c8f2; top: 36%; left: 44%; opacity: 0.32; }
+  .aurora-b4 { width: 22vw; height: 22vw; background: #f4c20d; bottom: 8%;  right: 14%; opacity: 0.13; }
+  .aurora-b5 { width: 20vw; height: 20vw; background: #0a8a3e; top: 8%;   left: 6%;  opacity: 0.10; }
+
+  /* Frosted glass surface */
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid var(--glass-stroke);
+    box-shadow: var(--glass-shadow);
+  }
+  .glass-strong {
+    background: var(--glass-strong);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    border: 1px solid var(--glass-stroke);
+    box-shadow: var(--glass-shadow);
+  }
+  /* thin top highlight for premium glass edge */
+  .glass-hi { position: relative; }
+  .glass-hi::before {
+    content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+  }
+  /* Cameroon-flag accent line */
+  .flag-line {
+    height: 3px; border-radius: 99px;
+    background: linear-gradient(90deg, #0a8a3e, #f4c20d, #c8102e);
   }
 }

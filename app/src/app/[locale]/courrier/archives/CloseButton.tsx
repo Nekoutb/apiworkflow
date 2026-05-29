@@ -37,7 +37,7 @@ export function CloseButton({
         type="button"
         onClick={onClick}
         disabled={pending}
-        className="border border-cmgreen-800 bg-white px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white disabled:opacity-50"
+        className="border border-cmgreen-800 bg-white px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-blue-800 hover:text-white disabled:opacity-50"
       >
         {pending ? '…' : 'Clôturer'}
       </button>

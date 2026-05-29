@@ -157,7 +157,7 @@ export function ComposeResponseForm({
           <button
             type="submit"
             disabled={pending || state.ok}
-            className="w-full bg-cmgreen-800 px-5 py-3 text-[12.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+            className="w-full bg-blue-700 px-5 py-3 text-[12.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
           >
             {pending ? 'Expédition…' : state.ok ? 'Expédié ✓' : "Expédier la réponse →"}
           </button>

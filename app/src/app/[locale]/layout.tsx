@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Source_Serif_4, JetBrains_Mono, Playfair_Display } from 'next/font/google';
+import { Inter, Source_Serif_4, JetBrains_Mono, Lexend } from 'next/font/google';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -27,10 +27,12 @@ const mono = JetBrains_Mono({
   display: 'swap',
 });
 
-const display = Playfair_Display({
+// V3 Aurora Glass — Lexend carries the headings (humanist, World-Bank register),
+// Inter carries the body. Playfair retired.
+const display = Lexend({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
 
@@ -74,6 +76,14 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body className="font-sans">
+        {/* V3 Aurora Glass — fixed gradient backdrop behind every page */}
+        <div aria-hidden className="aurora-bg">
+          <span className="aurora-b1" />
+          <span className="aurora-b2" />
+          <span className="aurora-b3" />
+          <span className="aurora-b4" />
+          <span className="aurora-b5" />
+        </div>
         <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>

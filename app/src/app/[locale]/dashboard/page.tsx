@@ -27,203 +27,131 @@ export default async function DashboardPage({
 
   const isAdmin = role === 'ADMIN';
   const isCourrierArrivee =
-    role === 'CHEF_BUREAU_ARRIVEE' ||
-    role === 'CHEF_SERVICE_COURRIER' ||
-    role === 'ADMIN';
+    role === 'CHEF_BUREAU_ARRIVEE' || role === 'CHEF_SERVICE_COURRIER' || role === 'ADMIN';
   const isCourrierDepart =
-    role === 'CHEF_BUREAU_DEPART' ||
-    role === 'CHEF_SERVICE_COURRIER' ||
-    role === 'ADMIN';
+    role === 'CHEF_BUREAU_DEPART' || role === 'CHEF_SERVICE_COURRIER' || role === 'ADMIN';
   const isCourrierArchives =
-    role === 'CHEF_BUREAU_ARCHIVES' ||
-    role === 'CHEF_SERVICE_COURRIER' ||
-    role === 'ADMIN';
+    role === 'CHEF_BUREAU_ARCHIVES' || role === 'CHEF_SERVICE_COURRIER' || role === 'ADMIN';
   const isDg = role === 'DG' || role === 'DGA' || role === 'ADMIN';
-  // Unit parapheur (B11): visible to anyone who can receive a DG dispatch —
-  // i.e. anyone except pure DG/DGA. ADMIN sees a universal admin view.
   const isUnitMember = role !== 'DG' && role !== 'DGA';
-  // Secretariat DG dashboard (B16): SECRETARIAT_DG + CHEF_SERVICE_COURRIER
-  // + DG / DGA + ADMIN. The DG and DGA get the same monitoring view as
-  // their secretariat (per organigramme — the secretariat acts on the
-  // DG's behalf for follow-up but the DG keeps oversight).
   const isSecretariatMonitor =
-    role === 'SECRETARIAT_DG' ||
-    role === 'CHEF_SERVICE_COURRIER' ||
-    role === 'DG' ||
-    role === 'DGA' ||
-    role === 'ADMIN';
+    role === 'SECRETARIAT_DG' || role === 'CHEF_SERVICE_COURRIER' ||
+    role === 'DG' || role === 'DGA' || role === 'ADMIN';
   const roleFr = roleLabel(role);
 
   return (
-    <main className="min-h-screen bg-bgsoft">
-      <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+    <main className="relative min-h-screen">
+      {/* obsidian banner */}
+      <div className="relative z-10 bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
         Portail interne <span className="mx-3 text-gold-500">⚜</span> API Cameroun
       </div>
 
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-7 py-4">
-          <AppLogo asLink={false} />
-          <div className="leading-tight">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">Portail interne</div>
-            <div className="serif text-[17px] font-bold text-ink">Tableau de bord</div>
+      {/* Glass header */}
+      <header className="glass glass-hi sticky top-0 z-30 mx-3 mt-3 flex items-center gap-4 rounded-2xl px-5 py-3 sm:px-7">
+        <AppLogo asLink={false} />
+        <div className="leading-tight">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">Portail interne</div>
+          <div className="text-[16px] font-bold text-navy">Tableau de bord</div>
+        </div>
+        {isAdmin && (
+          <nav className="ml-8 hidden gap-1 md:flex">
+            <span className="rounded-lg bg-blue-600/12 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-navy">Tableau de bord</span>
+            <Link href="/admin/users" className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy">Personnel</Link>
+            <Link href="/admin/data" className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy">Données</Link>
+          </nav>
+        )}
+        <div className="ml-auto flex items-center gap-3">
+          <NotificationBell />
+          <div className="hidden text-right leading-tight sm:block">
+            <div className="text-[13px] font-semibold text-navy">{session.user.name ?? session.user.email}</div>
+            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
           </div>
-          {isAdmin && (
-            <nav className="ml-8 hidden gap-6 md:flex">
-              <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink">Tableau de bord</span>
-              <Link href="/admin/users" className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink">Personnel</Link>
-              <Link href="/admin/data" className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink">Données</Link>
-            </nav>
-          )}
-          <div className="ml-auto flex items-center gap-3">
-            <NotificationBell />
-            <div className="text-right leading-tight">
-              <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
-              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
-            </div>
-            <LogoutButton />
-          </div>
+          <LogoutButton />
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-7 py-14">
-        <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-          ⚜ v2 · Re-baseline en cours
+      <section className="relative z-10 mx-auto max-w-7xl px-5 py-10 sm:px-7 sm:py-12">
+        {/* Hero */}
+        <div className="mb-1.5 inline-flex items-center gap-2 text-[10.5px] font-semibold uppercase tracking-[0.2em] text-blue-700">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+          {roleFr}
         </div>
-        <h1 className="serif text-4xl font-semibold tracking-[-0.5px] text-ink">
-          Bienvenue, {session.user.name ?? 'utilisateur'}
+        <h1 className="text-[clamp(28px,3.4vw,38px)] font-bold tracking-[-0.5px] text-navy">
+          Bonjour, {session.user.name ?? 'utilisateur'}
         </h1>
-        <p className="serif mt-2 text-[15px] italic text-ink-3">
-          Le projet a été re-baselinné autour de l'organigramme officiel (02 juillet 2020) et d'un workflow document-centrique
-          (Service du Courrier → DG → Organigramme → Réponse via Courrier).
+        <p className="mt-2 max-w-2xl text-[14.5px] leading-relaxed text-ink-2">
+          Accédez à vos espaces de travail. Circuit officiel : Service du Courrier → DG → Organigramme → Réponse.
         </p>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
+        {/* Tiles */}
+        <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {isDg && (
-            <Link href="/dg/parapheur" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B7-B8 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Parapheur DG — Analyse & Dispatch</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Documents transmis par le Bureau Arrivée, triés du plus ancien au plus récent.
-                L&apos;IA propose une unité de l&apos;organigramme pour chaque dossier.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
-            </Link>
-          )}
-          {isUnitMember && (
-            <Link href="/unit/parapheur" className="group border-2 border-cmgreen-800 bg-white p-6 transition hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B11-B15 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">
-                {isAdmin
-                  ? 'Parapheur universel (vue admin)'
-                  : 'Parapheur de mon unité'}
-              </h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                {isAdmin
-                  ? 'Toutes les affectations actives dans toutes les unités — surveillance admin du workflow post-dispatch DG et de la délégation hiérarchique interne.'
-                  : `Documents dispatchés par le DG vers votre unité (${roleFr}). Prenez en charge, déléguez à une sous-unité, ou renvoyez à votre supérieur / au DG selon l'organigramme.`}
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
-            </Link>
-          )}
-          {isCourrierArrivee && (
-            <Link href="/courrier/arrivee" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B4 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Bureau Arrivée — Enregistrement</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Enregistrement des courriers entrants avec IA (OCR + synopsis automatique),
-                génération de la référence COURRIER-YYYY-NNNNNN et envoi de l&apos;accusé de réception.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
-            </Link>
-          )}
-          {isCourrierDepart && (
-            <Link href="/courrier/depart" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B5 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Bureau Départ — Expédition</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Composition et expédition des réponses officielles aux émetteurs après
-                décision du DG : upload du PDF signé, lettre d&apos;accompagnement, envoi par email.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
-            </Link>
-          )}
-          {isCourrierArchives && (
-            <Link href="/courrier/archives" className="group border border-gold-700 bg-white p-6 transition hover:border-gold-800 hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">✓ B6 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Bureau Archives — Clôture & Recherche</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Clôture des dossiers expédiés et consultation des archives :
-                recherche par référence/émetteur/objet, filtres par nature et année.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-gold-700">Ouvrir →</div>
-            </Link>
+            <Tile href="/dg/parapheur" icon="📥" title="Parapheur DG"
+              desc="Analyse & dispatch des courriers entrants ; suggestion d'unité par l'IA ; décisions finales." />
           )}
           {isSecretariatMonitor && (
-            <Link href="/secretariat" className="group border-2 border-cmred bg-white p-6 transition hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmred">✓ B16 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">
-                Secrétariat DG — SLA 72h & rappels
-              </h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Surveillance des dossiers entre les mains du DG et de ceux dispatchés aux
-                départements. Indicateurs SLA 72h, alertes de dépassement, bouton de rappel
-                vers le détenteur courant.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmred">Ouvrir →</div>
-            </Link>
+            <Tile href="/secretariat" icon="⏱️" title="Secrétariat DG"
+              accent="red"
+              desc="Suivi SLA 72h des dossiers chez le DG et dispatchés aux unités. Alertes et rappels." />
+          )}
+          {isUnitMember && (
+            <Tile href="/unit/parapheur" icon="📂"
+              title={isAdmin ? 'Parapheur universel (admin)' : 'Parapheur de mon unité'}
+              desc={isAdmin
+                ? "Toutes les affectations actives — supervision du workflow post-dispatch et de la délégation interne."
+                : `Dossiers dispatchés vers votre unité (${roleFr}). Prise en charge, délégation, co-avis, renvoi.`} />
+          )}
+          {isCourrierArrivee && (
+            <Tile href="/courrier/arrivee" icon="📨" title="Bureau Arrivée"
+              desc="Enregistrement des courriers entrants (OCR + synopsis IA), référence et accusé de réception." />
+          )}
+          {isCourrierDepart && (
+            <Tile href="/courrier/depart" icon="📤" title="Bureau Départ"
+              desc="Composition et expédition des réponses officielles après décision du DG." />
+          )}
+          {isCourrierArchives && (
+            <Tile href="/courrier/archives" icon="🗄️" title="Bureau Archives"
+              desc="Clôture des dossiers expédiés et recherche dans les archives (référence, émetteur, année)." />
           )}
           {isAdmin && (
-            <Link href="/admin/users" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B2 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Personnel — 37 rôles · Antennes</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Créer, éditer et désactiver les comptes du personnel API. Picker hiérarchique
-                groupé par sous-direction et gestion des antennes régionales.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
-            </Link>
+            <Tile href="/admin/users" icon="👥" title="Personnel — 37 rôles"
+              desc="Créer, éditer et désactiver les comptes. Picker hiérarchique et antennes régionales." />
           )}
           {isAdmin && (
-            <Link href="/admin/data" className="group border border-cmgreen-700 bg-white p-6 transition hover:border-cmgreen-800 hover:shadow-lift">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-cmgreen-800">✓ B1 · Disponible</div>
-              <h3 className="serif text-[19px] font-bold text-ink">Aperçu base de données v2</h3>
-              <p className="serif mt-2 text-[13px] italic text-ink-3">
-                Compteurs des entités du nouveau schéma document-centrique : Documents, Submissions,
-                Assignments, Handoffs, Antennes, ExternalTransmissions, etc.
-              </p>
-              <div className="mt-4 text-[11.5px] font-bold uppercase tracking-[0.16em] text-cmgreen-800">Ouvrir →</div>
-            </Link>
+            <Tile href="/admin/data" icon="📊" title="Base de données"
+              desc="Compteurs des entités : Documents, Affectations, Handoffs, Antennes, Transmissions externes." />
           )}
-        </div>
-
-        <div className="mt-12 border border-line bg-white p-6">
-          <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-            État du projet
-          </div>
-          <h3 className="serif text-[19px] font-bold text-ink">v2 · Document Workflow</h3>
-          <ul className="serif mt-3 space-y-1.5 text-[13.5px] italic text-ink-2">
-            <li>✓ <strong className="not-italic">B0</strong> · Plan v2 adopté · 8 décisions cadrantes validées</li>
-            <li>✓ <strong className="not-italic">B1</strong> · Schéma document-centrique · PostgreSQL local sur le VPS</li>
-            <li>✓ <strong className="not-italic">B2</strong> · Enum 37 rôles · UI gestion personnel + antennes</li>
-            <li>✓ <strong className="not-italic">B3</strong> · i18n FR + EN (next-intl)</li>
-            <li>✓ <strong className="not-italic">B4</strong> · Service du Courrier — Arrivée (enregistrement + OCR IA)</li>
-            <li>✓ <strong className="not-italic">B5</strong> · Service du Courrier — Départ (composition + expédition)</li>
-            <li>✓ <strong className="not-italic">B6</strong> · Service du Courrier — Archives (clôture + recherche)</li>
-            <li>✓ <strong className="not-italic">B7</strong> · Parapheur DG — analyse IA + suggestion d&apos;unité</li>
-            <li>✓ <strong className="not-italic">B8</strong> · DG dispatcher — envoi vers l&apos;unité (Courrier transit)</li>
-            <li>✓ <strong className="not-italic">B11</strong> · Parapheur universel des unités — prise en charge & renvoi au DG</li>
-            <li>✓ <strong className="not-italic">B12</strong> · Délégation interne — VERTICAL_DOWN + RETURN_UP (hiérarchie organigramme)</li>
-            <li>✓ <strong className="not-italic">B13</strong> · Transferts horizontaux — co-avis entre pairs Directeurs (HORIZONTAL)</li>
-            <li>✓ <strong className="not-italic">B14</strong> · Avis externe — Min. Finances, DGI, DGD, etc. (EXTERNAL_OUT/IN)</li>
-            <li>✓ <strong className="not-italic">B15</strong> · Renvoi final au DG après traitement — décision (approuvé / rejeté) → Bureau Départ</li>
-            <li>✓ <strong className="not-italic">B16</strong> · Secrétariat DG — monitoring SLA 72h + rappels (vue aussi à Service Courrier)</li>
-            <li>✓ <strong className="not-italic">B17</strong> · Notification bell — alertes unifiées · auto-notifs sur tout l&apos;arbre B8-B16</li>
-            <li>✓ <strong className="not-italic">B18</strong> · Email Resend — pump horaire pour notifs critiques (assigned, to-DG, decided, external, reminder)</li>
-            <li>✓ <strong className="not-italic">B19</strong> · Rappel anticipatif 50h — cron horaire qui détecte les dossiers proches du SLA 72h et notifie le détenteur</li>
-            <li className="text-ink-3">— Session active · rôle : <code className="not-italic font-mono text-ink">{roleFr}</code></li>
-          </ul>
         </div>
       </section>
     </main>
+  );
+}
+
+function Tile({
+  href, icon, title, desc, accent,
+}: {
+  href: string; icon: string; title: string; desc: string; accent?: 'red';
+}) {
+  return (
+    <Link
+      href={href}
+      className="glass glass-hi group block rounded-2xl p-6 transition duration-200 hover:-translate-y-1 hover:shadow-glass"
+    >
+      <div
+        className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-[22px] text-white shadow-[0_6px_16px_rgba(43,126,201,0.32)]"
+        style={{
+          background: accent === 'red'
+            ? 'linear-gradient(135deg,#e06a7a,#c8102e)'
+            : 'linear-gradient(135deg,#52a8ec,#2b7ec9)',
+        }}
+      >
+        {icon}
+      </div>
+      <h3 className="text-[17px] font-bold text-navy">{title}</h3>
+      <p className="mt-2 text-[13px] leading-relaxed text-ink-3">{desc}</p>
+      <div className={'mt-4 text-[11px] font-bold uppercase tracking-[0.14em] ' + (accent === 'red' ? 'text-cmred' : 'text-blue-700')}>
+        Ouvrir →
+      </div>
+    </Link>
   );
 }

@@ -329,13 +329,13 @@ function DispatchForm({
         <div className="mt-4 flex flex-wrap gap-2">
           <a
             href="/dg/parapheur"
-            className="inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white"
+            className="inline-block border border-cmgreen-800 bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-cmgreen-800 hover:bg-blue-800 hover:text-white"
           >
             ← Retour au parapheur DG
           </a>
           <a
             href="/unit/parapheur"
-            className="inline-block border border-cmgreen-800 bg-cmgreen-800 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-cmgreen-900"
+            className="inline-block border border-cmgreen-800 bg-blue-700 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-blue-800"
           >
             Voir le parapheur unité →
           </a>
@@ -473,7 +473,7 @@ function DispatchForm({
         <button
           type="submit"
           disabled={pending}
-          className="w-full bg-cmgreen-800 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+          className="w-full bg-blue-700 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
         >
           {pending ? 'Dispatch en cours…' : `Dispatcher vers ${effectiveLabel} →`}
         </button>

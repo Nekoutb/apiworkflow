@@ -62,7 +62,7 @@ export function DecisionPanel({
               className={
                 'inline-block border bg-white px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] ' +
                 (isApproved
-                  ? 'border-cmgreen-800 text-cmgreen-800 hover:bg-cmgreen-800 hover:text-white'
+                  ? 'border-cmgreen-800 text-cmgreen-800 hover:bg-blue-800 hover:text-white'
                   : 'border-cmred text-cmred hover:bg-cmred hover:text-white')
               }
             >
@@ -72,7 +72,7 @@ export function DecisionPanel({
               href="/courrier/depart"
               className={
                 'inline-block px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white ' +
-                (isApproved ? 'bg-cmgreen-800 hover:bg-cmgreen-900' : 'bg-cmred hover:bg-cmred-900')
+                (isApproved ? 'bg-blue-700 hover:bg-blue-800' : 'bg-cmred hover:bg-cmred-900')
               }
             >
               Voir le Bureau Départ →
@@ -192,7 +192,7 @@ export function DecisionPanel({
             disabled={pending}
             className={
               'w-full px-4 py-3 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition disabled:opacity-50 ' +
-              (decision === 'APPROVED' ? 'bg-cmgreen-800 hover:bg-cmgreen-900' : 'bg-cmred hover:bg-cmred-900')
+              (decision === 'APPROVED' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-cmred hover:bg-cmred-900')
             }
           >
             {pending

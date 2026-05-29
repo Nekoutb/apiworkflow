@@ -306,7 +306,7 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
           <button
             type="submit"
             disabled={pending || analyzing}
-            className="bg-cmgreen-800 px-6 py-3 text-[12.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900 disabled:opacity-50"
+            className="bg-blue-700 px-6 py-3 text-[12.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
           >
             {pending ? 'Enregistrement…' : 'Enregistrer & accuser réception'}
           </button>

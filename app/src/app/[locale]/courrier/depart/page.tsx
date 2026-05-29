@@ -144,7 +144,7 @@ export default async function CourrierDepartPage() {
                     <td className="px-4 py-3">
                       <Link
                         href={`/courrier/depart/${d.id}`}
-                        className="bg-cmgreen-800 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-cmgreen-900"
+                        className="bg-blue-700 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
                       >
                         Composer →
                       </Link>
