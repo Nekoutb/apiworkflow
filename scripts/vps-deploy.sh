@@ -425,6 +425,16 @@ if [[ -f "$SHARED_ENV" ]]; then
   EXISTING_RESEND=$(grep -E '^RESEND_API_KEY=' "$SHARED_ENV" | head -1 | cut -d= -f2- | sed -E 's/^"(.*)"$/\1/; s/^'\''(.*)'\''$/\1/')
 fi
 
+# A key synced from GitHub Actions (shared/.anthropic-key) takes precedence over
+# whatever is currently in .env.production. The deploy workflow's "Sync Anthropic
+# API key" step writes that file via stdin (mode 600) when the ANTHROPIC_API_KEY
+# repo secret is set — letting the operator add the key with NO server login.
+ANTHROPIC_SYNC_FILE="$APP_ROOT/shared/.anthropic-key"
+if [[ -s "$ANTHROPIC_SYNC_FILE" ]]; then
+  EXISTING_ANTHROPIC="$(tr -d '\r\n' < "$ANTHROPIC_SYNC_FILE")"
+  log "  · Anthropic key sourced from shared/.anthropic-key (GitHub-synced)"
+fi
+
 # NOTE: heredoc body is parsed by the SHELL during write — backticks inside
 # the body would trigger command substitution and inject the result into the
 # file (which then breaks `set -a; . file; set +a` parsing). Avoid backticks

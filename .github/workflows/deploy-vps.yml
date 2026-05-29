@@ -261,6 +261,26 @@ jobs:
              rm /tmp/release-${RELEASE_ID}.tar.gz && \
              ls -la $REMOTE_DIR/app | head -20"
 
+      - name: 🔑 Sync Anthropic API key to VPS (optional)
+        # Lets the operator enable the AI features WITHOUT any server login:
+        # set the ANTHROPIC_API_KEY repo secret, and this step writes it to
+        # shared/.anthropic-key on the VPS (mode 600), which vps-deploy.sh then
+        # folds into .env.production. The secret travels over ssh STDIN (piped
+        # into `cat`), never as a command-line argument, so it can't leak via
+        # the VPS process list. Skips cleanly when the secret is unset.
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ℹ No ANTHROPIC_API_KEY repo secret set — skipping. App stays in AI demo mode."
+            exit 0
+          fi
+          echo "→ Sending key to ${APP_REMOTE_ROOT}/shared/.anthropic-key via stdin (not argv)"
+          printf '%s' "$ANTHROPIC_API_KEY" | sshpass -e ssh -p "$VPS_PORT" $SSH_OPTS \
+            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+            "umask 077; mkdir -p ${APP_REMOTE_ROOT}/shared && cat > ${APP_REMOTE_ROOT}/shared/.anthropic-key && chmod 600 ${APP_REMOTE_ROOT}/shared/.anthropic-key && echo '✓ key stored on VPS'"
+
       - name: 🚀 Run remote deploy script
         id: remote_deploy
         env:
