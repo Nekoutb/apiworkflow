@@ -163,6 +163,31 @@ export function roleChildren(role: StaffRole): StaffRole[] {
   return ROLES.filter((r) => r.parent === role).map((r) => r.role);
 }
 
+/**
+ * Every role transitively beneath `role` in the organigramme (excluding
+ * `role` itself). Memoised — the tree is static. Used by the visibility
+ * model (`src/lib/visibility.ts`): a staff member's scope is their own
+ * role plus every descendant role.
+ *
+ *   descendantRoles('DG')           → every other role
+ *   descendantRoles('DIR_PROMOTION') → sub-directorates + services below it
+ *   descendantRoles(leaf)            → []
+ */
+const DESCENDANTS_CACHE = new Map<StaffRole, StaffRole[]>();
+export function descendantRoles(role: StaffRole): StaffRole[] {
+  const cached = DESCENDANTS_CACHE.get(role);
+  if (cached) return cached;
+  const out: StaffRole[] = [];
+  const stack: StaffRole[] = [...roleChildren(role)];
+  while (stack.length > 0) {
+    const r = stack.pop()!;
+    out.push(r);
+    stack.push(...roleChildren(r));
+  }
+  DESCENDANTS_CACHE.set(role, out);
+  return out;
+}
+
 export function isStaffRole(value: unknown): value is StaffRole {
   return typeof value === 'string' && ROLE_BY_ENUM.has(value as StaffRole);
 }
