@@ -149,7 +149,7 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
 
         {/* File picker first — drives the AI panel */}
         <fieldset className="border border-line bg-white">
-          <legend className="px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+          <legend className="ml-3 bg-white px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
             1. Document scanné
           </legend>
           <div className="p-5">
@@ -184,7 +184,7 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
 
         {/* Sender block */}
         <fieldset className="border border-line bg-white">
-          <legend className="px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+          <legend className="ml-3 bg-white px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
             2. Émetteur
           </legend>
           <div className="grid gap-4 p-5 md:grid-cols-2">
@@ -247,7 +247,7 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
 
         {/* Document metadata block */}
         <fieldset className="border border-line bg-white">
-          <legend className="px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
+          <legend className="ml-3 bg-white px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
             3. Métadonnées
           </legend>
           <div className="grid gap-4 p-5 md:grid-cols-2">
