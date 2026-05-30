@@ -4,15 +4,15 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel } from '@/lib/roles';
+import { getStaffScope, canAccessDocument } from '@/lib/visibility';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
-//  B16 — Reminder nudges from Secretariat DG / Service du Courrier
+//  B16 + B20 — Reminder nudges from "État des dossiers"
 //
-//  The Secretariat DG dashboard (and the Service du Courrier dashboard,
-//  same view) shows pending dossiers with their wait time against the
-//  72h government SLA. The "Send reminder" button on each row triggers
-//  this action.
+//  The État des dossiers console (formerly /secretariat) shows pending
+//  dossiers with their wait time against the 72h government SLA. The
+//  "Send reminder" button on each row triggers this action.
 //
 //  Behavior:
 //    - Creates a REMINDER_NUDGE notification for the current holder
@@ -21,21 +21,23 @@ import type { StaffRole } from '@prisma/client';
 //    - Adds a tagged Comment to the document so the reminder is in the
 //      audit trail.
 //
-//  Auth: SECRETARIAT_DG, CHEF_SERVICE_COURRIER, or ADMIN.
+//  Auth (B20 update): any staff member whose visibility scope includes
+//  the document. Privileged roles (SECRETARIAT_DG, CHEF_SERVICE_COURRIER,
+//  DG, DGA, ADMIN) pass automatically via hasFullVisibility. Scoped
+//  roles pass when the doc was assigned to / handed off from / sent for
+//  external avis by their role or any subordinate role.
 // ============================================================================
 
-const ALLOWED_REMINDER_ROLES: StaffRole[] = [
-  'SECRETARIAT_DG',
-  'CHEF_SERVICE_COURRIER',
-  'ADMIN',
-];
-
-async function assertReminderSender(): Promise<{ id: string; role: StaffRole }> {
+async function assertReminderSender(
+  documentId: string,
+): Promise<{ id: string; role: StaffRole }> {
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
-  if (!session?.user || !role || !ALLOWED_REMINDER_ROLES.includes(role)) {
-    throw new Error('UNAUTHORIZED');
-  }
+  if (!session?.user || !role) throw new Error('UNAUTHORIZED');
+  const scope = getStaffScope(session);
+  if (!scope) throw new Error('UNAUTHORIZED');
+  const ok = await canAccessDocument(documentId, scope);
+  if (!ok) throw new Error('UNAUTHORIZED');
   return { id: session.user.id!, role };
 }
 
@@ -47,7 +49,7 @@ export type SendReminderResult = {
 
 export async function sendReminder(documentId: string): Promise<SendReminderResult> {
   try {
-    const { id: senderId, role: senderRole } = await assertReminderSender();
+    const { id: senderId, role: senderRole } = await assertReminderSender(documentId);
 
     const doc = await db.document.findUnique({
       where: { id: documentId },
@@ -83,12 +85,9 @@ export async function sendReminder(documentId: string): Promise<SendReminderResu
       };
     }
 
-    const senderLabel =
-      senderRole === 'SECRETARIAT_DG'
-        ? 'Secrétariat DG'
-        : senderRole === 'CHEF_SERVICE_COURRIER'
-          ? 'Service du Courrier'
-          : 'Administrateur';
+    // Sender label: any role can send a reminder if the doc is in their
+    // visibility scope. Use the role's official label.
+    const senderLabel = roleLabel(senderRole);
     const holderLabel = roleLabel(doc.currentHolderRole);
 
     // Deep link to the right page based on holder role
@@ -123,7 +122,7 @@ export async function sendReminder(documentId: string): Promise<SendReminderResu
         data: {
           documentId: doc.id,
           authorUserId: senderId,
-          authorRole: senderRole === 'ADMIN' ? 'SECRETARIAT_DG' : senderRole,
+          authorRole: senderRole,
           body:
             `[Rappel envoyé par ${senderLabel} → ${holderLabel}]\n\n` +
             `${recipientIds.length} destinataire${recipientIds.length > 1 ? 's' : ''} notifié${recipientIds.length > 1 ? 's' : ''}.`,
@@ -137,7 +136,7 @@ export async function sendReminder(documentId: string): Promise<SendReminderResu
     return { ok: true, recipients: recipientIds.length };
   } catch (e) {
     if (e instanceof Error && e.message === 'UNAUTHORIZED') {
-      return { error: 'Vous n\'avez pas accès aux rappels (Secrétariat DG / Service Courrier uniquement).' };
+      return { error: 'Ce dossier n\'est pas dans votre périmètre de visibilité — rappel impossible.' };
     }
     console.error('[sendReminder]', e);
     return { error: e instanceof Error ? e.message : 'Erreur inconnue' };

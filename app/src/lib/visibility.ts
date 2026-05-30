@@ -1,7 +1,7 @@
 import type { Prisma, StaffRole } from '@prisma/client';
 import { notFound } from 'next/navigation';
 import { db } from './db';
-import { descendantRoles } from './roles';
+import { descendantRoles, isStaffRole } from './roles';
 
 // =============================================================================
 //  VISIBILITY MODEL — single source of truth (B20)
@@ -51,19 +51,26 @@ export type StaffScope = {
   roleScope: StaffRole[];
 };
 
+/**
+ * Loose accept of the Auth.js Session shape — module augmentation in
+ * `src/types/next-auth.d.ts` widens `user.role` to `string | undefined`,
+ * so we widen here and validate via `isStaffRole` inside the function.
+ */
 type SessionLike =
-  | { user?: { id?: string | null; role?: StaffRole | null } | null }
+  | { user?: { id?: string | null; role?: string | null } | null }
   | null
   | undefined;
 
 /**
  * Build a scope object from the auth session. Returns `null` when the
- * session has no staff identity — the caller should redirect to /login.
+ * session has no staff identity (or the role string isn't a valid
+ * StaffRole) — the caller should redirect to /login.
  */
 export function getStaffScope(session: SessionLike): StaffScope | null {
   const userId = session?.user?.id;
-  const role = session?.user?.role;
-  if (!userId || !role) return null;
+  const rawRole = session?.user?.role;
+  if (!userId || !rawRole || !isStaffRole(rawRole)) return null;
+  const role: StaffRole = rawRole;
   const hasFullVisibility = FULL_VISIBILITY.has(role);
   return {
     hasFullVisibility,

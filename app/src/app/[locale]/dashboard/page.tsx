@@ -205,24 +205,30 @@ export default async function DashboardPage({
                 </div>
               </Link>
             )}
-            {isSecretariatMonitor && (
-              <Link href="/secretariat" className="v4-tile glass">
-                <div className="head">
-                  <div className="chip red">
-                    <Icon name="timer" />
-                  </div>
-                  <div className="meta">
-                    <div className="name">Secrétariat DG</div>
-                    <div className="role">Suivi SLA 72 h</div>
-                  </div>
-                  {slaAlerts > 0 && <div className="count alert">{slaAlerts}</div>}
+            <Link href="/secretariat" className="v4-tile glass">
+              <div className="head">
+                <div className="chip red">
+                  <Icon name="timer" />
                 </div>
-                <p>Monitoring des dossiers chez le DG et dispatchés. Rappels manuels.</p>
-                <div className={`open ${slaAlerts > 0 ? 'alert' : ''}`}>
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                <div className="meta">
+                  <div className="name">État des dossiers</div>
+                  <div className="role">
+                    {isSecretariatMonitor ? 'Suivi SLA 72 h · vue complète' : 'Suivi SLA 72 h · mon périmètre'}
+                  </div>
                 </div>
-              </Link>
-            )}
+                {slaAlerts > 0 && isSecretariatMonitor && (
+                  <div className="count alert">{slaAlerts}</div>
+                )}
+              </div>
+              <p>
+                {isSecretariatMonitor
+                  ? 'Monitoring des dossiers chez le DG et dispatchés. Rappels manuels.'
+                  : 'Suivi 72 h des dossiers de votre périmètre : reçus, envoyés, avis externe.'}
+              </p>
+              <div className={`open ${isSecretariatMonitor && slaAlerts > 0 ? 'alert' : ''}`}>
+                Ouvrir <Icon name="arrow-right" className="icon-sm" />
+              </div>
+            </Link>
             {isUnitMember && (
               <Link href="/unit/parapheur" className="v4-tile glass">
                 <div className="head">
