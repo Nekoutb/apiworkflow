@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
+import { getStaffScope, assertCanAccessDocument } from '@/lib/visibility';
 import { isClaudeConfigured } from '@/lib/claude';
 import type { StaffRole } from '@prisma/client';
 import { DispatchAiPanel } from './DispatchAiPanel';
@@ -35,6 +36,15 @@ export default async function DgDocumentDetailPage({
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || !ALLOWED.includes(role)) redirect('/dashboard');
+
+  // B20 — per-document visibility guard. The ALLOWED check above is a
+  // coarse first gate (only DG/DGA/ADMIN reach this page); this guard
+  // closes the back-door for any role that somehow has access to the
+  // route but is out of scope for this specific document. Full-vis
+  // roles (DG/DGA/ADMIN) pass without a query.
+  const scope = getStaffScope(session);
+  if (!scope) redirect('/login');
+  await assertCanAccessDocument(id, scope);
 
   const doc = await db.document.findUnique({
     where: { id },

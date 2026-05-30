@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel, roleMeta, roleChildren, roleParent, ROLES } from '@/lib/roles';
+import { getStaffScope, assertCanAccessDocument } from '@/lib/visibility';
 import { coAvisReturnTarget, directorPeers, isDirectorPeer } from '@/lib/co-avis';
 import type { StaffRole } from '@prisma/client';
 import { UnitActions } from './UnitActions';
@@ -36,6 +37,15 @@ export default async function UnitDocumentDetailPage({
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || FORBIDDEN.includes(role)) redirect('/dashboard');
+
+  // B20 — per-document visibility guard. Closes the back-door so a
+  // staff member can't open another unit's document by guessing the
+  // URL. Full-vis roles (ADMIN/SECRETARIAT_DG/CHEF_SERVICE_COURRIER —
+  // DG/DGA are FORBIDDEN above) pass without a query. Out-of-scope →
+  // notFound() (standard 404, doesn't reveal existence).
+  const scope = getStaffScope(session);
+  if (!scope) redirect('/login');
+  await assertCanAccessDocument(id, scope);
 
   const doc = await db.document.findUnique({
     where: { id },

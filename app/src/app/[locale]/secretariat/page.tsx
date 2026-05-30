@@ -491,7 +491,7 @@ function Section({
       </h2>
       <p className="mt-1 mb-4 text-[12.5px] italic text-ink-3">{intro}</p>
 
-      <div className="v4-table glass">
+      <div className="v4-table v4-secretariat-table glass">
         {rows.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <p className="text-[13px] italic text-ink-3">{emptyHint}</p>
