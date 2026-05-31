@@ -1,7 +1,7 @@
 'use client';
 
 import { useTransition } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { routing, type Locale } from '@/i18n/routing';
 
@@ -16,6 +16,7 @@ import { routing, type Locale } from '@/i18n/routing';
 type Props = { variant?: 'editorial' | 'compact' };
 
 export function LanguageSwitcher({ variant = 'compact' }: Props) {
+  const t = useTranslations('Common');
   const locale = useLocale() as Locale;
   const router = useRouter();
   const pathname = usePathname(); // locale-agnostic (already stripped by next-intl)
@@ -35,7 +36,7 @@ export function LanguageSwitcher({ variant = 'compact' }: Props) {
         (variant === 'editorial' ? 'border-line-2' : 'border-line-2 bg-white')
       }
       role="group"
-      aria-label="Language"
+      aria-label={t('language')}
     >
       {routing.locales.map((loc, idx) => {
         const active = loc === locale;

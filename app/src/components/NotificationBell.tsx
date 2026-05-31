@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useTransition, useRef } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
   getMyNotifications,
@@ -24,6 +25,10 @@ const KIND_ICON: Record<string, string> = {
 };
 
 export function NotificationBell() {
+  const t = useTranslations('Notifications');
+  const tCommon = useTranslations('Common');
+  const tTime = useTranslations('Time');
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationView[]>([]);
   const [unread, setUnread] = useState(0);
@@ -88,14 +93,14 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={handleOpen}
-        aria-label="Notifications"
+        aria-label={t('title')}
         className="relative flex h-10 w-10 items-center justify-center border border-line bg-white text-[18px] text-ink-2 transition hover:border-ink hover:text-ink"
       >
         🔔
         {unread > 0 && (
           <span
             className="absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center border border-obsidian bg-gold-500 px-1 text-[9px] font-bold text-obsidian"
-            aria-label={`${unread} non lues`}
+            aria-label={`${unread} ${locale === 'en' ? 'unread' : 'non lues'}`}
           >
             {unread > 99 ? '99+' : unread}
           </span>
@@ -112,7 +117,7 @@ export function NotificationBell() {
         <div className="absolute right-0 top-12 z-50 w-[380px] max-w-[calc(100vw-2rem)] border border-line bg-white shadow-lift">
           <div className="flex items-center justify-between border-b border-line bg-bgsoft px-4 py-2.5">
             <div className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-2">
-              Notifications {unread > 0 && (
+              {t('title')} {unread > 0 && (
                 <span className="ml-2 inline-block bg-gold-500 px-1.5 text-[10px] font-bold text-obsidian">
                   {unread}
                 </span>
@@ -125,7 +130,7 @@ export function NotificationBell() {
                 disabled={pending}
                 className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-3 hover:text-ink disabled:opacity-50"
               >
-                Tout marquer lu
+                {t('markAllRead')}
               </button>
             )}
           </div>
@@ -133,11 +138,11 @@ export function NotificationBell() {
           <div className="max-h-[60vh] overflow-y-auto">
             {loading && items.length === 0 ? (
               <div className="px-4 py-8 text-center text-[12px] italic text-ink-3">
-                Chargement…
+                {tCommon('loading')}
               </div>
             ) : items.length === 0 ? (
               <div className="px-4 py-8 text-center text-[12px] italic text-ink-3">
-                Aucune notification.
+                {t('empty')}
               </div>
             ) : (
               <ul>
@@ -154,6 +159,8 @@ export function NotificationBell() {
                       onMarkRead={() => handleMarkOne(n.id)}
                       onNavigate={() => setOpen(false)}
                       pending={pending}
+                      tTime={tTime}
+                      locale={locale}
                     />
                   </li>
                 ))}
@@ -166,20 +173,26 @@ export function NotificationBell() {
   );
 }
 
+type TTime = ReturnType<typeof useTranslations<'Time'>>;
+
 function NotificationRow({
   n,
   onMarkRead,
   onNavigate,
   pending,
+  tTime,
+  locale,
 }: {
   n: NotificationView;
   onMarkRead: () => void;
   onNavigate: () => void;
   pending: boolean;
+  tTime: TTime;
+  locale: string;
 }) {
   const icon = KIND_ICON[n.kind] ?? '•';
   const date = new Date(n.createdAt);
-  const ago = humanAgo(date);
+  const ago = humanAgo(date, tTime, locale);
 
   const inner = (
     <div className="flex gap-3 px-4 py-3">
@@ -208,20 +221,13 @@ function NotificationRow({
     </div>
   );
 
-  // Use next-intl Link for client-side, locale-aware navigation. Plain <a>
-  // triggers a full-page reload, which would briefly flash the destination's
-  // server-rendered "loading" state before settling. With <Link>, navigation
-  // is instant + locale-prefix-correct, and the bell dropdown closes cleanly
-  // before the new page mounts (no flash of stale dropdown state).
   if (n.link) {
     return (
       <Link
         href={n.link}
         onClick={() => {
-          onNavigate();              // close the dropdown FIRST
-          if (!n.read && !pending) {
-            onMarkRead();            // mark-read in the background
-          }
+          onNavigate();
+          if (!n.read && !pending) onMarkRead();
         }}
         className="block hover:bg-bgsoft"
       >
@@ -242,14 +248,17 @@ function NotificationRow({
   );
 }
 
-function humanAgo(date: Date): string {
+function humanAgo(date: Date, tTime: TTime, locale: string): string {
   const sec = Math.floor((Date.now() - date.getTime()) / 1000);
-  if (sec < 60)       return 'à l\'instant';
+  if (sec < 60) return tTime('now');
   const min = Math.floor(sec / 60);
-  if (min < 60)       return `${min} min`;
+  if (min < 60) return tTime('minutesAgo', { n: min });
   const h = Math.floor(min / 60);
-  if (h < 24)         return `${h} h`;
+  if (h < 24) return tTime('hoursAgo', { n: h });
   const d = Math.floor(h / 24);
-  if (d < 7)          return `${d} j`;
-  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  if (d < 7) return tTime('daysAgo', { n: d });
+  return date.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', {
+    day: '2-digit',
+    month: 'short',
+  });
 }
