@@ -1,6 +1,7 @@
 import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { LogoutButton } from '@/components/LogoutButton';
@@ -10,10 +11,19 @@ import { AppLogo } from '@/components/AppLogo';
 import { Icon } from '@/components/Icon';
 import { isStaffRole, roleLabel } from '@/lib/roles';
 
-export const metadata = { title: 'Tableau de bord · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
-const SLA_RED_MS = 60 * 3_600_000; // ~12 h before 72 h deadline → "alerte"
+const SLA_RED_MS = 60 * 3_600_000;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('dashboardTitle') };
+}
 
 export default async function DashboardPage({
   params,
@@ -28,6 +38,10 @@ export default async function DashboardPage({
 
   const role = session.user.role;
   if (!isStaffRole(role)) redirect('/login');
+
+  const t = await getTranslations('Dashboard');
+  const tCommon = await getTranslations('Common');
+  const tTime = await getTranslations('Time');
 
   const isAdmin = role === 'ADMIN';
   const isCourrierArrivee =
@@ -44,7 +58,7 @@ export default async function DashboardPage({
     role === 'DG' ||
     role === 'DGA' ||
     role === 'ADMIN';
-  const roleFr = roleLabel(role);
+  const localizedRole = roleLabel(role, locale === 'en' ? 'en' : 'fr');
 
   // Live counts for KPI strip + tile badges + activity feed
   const now = Date.now();
@@ -86,11 +100,13 @@ export default async function DashboardPage({
       : Promise.resolve([] as Array<{ id: string; title: string; body: string | null; createdAt: Date }>),
   ]);
 
+  const displayName = session.user.name ?? (locale === 'en' ? 'user' : 'utilisateur');
+
   return (
     <main className="relative min-h-screen">
       {/* obsidian banner */}
       <div className="relative z-10 bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
-        <span className="text-gold-500">⚜</span> Portail interne · Accès réservé au personnel{' '}
+        <span className="text-gold-500">⚜</span> {tCommon('internalPortal')} · {tCommon('reservedAccess')}{' '}
         <span className="text-gold-500">⚜</span>
       </div>
 
@@ -99,31 +115,31 @@ export default async function DashboardPage({
         <AppLogo asLink={false} />
         <div className="min-w-0 leading-tight">
           <div className="text-[9.5px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-            République du Cameroun
+            {tCommon('republic')}
           </div>
           <div
             className="truncate text-[14.5px] font-bold text-navy"
             style={{ fontFamily: "var(--font-display), 'Lexend', sans-serif" }}
           >
-            Cameroon Investment Promotion Agency
+            {tCommon('appNameLong')}
           </div>
         </div>
         {isAdmin && (
           <nav className="ml-6 hidden gap-1 md:flex">
             <span className="rounded-lg bg-blue-600/12 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-navy">
-              Tableau de bord
+              {t('panelHeading')}
             </span>
             <Link
               href="/admin/users"
               className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy"
             >
-              Personnel
+              {t('tilePersonnel')}
             </Link>
             <Link
               href="/admin/data"
               className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy"
             >
-              Données
+              {t('tileData')}
             </Link>
           </nav>
         )}
@@ -134,7 +150,7 @@ export default async function DashboardPage({
             <div className="text-[13px] font-semibold text-navy">
               {session.user.name ?? session.user.email}
             </div>
-            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
+            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{localizedRole}</div>
           </div>
           <LogoutButton />
         </div>
@@ -144,42 +160,39 @@ export default async function DashboardPage({
         <div className="v4-page-head">
           <div className="kicker">
             <span className="dot" />
-            {roleFr}
+            {localizedRole}
           </div>
-          <h1>Bonjour, {session.user.name ?? 'utilisateur'}</h1>
-          <p>
-            Accédez à vos espaces de travail. Circuit officiel : Service du Courrier → DG →
-            Organigramme → Réponse.
-          </p>
+          <h1>{t('greeting', { name: displayName })}</h1>
+          <p>{t('intro')}</p>
         </div>
 
         {/* KPI strip — live counts from Postgres */}
         <div className="v4-kpis">
           <div className="v4-kpi glass">
-            <div className="label">Dossiers actifs</div>
+            <div className="label">{t('kpiActive')}</div>
             <div className="num">{activeAssignmentsCount}</div>
-            <div className="delta">en cours dans l'organigramme</div>
+            <div className="delta">{t('kpiActiveHint')}</div>
           </div>
           <div className="v4-kpi glass">
-            <div className="label">Chez le DG</div>
+            <div className="label">{t('kpiAtDg')}</div>
             <div className="num">{dgQueueCount}</div>
-            <div className="delta">à analyser & décider</div>
+            <div className="delta">{t('kpiAtDgHint')}</div>
           </div>
           <div className="v4-kpi glass">
-            <div className="label">Alertes SLA</div>
+            <div className="label">{t('kpiAlerts')}</div>
             <div className="num" style={slaAlerts > 0 ? { color: '#c8102e' } : undefined}>
               {slaAlerts}
             </div>
             <div className={`delta ${slaAlerts > 0 ? 'alert' : ''}`}>
               {slaAlerts > 0 && <Icon name="warn" className="icon-sm" />}
-              {slaAlerts > 0 ? '< 12 h restant' : 'aucune alerte'}
+              {slaAlerts > 0 ? t('kpiAlertsHint') : t('kpiNoAlerts')}
             </div>
           </div>
           <div className="v4-kpi glass">
-            <div className="label">{isUnitMember ? 'Votre parapheur' : 'Votre rôle'}</div>
+            <div className="label">{isUnitMember ? t('kpiMyParapheur') : t('kpiYourRole')}</div>
             <div className="num">{isUnitMember ? myUnitCount : '—'}</div>
             <div className="delta">
-              {isUnitMember ? 'affectations actives' : 'décisions en attente'}
+              {isUnitMember ? t('kpiMyParapheurHint') : t('kpiYourRoleHint')}
             </div>
           </div>
         </div>
@@ -194,14 +207,14 @@ export default async function DashboardPage({
                     <Icon name="inbox" />
                   </div>
                   <div className="meta">
-                    <div className="name">Parapheur DG</div>
-                    <div className="role">À analyser & dispatcher</div>
+                    <div className="name">{t('tileDgParapheur')}</div>
+                    <div className="role">{t('tileDgParapheurRole')}</div>
                   </div>
                   {dgQueueCount > 0 && <div className="count">{dgQueueCount}</div>}
                 </div>
-                <p>Suggestion d'unité par Claude · décision finale du DG.</p>
+                <p>{t('tileDgParapheurDesc')}</p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
@@ -211,9 +224,9 @@ export default async function DashboardPage({
                   <Icon name="timer" />
                 </div>
                 <div className="meta">
-                  <div className="name">État des dossiers</div>
+                  <div className="name">{t('tileSecretariat')}</div>
                   <div className="role">
-                    {isSecretariatMonitor ? 'Suivi SLA 72 h · vue complète' : 'Suivi SLA 72 h · mon périmètre'}
+                    {isSecretariatMonitor ? t('tileSecretariatRoleFull') : t('tileSecretariatRoleScoped')}
                   </div>
                 </div>
                 {slaAlerts > 0 && isSecretariatMonitor && (
@@ -222,11 +235,11 @@ export default async function DashboardPage({
               </div>
               <p>
                 {isSecretariatMonitor
-                  ? 'Monitoring des dossiers chez le DG et dispatchés. Rappels manuels.'
-                  : 'Suivi 72 h des dossiers de votre périmètre : reçus, envoyés, avis externe.'}
+                  ? t('tileSecretariatDescFull')
+                  : t('tileSecretariatDescScoped')}
               </p>
               <div className={`open ${isSecretariatMonitor && slaAlerts > 0 ? 'alert' : ''}`}>
-                Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
               </div>
             </Link>
             {isUnitMember && (
@@ -237,19 +250,19 @@ export default async function DashboardPage({
                   </div>
                   <div className="meta">
                     <div className="name">
-                      {isAdmin ? 'Parapheur universel (admin)' : 'Parapheur de mon unité'}
+                      {isAdmin ? t('tileUnitParapheurAdmin') : t('tileUnitParapheur')}
                     </div>
-                    <div className="role">{isAdmin ? 'Toutes les affectations' : roleFr}</div>
+                    <div className="role">{isAdmin ? t('tileUnitParapheurRoleAdmin') : localizedRole}</div>
                   </div>
                   {myUnitCount > 0 && <div className="count">{myUnitCount}</div>}
                 </div>
                 <p>
                   {isAdmin
-                    ? 'Toutes les affectations actives — supervision du workflow post-dispatch.'
-                    : 'Dossiers dispatchés vers votre unité. Délégation et co-avis.'}
+                    ? t('tileUnitParapheurDescAdmin')
+                    : t('tileUnitParapheurDesc')}
                 </p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
@@ -260,13 +273,13 @@ export default async function DashboardPage({
                     <Icon name="mail-in" />
                   </div>
                   <div className="meta">
-                    <div className="name">Bureau Arrivée</div>
-                    <div className="role">Courrier entrant</div>
+                    <div className="name">{t('tileArrivee')}</div>
+                    <div className="role">{t('tileArriveeRole')}</div>
                   </div>
                 </div>
-                <p>Enregistrement OCR + synopsis IA · récépissé officiel.</p>
+                <p>{t('tileArriveeDesc')}</p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
@@ -277,13 +290,13 @@ export default async function DashboardPage({
                     <Icon name="send" />
                   </div>
                   <div className="meta">
-                    <div className="name">Bureau Départ</div>
-                    <div className="role">Réponses officielles</div>
+                    <div className="name">{t('tileDepart')}</div>
+                    <div className="role">{t('tileDepartRole')}</div>
                   </div>
                 </div>
-                <p>Composition et expédition après décision du DG.</p>
+                <p>{t('tileDepartDesc')}</p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
@@ -294,13 +307,13 @@ export default async function DashboardPage({
                     <Icon name="archive" />
                   </div>
                   <div className="meta">
-                    <div className="name">Archives</div>
-                    <div className="role">Clôture & recherche</div>
+                    <div className="name">{t('tileArchives')}</div>
+                    <div className="role">{t('tileArchivesRole')}</div>
                   </div>
                 </div>
-                <p>Recherche par référence, émetteur, année.</p>
+                <p>{t('tileArchivesDesc')}</p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
@@ -311,13 +324,13 @@ export default async function DashboardPage({
                     <Icon name="users" />
                   </div>
                   <div className="meta">
-                    <div className="name">Personnel</div>
-                    <div className="role">Organigramme · 37 rôles</div>
+                    <div className="name">{t('tilePersonnel')}</div>
+                    <div className="role">{t('tilePersonnelRole')}</div>
                   </div>
                 </div>
-                <p>Créer, éditer et désactiver les comptes. Antennes régionales.</p>
+                <p>{t('tilePersonnelDesc')}</p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
@@ -328,29 +341,28 @@ export default async function DashboardPage({
                     <Icon name="chart" />
                   </div>
                   <div className="meta">
-                    <div className="name">Base de données</div>
-                    <div className="role">Compteurs des entités</div>
+                    <div className="name">{t('tileData')}</div>
+                    <div className="role">{t('tileDataRole')}</div>
                   </div>
                 </div>
-                <p>Documents · Affectations · Handoffs · Antennes · Transmissions externes.</p>
+                <p>{t('tileDataDesc')}</p>
                 <div className="open">
-                  Ouvrir <Icon name="arrow-right" className="icon-sm" />
+                  {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
                 </div>
               </Link>
             )}
           </div>
 
           <aside className="v4-feed glass" aria-labelledby="dash-feed-title">
-            <h2 id="dash-feed-title">Activité récente</h2>
+            <h2 id="dash-feed-title">{t('feedTitle')}</h2>
             {notifications.length === 0 ? (
               <p className="text-[12.5px] italic text-ink-3">
-                Aucune activité récente. Les notifications apparaîtront ici dès qu'un dossier vous
-                concerne.
+                {t('feedEmpty')}
               </p>
             ) : (
               notifications.map((n) => {
-                const isAlert = /(alerte|SLA|retard)/i.test(n.title);
-                const isOK = /(approuv|décid|valid|clôtur)/i.test(n.title);
+                const isAlert = /(alerte|alert|SLA|retard|overdue)/i.test(n.title);
+                const isOK = /(approuv|approv|décid|decid|valid|clôtur|clos|closed)/i.test(n.title);
                 const isWarn = /(rappel|reminder|nudge)/i.test(n.title);
                 const klass = isAlert ? 'alert' : isOK ? 'ok' : isWarn ? 'warn' : '';
                 return (
@@ -366,7 +378,7 @@ export default async function DashboardPage({
                           </>
                         )}
                       </div>
-                      <div className="time">{humanTime(n.createdAt)}</div>
+                      <div className="time">{humanTime(n.createdAt, tTime, locale)}</div>
                     </div>
                   </div>
                 );
@@ -379,15 +391,22 @@ export default async function DashboardPage({
   );
 }
 
-function humanTime(d: Date): string {
+function humanTime(
+  d: Date,
+  tTime: Awaited<ReturnType<typeof getTranslations<'Time'>>>,
+  locale: string,
+): string {
   const diff = Date.now() - d.getTime();
   const min = Math.floor(diff / 60_000);
-  if (min < 1) return "à l'instant";
-  if (min < 60) return `il y a ${min} min`;
+  if (min < 1) return tTime('now');
+  if (min < 60) return tTime('minutesAgo', { n: min });
   const h = Math.floor(min / 60);
-  if (h < 24) return `il y a ${h} h`;
+  if (h < 24) return tTime('hoursAgo', { n: h });
   const days = Math.floor(h / 24);
-  if (days === 1) return 'hier';
-  if (days < 7) return `il y a ${days} j`;
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  if (days === 1) return tTime('yesterday');
+  if (days < 7) return tTime('daysAgo', { n: days });
+  return d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', {
+    day: '2-digit',
+    month: 'short',
+  });
 }

@@ -1,6 +1,7 @@
 import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel, roleMeta } from '@/lib/roles';
@@ -11,7 +12,6 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { AppLogo } from '@/components/AppLogo';
 import { Icon } from '@/components/Icon';
 
-export const metadata = { title: "Parapheur de l'unité · API Cameroun" };
 export const dynamic = 'force-dynamic';
 
 // DG / DGA have their own /dg/parapheur — they don't belong here.
@@ -21,66 +21,24 @@ const SLA_TOTAL_MS = 72 * 3_600_000;
 const SLA_AMBER_MS = 40 * 3_600_000;
 const SLA_RED_MS = 60 * 3_600_000;
 
-type FilterEntry = { key: string; label: string; dbStatus?: DocumentStatus };
+type FilterKey = '' | 'a-traiter' | 'en-traitement' | 'avis-externe' | 'soumis-dg';
+type FilterEntry = { key: FilterKey; labelKey: string; dbStatus?: DocumentStatus };
 const STATUS_FILTERS: readonly FilterEntry[] = [
-  { key: '', label: 'Tous' },
-  { key: 'a-traiter', label: 'À traiter', dbStatus: 'ASSIGNED' },
-  { key: 'en-traitement', label: 'En traitement', dbStatus: 'IN_TREATMENT' },
-  { key: 'avis-externe', label: 'Avis externe', dbStatus: 'AWAITING_EXTERNAL_AVIS' },
-  { key: 'soumis-dg', label: 'Soumis au DG', dbStatus: 'AWAITING_DG_DECISION' },
+  { key: '', labelKey: 'filterAll' },
+  { key: 'a-traiter', labelKey: 'filterToTreat', dbStatus: 'ASSIGNED' },
+  { key: 'en-traitement', labelKey: 'filterInTreatment', dbStatus: 'IN_TREATMENT' },
+  { key: 'avis-externe', labelKey: 'filterExternal', dbStatus: 'AWAITING_EXTERNAL_AVIS' },
+  { key: 'soumis-dg', labelKey: 'filterDg', dbStatus: 'AWAITING_DG_DECISION' },
 ] as const;
 
-function pillFromStatus(
-  status: DocumentStatus,
-  isAlert: boolean,
-): { label: string; cls: string } {
-  if (isAlert) return { label: 'À traiter · alerte', cls: 'alert' };
-  switch (status) {
-    case 'ASSIGNED':
-      return { label: 'À traiter', cls: 'new' };
-    case 'IN_TREATMENT':
-      return { label: 'En traitement', cls: 'in-treatment' };
-    case 'AWAITING_EXTERNAL_AVIS':
-      return { label: 'Avis externe', cls: 'ext-avis' };
-    case 'AWAITING_DG_DECISION':
-      return { label: 'Soumis au DG', cls: 'dg' };
-    default:
-      return { label: status, cls: '' };
-  }
-}
-
-function slaState(
-  assignedAt: Date,
-  docStatus: DocumentStatus,
-): { pct: number; cls: string; label: string } {
-  if (docStatus === 'AWAITING_EXTERNAL_AVIS') {
-    return { pct: 100, cls: 'paused', label: 'SLA suspendu' };
-  }
-  const elapsed = Date.now() - assignedAt.getTime();
-  const pct = Math.min(100, Math.max(2, Math.round((elapsed / SLA_TOTAL_MS) * 100)));
-  const remaining = SLA_TOTAL_MS - elapsed;
-  if (remaining < 0) {
-    return { pct, cls: 'red', label: `SLA dépassé · ${humanDuration(-remaining)}` };
-  }
-  if (elapsed > SLA_RED_MS) {
-    return { pct, cls: 'red', label: `${humanDuration(remaining)} restant` };
-  }
-  if (elapsed > SLA_AMBER_MS) {
-    return { pct, cls: 'amber', label: `${humanDuration(remaining)} restant` };
-  }
-  return { pct, cls: '', label: `${humanDuration(remaining)} restant` };
-}
-
-function humanDuration(ms: number): string {
-  const totalMin = Math.max(0, Math.floor(ms / 60_000));
-  const h = Math.floor(totalMin / 60);
-  if (h < 1) return `${totalMin} min`;
-  if (h < 24) {
-    const min = totalMin % 60;
-    return min === 0 ? `${h} h` : `${h} h ${String(min).padStart(2, '0')}`;
-  }
-  const d = Math.floor(h / 24);
-  return `${d} j`;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('unitParapheurTitle') };
 }
 
 export default async function UnitParapheurPage({
@@ -99,6 +57,13 @@ export default async function UnitParapheurPage({
   if (!session?.user) redirect('/login');
   if (!role || FORBIDDEN.includes(role)) redirect('/dashboard');
 
+  const tParapheur = await getTranslations('UnitParapheur');
+  const tCommon = await getTranslations('Common');
+  const tDashboard = await getTranslations('Dashboard');
+  const tSla = await getTranslations('Sla');
+  const tTime = await getTranslations('Time');
+  const localeShort = locale === 'en' ? 'en' : 'fr';
+
   const isAdmin = role === 'ADMIN';
   const baseWhere = isAdmin ? {} : { assignedToRole: role };
 
@@ -112,7 +77,7 @@ export default async function UnitParapheurPage({
         ...baseWhere,
         ...(filterEntry?.dbStatus ? { document: { status: filterEntry.dbStatus } } : {}),
       },
-      orderBy: { assignedAt: 'asc' }, // oldest first → tightest SLA at top
+      orderBy: { assignedAt: 'asc' },
       take: 100,
       select: {
         id: true,
@@ -152,15 +117,35 @@ export default async function UnitParapheurPage({
   ).length;
 
   const myRoleMeta = roleMeta(role);
+  const localizedRole = roleLabel(role, localeShort);
   const headerKicker = isAdmin
-    ? 'Parapheur universel · vue admin'
-    : myRoleMeta?.fr ?? roleLabel(role);
-  const roleFr = roleLabel(role);
+    ? tParapheur('kickerAdmin')
+    : (localeShort === 'en' ? myRoleMeta?.en : myRoleMeta?.fr) ?? localizedRole;
+
+  // Compose the intro line — uses ICU plurals + suffixes
+  const introBase =
+    totalActive === 0
+      ? tParapheur('introZero', { count: totalActive })
+      : totalActive === 1
+        ? tParapheur('introOne', { count: totalActive })
+        : tParapheur('introMany', { count: totalActive });
+  const introNew =
+    newCount > 0
+      ? (newCount === 1
+          ? tParapheur('newSuffix', { count: newCount })
+          : tParapheur('newSuffixPlural', { count: newCount }))
+      : '';
+  const introAlert =
+    alertCount > 0
+      ? (alertCount === 1
+          ? tParapheur('alertSuffix', { count: alertCount })
+          : tParapheur('alertSuffixPlural', { count: alertCount }))
+      : '';
 
   return (
     <main className="relative min-h-screen">
       <div className="relative z-10 bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
-        <span className="text-gold-500">⚜</span> Portail interne · Parapheur unité{' '}
+        <span className="text-gold-500">⚜</span> {tCommon('internalPortal')} · {tParapheur('title')}{' '}
         <span className="text-gold-500">⚜</span>
       </div>
 
@@ -168,13 +153,13 @@ export default async function UnitParapheurPage({
         <AppLogo asLink={false} />
         <div className="min-w-0 leading-tight">
           <div className="text-[9.5px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-            République du Cameroun
+            {tCommon('republic')}
           </div>
           <div
             className="truncate text-[14.5px] font-bold text-navy"
             style={{ fontFamily: "var(--font-display), 'Lexend', sans-serif" }}
           >
-            Parapheur · {headerKicker}
+            {tParapheur('title')} · {headerKicker}
           </div>
         </div>
         <nav className="ml-6 hidden gap-1 md:flex">
@@ -182,10 +167,10 @@ export default async function UnitParapheurPage({
             href="/dashboard"
             className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy"
           >
-            Tableau de bord
+            {tDashboard('panelHeading')}
           </Link>
           <span className="rounded-lg bg-blue-600/12 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-navy">
-            Parapheur
+            {tParapheur('title')}
           </span>
         </nav>
         <div className="ml-auto flex items-center gap-3">
@@ -195,7 +180,7 @@ export default async function UnitParapheurPage({
             <div className="text-[13px] font-semibold text-navy">
               {session.user.name ?? session.user.email}
             </div>
-            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
+            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{localizedRole}</div>
           </div>
           <LogoutButton />
         </div>
@@ -207,20 +192,13 @@ export default async function UnitParapheurPage({
             <span className="dot" />
             {headerKicker}
           </div>
-          <h1>Parapheur de mon unité</h1>
-          <p>
-            {totalActive} dossier{totalActive === 1 ? '' : 's'} actif
-            {totalActive === 1 ? '' : 's'}
-            {newCount > 0 && ` · ${newCount} nouveau${newCount === 1 ? '' : 'x'} depuis hier`}
-            {alertCount > 0 &&
-              ` · ${alertCount} alerte${alertCount === 1 ? '' : 's'} SLA`}
-            . Ordre par défaut : le plus ancien en premier (SLA le plus tendu).
-          </p>
+          <h1>{tParapheur('title')}</h1>
+          <p>{introBase}{introNew}{introAlert}</p>
         </div>
 
         {/* Filter chips wired to ?status=… */}
         <div className="v4-toolbar glass">
-          <div className="filters" role="tablist" aria-label="Filtre par statut">
+          <div className="filters" role="tablist" aria-label={tCommon('filter')}>
             {STATUS_FILTERS.map((f, i) => {
               const isActive =
                 (f.key === '' && !statusFilter) || (f.key !== '' && f.key === statusFilter);
@@ -234,7 +212,7 @@ export default async function UnitParapheurPage({
                   aria-selected={isActive}
                   className={`v4-filter-chip ${isActive ? 'on' : ''}`}
                 >
-                  {f.label}
+                  {tParapheur(f.labelKey)}
                   <span className="num">{counts[i]}</span>
                 </Link>
               );
@@ -245,11 +223,11 @@ export default async function UnitParapheurPage({
         <div className="v4-table glass">
           {active.length > 0 && (
             <div className="v4-thead" role="row">
-              <div>Référence · Objet</div>
-              <div>Émetteur</div>
-              <div>Reçu le</div>
-              <div>Statut</div>
-              <div>SLA 72 h</div>
+              <div>{tParapheur('colRefObject')}</div>
+              <div>{tParapheur('colSender')}</div>
+              <div>{tParapheur('colReceivedDate')}</div>
+              <div>{tParapheur('colStatus')}</div>
+              <div>{tParapheur('colSla')}</div>
               <div />
             </div>
           )}
@@ -258,10 +236,10 @@ export default async function UnitParapheurPage({
             <div className="px-6 py-14 text-center">
               <p className="text-[13px] italic text-ink-3">
                 {filterEntry
-                  ? `Aucun dossier avec le statut « ${filterEntry.label.toLowerCase()} » pour le moment.`
+                  ? tParapheur('emptyFiltered', { status: tParapheur(filterEntry.labelKey).toLowerCase() })
                   : isAdmin
-                    ? "Aucune affectation active. Le parapheur se remplit dès qu'un document est dispatché par le DG."
-                    : "Aucune affectation active. Votre parapheur se remplira dès que le DG vous dispatchera un document."}
+                    ? tParapheur('emptyAdmin')
+                    : tParapheur('empty')}
               </p>
             </div>
           ) : (
@@ -269,15 +247,15 @@ export default async function UnitParapheurPage({
               const elapsed = Date.now() - a.assignedAt.getTime();
               const isAlert =
                 elapsed > SLA_RED_MS && a.document.status !== 'AWAITING_EXTERNAL_AVIS';
-              const pill = pillFromStatus(a.document.status, isAlert);
-              const sla = slaState(a.assignedAt, a.document.status);
+              const pill = pillFromStatus(a.document.status, isAlert, tParapheur);
+              const sla = slaState(a.assignedAt, a.document.status, tSla, tTime);
               const dt = a.assignedAt;
               const adminUnit =
-                isAdmin && roleMeta(a.assignedToRole)?.shortFr
-                  ? roleMeta(a.assignedToRole)?.shortFr
-                  : isAdmin
-                    ? a.assignedToRole
-                    : null;
+                isAdmin && roleMeta(a.assignedToRole)
+                  ? (localeShort === 'en'
+                      ? roleMeta(a.assignedToRole)?.shortFr // shortFr is the only short label we have
+                      : roleMeta(a.assignedToRole)?.shortFr) ?? a.assignedToRole
+                  : null;
               return (
                 <Link
                   key={a.id}
@@ -301,9 +279,15 @@ export default async function UnitParapheurPage({
                     )}
                   </div>
                   <div className="date">
-                    {dt.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                    {dt.toLocaleDateString(localeShort === 'en' ? 'en-GB' : 'fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}
                     <span className="t">
-                      {dt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {dt.toLocaleTimeString(localeShort === 'en' ? 'en-GB' : 'fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </span>
                   </div>
                   <div className="status">
@@ -316,7 +300,7 @@ export default async function UnitParapheurPage({
                     <div className="label">{sla.label}</div>
                   </div>
                   <div className="actions">
-                    <span className="open-btn" aria-label="Ouvrir le dossier">
+                    <span className="open-btn" aria-label={tParapheur('openDossier')}>
                       <Icon name="arrow-right" />
                     </span>
                   </div>
@@ -328,4 +312,68 @@ export default async function UnitParapheurPage({
       </section>
     </main>
   );
+}
+
+// -----------------------------------------------------------------------------
+//  Helpers (locale-aware)
+// -----------------------------------------------------------------------------
+
+type TParapheur = Awaited<ReturnType<typeof getTranslations<'UnitParapheur'>>>;
+type TSla = Awaited<ReturnType<typeof getTranslations<'Sla'>>>;
+type TTime = Awaited<ReturnType<typeof getTranslations<'Time'>>>;
+
+function pillFromStatus(
+  status: DocumentStatus,
+  isAlert: boolean,
+  t: TParapheur,
+): { label: string; cls: string } {
+  if (isAlert) return { label: t('pillAlert'), cls: 'alert' };
+  switch (status) {
+    case 'ASSIGNED':
+      return { label: t('pillNew'), cls: 'new' };
+    case 'IN_TREATMENT':
+      return { label: t('pillInTreatment'), cls: 'in-treatment' };
+    case 'AWAITING_EXTERNAL_AVIS':
+      return { label: t('pillExtAvis'), cls: 'ext-avis' };
+    case 'AWAITING_DG_DECISION':
+      return { label: t('pillDg'), cls: 'dg' };
+    default:
+      return { label: status, cls: '' };
+  }
+}
+
+function slaState(
+  assignedAt: Date,
+  docStatus: DocumentStatus,
+  tSla: TSla,
+  tTime: TTime,
+): { pct: number; cls: string; label: string } {
+  if (docStatus === 'AWAITING_EXTERNAL_AVIS') {
+    return { pct: 100, cls: 'paused', label: tSla('suspended') };
+  }
+  const elapsed = Date.now() - assignedAt.getTime();
+  const pct = Math.min(100, Math.max(2, Math.round((elapsed / SLA_TOTAL_MS) * 100)));
+  const remaining = SLA_TOTAL_MS - elapsed;
+  if (remaining < 0) {
+    return { pct, cls: 'red', label: tSla('overdue', { label: humanDuration(-remaining, tTime) }) };
+  }
+  if (elapsed > SLA_RED_MS) {
+    return { pct, cls: 'red', label: tSla('remaining', { label: humanDuration(remaining, tTime) }) };
+  }
+  if (elapsed > SLA_AMBER_MS) {
+    return { pct, cls: 'amber', label: tSla('remaining', { label: humanDuration(remaining, tTime) }) };
+  }
+  return { pct, cls: '', label: tSla('remaining', { label: humanDuration(remaining, tTime) }) };
+}
+
+function humanDuration(ms: number, tTime: TTime): string {
+  const totalMin = Math.max(0, Math.floor(ms / 60_000));
+  const h = Math.floor(totalMin / 60);
+  if (h < 1) return `${totalMin} ${tTime('minuteShort')}`;
+  if (h < 24) {
+    const min = totalMin % 60;
+    return min === 0 ? `${h} ${tTime('hourShort')}` : `${h} ${tTime('hourShort')} ${String(min).padStart(2, '0')}`;
+  }
+  const d = Math.floor(h / 24);
+  return `${d} ${tTime('dayShort')}`;
 }

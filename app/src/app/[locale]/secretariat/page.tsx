@@ -1,6 +1,7 @@
 import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getStaffScope, type StaffScope } from '@/lib/visibility';
@@ -18,25 +19,6 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { Icon } from '@/components/Icon';
 import { ReminderButton } from './ReminderButton';
 
-// =============================================================================
-//  ÉTAT DES DOSSIERS — formerly /secretariat (B20 slice 2)
-//
-//  Same URL as before. The page is now available to every staff role with
-//  two layouts:
-//
-//    A) FULL VISIBILITY (DG, DGA, SECRETARIAT_DG, CHEF_SERVICE_COURRIER,
-//       ADMIN): keeps the original two-section view — "Chez le DG" +
-//       "Dispatchés par le DG". Zero regression to the existing monitoring
-//       workflow, just refreshed to V4 Civic Glass styling.
-//
-//    B) SCOPED (every other staff role): three sections that match the
-//       three categories the operator described — "Reçus par moi (ou mes
-//       subordonnés)" + "Envoyés à un autre service" + "Avis externe en
-//       cours". Data filtered through the visibility module so each user
-//       sees only their subtree + outbound traffic + their pending avis.
-// =============================================================================
-
-export const metadata = { title: 'État des dossiers · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 const SLA_TOTAL_MS = 72 * 3_600_000;
@@ -55,24 +37,26 @@ const OUTBOUND_TYPES: HandoffType[] = [
 
 const TERMINAL_STATUSES: DocumentStatus[] = ['CLOSED', 'RESPONSE_SENT'];
 
-const STATUS_PILL: Partial<Record<DocumentStatus, { label: string; cls: string }>> = {
-  AWAITING_DG_ANALYSIS: { label: 'Analyse DG', cls: 'dg' },
-  AWAITING_DG_DECISION: { label: 'Décision DG', cls: 'dg' },
-  ASSIGNED: { label: 'À traiter', cls: 'new' },
-  IN_TREATMENT: { label: 'En traitement', cls: 'in-treatment' },
-  AWAITING_EXTERNAL_AVIS: { label: 'Avis externe', cls: 'ext-avis' },
-};
+type TSecretariat = Awaited<ReturnType<typeof getTranslations<'Secretariat'>>>;
+type TSla = Awaited<ReturnType<typeof getTranslations<'Sla'>>>;
+type TTime = Awaited<ReturnType<typeof getTranslations<'Time'>>>;
+type TExtRecipient = Awaited<ReturnType<typeof getTranslations<'ExternalRecipient'>>>;
+type TCommon = Awaited<ReturnType<typeof getTranslations<'Common'>>>;
+type TDocStatus = Awaited<ReturnType<typeof getTranslations<'DocStatus'>>>;
 
-const EXTERNAL_LABEL: Record<ExternalRecipient, string> = {
-  MINISTRE_FINANCES: 'Min. Finances',
-  MINISTRE_INDUSTRIE: 'Min. Industrie',
-  DGI: 'DGI',
-  DGD: 'DGD',
-  MINISTRE_AUTRE: 'Ministère (autre)',
-  ADMINISTRATION_AUTRE: 'Administration (autre)',
-};
+type LocaleShort = 'fr' | 'en';
 
 // -----------------------------------------------------------------------------
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const tMeta = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: tMeta('secretariatTitle') };
+}
 
 export default async function EtatDesDossiersPage({
   params,
@@ -87,12 +71,21 @@ export default async function EtatDesDossiersPage({
   const scope = getStaffScope(session);
   if (!scope) redirect('/login');
 
-  const roleFr = roleLabel(scope.selfRole);
+  const t = await getTranslations('Secretariat');
+  const tCommon = await getTranslations('Common');
+  const tDashboard = await getTranslations('Dashboard');
+  const tSla = await getTranslations('Sla');
+  const tTime = await getTranslations('Time');
+  const tExt = await getTranslations('ExternalRecipient');
+  const tStatus = await getTranslations('DocStatus');
+  const localeShort: LocaleShort = locale === 'en' ? 'en' : 'fr';
+
+  const localizedRole = roleLabel(scope.selfRole, localeShort);
 
   return (
     <main className="relative min-h-screen">
       <div className="relative z-10 bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white">
-        <span className="text-gold-500">⚜</span> Portail interne · État des dossiers ·
+        <span className="text-gold-500">⚜</span> {tCommon('internalPortal')} · {t('title')} ·
         SLA 72 h <span className="text-gold-500">⚜</span>
       </div>
 
@@ -100,13 +93,13 @@ export default async function EtatDesDossiersPage({
         <AppLogo asLink={false} />
         <div className="min-w-0 leading-tight">
           <div className="text-[9.5px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-            République du Cameroun
+            {tCommon('republic')}
           </div>
           <div
             className="truncate text-[14.5px] font-bold text-navy"
             style={{ fontFamily: "var(--font-display), 'Lexend', sans-serif" }}
           >
-            État des dossiers · {scope.hasFullVisibility ? 'Vue complète' : roleFr}
+            {t('title')} · {scope.hasFullVisibility ? t('fullView') : localizedRole}
           </div>
         </div>
         <nav className="ml-6 hidden gap-1 md:flex">
@@ -114,10 +107,10 @@ export default async function EtatDesDossiersPage({
             href="/dashboard"
             className="rounded-lg px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-ink-3 transition hover:bg-blue-600/8 hover:text-navy"
           >
-            Tableau de bord
+            {tDashboard('panelHeading')}
           </Link>
           <span className="rounded-lg bg-blue-600/12 px-3 py-1.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-navy">
-            État des dossiers
+            {t('title')}
           </span>
         </nav>
         <div className="ml-auto flex items-center gap-3">
@@ -127,7 +120,7 @@ export default async function EtatDesDossiersPage({
             <div className="text-[13px] font-semibold text-navy">
               {session.user.name ?? session.user.email}
             </div>
-            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleFr}</div>
+            <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{localizedRole}</div>
           </div>
           <LogoutButton />
         </div>
@@ -135,9 +128,28 @@ export default async function EtatDesDossiersPage({
 
       <section className="relative z-10 mx-auto max-w-7xl px-5 py-6 sm:px-7 sm:py-10">
         {scope.hasFullVisibility ? (
-          <PrivilegedView scope={scope} />
+          <PrivilegedView
+            scope={scope}
+            t={t}
+            tCommon={tCommon}
+            tSla={tSla}
+            tTime={tTime}
+            tExt={tExt}
+            tStatus={tStatus}
+            locale={localeShort}
+          />
         ) : (
-          <ScopedView scope={scope} roleFr={roleFr} />
+          <ScopedView
+            scope={scope}
+            roleLabel={localizedRole}
+            t={t}
+            tCommon={tCommon}
+            tSla={tSla}
+            tTime={tTime}
+            tExt={tExt}
+            tStatus={tStatus}
+            locale={localeShort}
+          />
         )}
       </section>
     </main>
@@ -145,10 +157,28 @@ export default async function EtatDesDossiersPage({
 }
 
 // =============================================================================
-//  A) FULL-VISIBILITY VIEW — Chez le DG + Dispatchés par le DG
+//  A) FULL-VISIBILITY VIEW
 // =============================================================================
 
-async function PrivilegedView({ scope }: { scope: StaffScope }) {
+async function PrivilegedView({
+  scope: _scope,
+  t,
+  tCommon: _tCommon,
+  tSla,
+  tTime,
+  tExt: _tExt,
+  tStatus,
+  locale,
+}: {
+  scope: StaffScope;
+  t: TSecretariat;
+  tCommon: TCommon;
+  tSla: TSla;
+  tTime: TTime;
+  tExt: TExtRecipient;
+  tStatus: TDocStatus;
+  locale: LocaleShort;
+}) {
   const [withDg, dispatchedFromDg] = await Promise.all([
     db.document.findMany({
       where: { status: { in: ['AWAITING_DG_ANALYSIS', 'AWAITING_DG_DECISION'] } },
@@ -164,8 +194,10 @@ async function PrivilegedView({ scope }: { scope: StaffScope }) {
     }),
   ]);
 
-  const withDgRows = withDg.map((d) => buildRow(d, 'with-dg'));
-  const dispatchedRows = dispatchedFromDg.map((d) => buildRow(d, 'dispatched'));
+  const withDgRows = withDg.map((d) => buildRow(d, 'with-dg', { t, tSla, tTime, tStatus, locale }));
+  const dispatchedRows = dispatchedFromDg.map((d) =>
+    buildRow(d, 'dispatched', { t, tSla, tTime, tStatus, locale }),
+  );
 
   const overdue =
     withDgRows.filter((r) => r.sla.cls === 'red').length +
@@ -176,58 +208,73 @@ async function PrivilegedView({ scope }: { scope: StaffScope }) {
 
   return (
     <>
-      <PageHead
-        kicker="Vue complète · Secrétariat DG"
-        title="État des dossiers"
-        intro="Politique gouvernementale : tout document doit être traité dans les 72 h. Cliquez sur 🔔 Rappeler pour notifier le détenteur."
-      />
+      <PageHead kicker={t('subtitleFull')} title={t('title')} intro={t('introFull')} />
 
       <Kpis
         items={[
-          { label: 'Chez le DG', num: withDg.length, hint: 'à analyser & décider' },
-          { label: 'Dispatchés par DG', num: dispatchedFromDg.length, hint: 'en cours dans les unités' },
+          { label: t('kpiAtDg'), num: withDg.length, hint: t('kpiAtDgHint') },
+          { label: t('kpiDispatched'), num: dispatchedFromDg.length, hint: t('kpiDispatchedHint') },
           {
-            label: 'SLA dépassé',
+            label: t('kpiOverdue'),
             num: overdue,
             alert: overdue > 0,
-            hint: overdue > 0 ? 'à rappeler en priorité' : 'aucun dépassement',
+            hint: overdue > 0 ? t('kpiOverdueHint') : t('kpiNoOverdue'),
           },
           {
-            label: 'Approchent 72 h',
+            label: t('kpiApproaching'),
             num: approaching,
             warn: approaching > 0,
-            hint: approaching > 0 ? '< 32 h restant' : 'pas d\'alerte amber',
+            hint: approaching > 0 ? t('kpiApproachingHint') : t('kpiNoApproaching'),
           },
         ]}
       />
 
       <Section
-        title={`Dossiers chez le DG (${withDgRows.length})`}
-        intro="En attente d'analyse (nouvelle arrivée) ou de décision finale (retour d'un département après traitement)."
+        title={t('secAtDgTitle', { count: withDgRows.length })}
+        intro={t('secAtDgIntro')}
         rows={withDgRows}
-        emptyHint="Aucun dossier chez le DG actuellement."
+        emptyHint={t('secAtDgEmpty')}
+        t={t}
       />
 
       <Section
-        title={`Dossiers dispatchés par le DG (${dispatchedRows.length})`}
-        intro="Sortis du DG vers les unités. La durée est calculée depuis que le détenteur courant l'a reçu (la délégation interne réinitialise le compteur)."
+        title={t('secDispatchedTitle', { count: dispatchedRows.length })}
+        intro={t('secDispatchedIntro')}
         rows={dispatchedRows}
-        emptyHint="Aucun dossier en cours dans les unités."
+        emptyHint={t('secDispatchedEmpty')}
+        t={t}
       />
     </>
   );
 }
 
 // =============================================================================
-//  B) SCOPED VIEW — Reçus + Envoyés + Avis externe (per the visibility rule)
+//  B) SCOPED VIEW
 // =============================================================================
 
-async function ScopedView({ scope, roleFr }: { scope: StaffScope; roleFr: string }) {
+async function ScopedView({
+  scope,
+  roleLabel: localizedRole,
+  t,
+  tCommon: _tCommon,
+  tSla,
+  tTime,
+  tExt,
+  tStatus,
+  locale,
+}: {
+  scope: StaffScope;
+  roleLabel: string;
+  t: TSecretariat;
+  tCommon: TCommon;
+  tSla: TSla;
+  tTime: TTime;
+  tExt: TExtRecipient;
+  tStatus: TDocStatus;
+  locale: LocaleShort;
+}) {
   const roles = scope.roleScope;
 
-  // 1. Reçus by me or my subordinates (active assignments to my subtree)
-  // 2. Envoyés à un autre service (docs we sent out, currently held elsewhere)
-  // 3. Avis externe en cours (pending external transmissions our subtree sent)
   const [received, sentDocs, externalTx] = await Promise.all([
     db.assignment.findMany({
       where: {
@@ -247,7 +294,7 @@ async function ScopedView({ scope, roleFr }: { scope: StaffScope; roleFr: string
     db.document.findMany({
       where: {
         status: { notIn: TERMINAL_STATUSES },
-        currentHolderRole: { notIn: roles }, // handed away, currently elsewhere
+        currentHolderRole: { notIn: roles },
         handoffs: {
           some: {
             fromRole: { in: roles },
@@ -283,45 +330,46 @@ async function ScopedView({ scope, roleFr }: { scope: StaffScope; roleFr: string
     }),
   ]);
 
-  // ---- Build rows for each section ------------------------------------------
-
   const receivedRows = received.map((a) =>
     buildRow(
-      // For received: SLA from when assigned to the role
       { ...a.document, _refTime: a.assignedAt, _holderRoleOverride: a.assignedToRole },
       'received',
+      { t, tSla, tTime, tStatus, locale },
     ),
   );
 
   const sentRows = sentDocs.map((d) => {
     const sentAt = d.handoffs[0]?.createdAt ?? d.updatedAt;
     const toRole = d.handoffs[0]?.toRole ?? d.currentHolderRole ?? null;
-    return buildRow(
-      { ...d, _refTime: sentAt, _sentToRoleOverride: toRole },
-      'sent',
-    );
+    return buildRow({ ...d, _refTime: sentAt, _sentToRoleOverride: toRole }, 'sent', {
+      t,
+      tSla,
+      tTime,
+      tStatus,
+      locale,
+    });
   });
 
-  const externalRows = externalTx.map((t) => {
-    const sla = slaState(t.sentAt, t.expectedReturnAt ?? undefined);
+  const externalRows: Row[] = externalTx.map((tx) => {
+    const sla = computeSla(tx.sentAt, false, tSla, tTime);
     return {
-      id: t.id,
-      reference: t.document.reference,
-      documentId: t.document.id,
-      subject: t.document.subject,
-      sender: t.document.submission?.senderName ?? '—',
-      senderOrg: t.document.submission?.senderOrganization ?? null,
+      id: tx.id,
+      reference: tx.document.reference,
+      documentId: tx.document.id,
+      subject: tx.document.subject,
+      sender: tx.document.submission?.senderName ?? '—',
+      senderOrg: tx.document.submission?.senderOrganization ?? null,
       counterparty: {
-        label: EXTERNAL_LABEL[t.recipient] + (t.recipientName ? ` · ${t.recipientName}` : ''),
-        role: null as StaffRole | null,
+        label: tExt(tx.recipient) + (tx.recipientName ? ` · ${tx.recipientName}` : ''),
+        role: null,
       },
-      refTime: t.sentAt,
-      pill: { label: 'En attente', cls: 'ext-avis' },
+      refTime: tx.sentAt,
+      pill: { label: t('pendingLabel'), cls: 'ext-avis' },
       sla,
       status: 'AWAITING_EXTERNAL_AVIS' as DocumentStatus,
-      kind: 'external' as const,
-      sentByName: t.sentBy?.name ?? null,
-      sentByRole: t.sentBy?.staffRole ?? null,
+      kind: 'external',
+      sentByName: tx.sentBy?.name ?? null,
+      sentByRole: tx.sentBy?.staffRole ?? null,
     };
   });
 
@@ -333,66 +381,61 @@ async function ScopedView({ scope, roleFr }: { scope: StaffScope; roleFr: string
     sentRows.filter((r) => r.sla.cls === 'amber').length;
 
   const subtreeBreadth = roles.length;
+  const introScoped =
+    subtreeBreadth === 1
+      ? t('introScopedSingular', { count: subtreeBreadth })
+      : t('introScopedPlural', { count: subtreeBreadth });
 
   return (
     <>
       <PageHead
-        kicker={`Mon périmètre · ${roleFr}`}
-        title="État des dossiers"
-        intro={`Vue scopée sur votre périmètre organigramme (${subtreeBreadth} rôle${subtreeBreadth > 1 ? 's' : ''} dans votre arborescence). Politique gouvernementale : tout document doit être traité dans les 72 h.`}
+        kicker={t('subtitleScoped', { role: localizedRole })}
+        title={t('title')}
+        intro={introScoped}
       />
 
       <Kpis
         items={[
+          { label: t('kpiReceived'), num: receivedRows.length, hint: t('kpiReceivedHint') },
+          { label: t('kpiSent'), num: sentRows.length, hint: t('kpiSentHint') },
+          { label: t('kpiExternal'), num: externalRows.length, hint: t('kpiExternalHint') },
           {
-            label: 'Reçus',
-            num: receivedRows.length,
-            hint: 'à traiter dans votre arborescence',
-          },
-          {
-            label: 'Envoyés à un service',
-            num: sentRows.length,
-            hint: 'en attente chez un autre service',
-          },
-          {
-            label: 'Avis externe en cours',
-            num: externalRows.length,
-            hint: 'Min. Finances · DGI · DGD · etc.',
-          },
-          {
-            label: 'SLA dépassé',
+            label: t('kpiOverdue'),
             num: overdue,
             alert: overdue > 0,
             warn: overdue === 0 && approaching > 0,
             hint:
               overdue > 0
-                ? 'à rappeler en priorité'
+                ? t('kpiOverdueHint')
                 : approaching > 0
-                  ? `${approaching} approchent 72 h`
-                  : 'aucune alerte',
+                  ? t('kpiApproachingHint')
+                  : t('kpiNoOverdue'),
           },
         ]}
       />
 
       <Section
-        title={`Reçus par moi (ou mes subordonnés) — ${receivedRows.length}`}
-        intro="Dossiers actuellement affectés à votre rôle ou à un rôle sous votre responsabilité. Le compteur SLA part du moment de l'affectation."
+        title={t('secReceivedTitle', { count: receivedRows.length })}
+        intro={t('secReceivedIntro')}
         rows={receivedRows}
-        emptyHint="Aucune affectation active dans votre arborescence."
+        emptyHint={t('secReceivedEmpty')}
+        t={t}
       />
 
       <Section
-        title={`Envoyés à un autre service — ${sentRows.length}`}
-        intro="Dossiers que vous (ou un subordonné) avez transmis et qui se trouvent actuellement chez un autre service. Le compteur SLA part de l'envoi."
+        title={t('secSentTitle', { count: sentRows.length })}
+        intro={t('secSentIntro')}
         rows={sentRows}
-        emptyHint="Aucun dossier envoyé en attente d'action ailleurs."
+        emptyHint={t('secSentEmpty')}
+        t={t}
       />
 
       <Section
-        title={`Avis externe en cours — ${externalRows.length}`}
-        intro="Transmissions envoyées à des destinataires externes (Min. Finances, DGI, DGD, etc.) et toujours en attente de retour. Le SLA est calculé depuis l'envoi (ou la date de retour attendue si renseignée)."
+        title={t('secExternalTitle', { count: externalRows.length })}
+        intro={t('secExternalIntro')}
         rows={externalRows}
-        emptyHint="Aucune transmission externe en attente."
+        emptyHint={t('secExternalEmpty')}
+        t={t}
       />
     </>
   );
@@ -475,11 +518,13 @@ function Section({
   intro,
   rows,
   emptyHint,
+  t,
 }: {
   title: string;
   intro: string;
   rows: Row[];
   emptyHint: string;
+  t: TSecretariat;
 }) {
   return (
     <div className="mt-12">
@@ -499,12 +544,12 @@ function Section({
         ) : (
           <>
             <div className="v4-thead">
-              <div>Référence · Objet</div>
-              <div>Émetteur</div>
-              <div>{counterpartyHeader(rows[0]?.kind)}</div>
-              <div>Statut</div>
-              <div>SLA 72 h</div>
-              <div>Rappel</div>
+              <div>{t('colRefObject')}</div>
+              <div>{t('colSender')}</div>
+              <div>{counterpartyHeader(rows[0]?.kind, t)}</div>
+              <div>{t('colStatus')}</div>
+              <div>{t('colSla')}</div>
+              <div>{t('colReminder')}</div>
             </div>
             {rows.map((r) => (
               <RowItem key={r.id} row={r} />
@@ -516,17 +561,17 @@ function Section({
   );
 }
 
-function counterpartyHeader(kind?: Row['kind']): string {
+function counterpartyHeader(kind: Row['kind'] | undefined, t: TSecretariat): string {
   switch (kind) {
     case 'with-dg':
-      return 'Reçu le';
+      return t('colReceivedDate');
     case 'dispatched':
     case 'received':
-      return 'Détenteur';
+      return t('colHolder');
     case 'sent':
-      return 'Envoyé vers';
+      return t('colSentTo');
     case 'external':
-      return 'Destinataire externe';
+      return t('colExternal');
     default:
       return '';
   }
@@ -616,34 +661,43 @@ type RawDoc = {
   _sentToRoleOverride?: StaffRole | null;
 };
 
-function buildRow(d: RawDoc, kind: Row['kind']): Row {
+type RowCtx = { t: TSecretariat; tSla: TSla; tTime: TTime; tStatus: TDocStatus; locale: LocaleShort };
+
+function buildRow(d: RawDoc, kind: Row['kind'], ctx: RowCtx): Row {
   const refTime = d._refTime ?? d.updatedAt ?? d.submittedAt;
   const paused = d.status === 'AWAITING_EXTERNAL_AVIS';
-  const sla = slaState(refTime, paused);
-  const pill = STATUS_PILL[d.status] ?? { label: d.status, cls: '' };
+  const sla = computeSla(refTime, paused, ctx.tSla, ctx.tTime);
+  const pill = pillFor(d.status, ctx.tStatus);
 
   let counterpartyRole: StaffRole | null = null;
   let counterpartyLabel = '';
   switch (kind) {
     case 'with-dg':
-      counterpartyLabel = refTime.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
-        + ' · ' + refTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      counterpartyLabel =
+        refTime.toLocaleDateString(ctx.locale === 'en' ? 'en-GB' : 'fr-FR', {
+          day: '2-digit',
+          month: 'short',
+        }) +
+        ' · ' +
+        refTime.toLocaleTimeString(ctx.locale === 'en' ? 'en-GB' : 'fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
       break;
     case 'dispatched':
     case 'received': {
       const role = d._holderRoleOverride ?? d.currentHolderRole;
       counterpartyRole = role ?? null;
-      counterpartyLabel = role ? roleLabel(role) : '—';
+      counterpartyLabel = role ? roleLabel(role, ctx.locale) : '—';
       break;
     }
     case 'sent': {
       const role = d._sentToRoleOverride ?? d.currentHolderRole;
       counterpartyRole = role ?? null;
-      counterpartyLabel = role ? roleLabel(role) : '—';
+      counterpartyLabel = role ? roleLabel(role, ctx.locale) : '—';
       break;
     }
     case 'external':
-      // handled inline by caller
       counterpartyLabel = '';
       break;
   }
@@ -655,7 +709,8 @@ function buildRow(d: RawDoc, kind: Row['kind']): Row {
     subject: d.subject,
     sender: d.submission?.senderName ?? '—',
     senderOrg: d.submission?.senderOrganization ?? null,
-    counterparty: kind === 'with-dg' ? null : { label: counterpartyLabel, role: counterpartyRole },
+    counterparty:
+      kind === 'with-dg' ? null : { label: counterpartyLabel, role: counterpartyRole },
     refTime,
     pill,
     sla,
@@ -664,25 +719,52 @@ function buildRow(d: RawDoc, kind: Row['kind']): Row {
   };
 }
 
-function slaState(referenceTime: Date, paused?: boolean | Date) {
-  if (paused === true) return { pct: 100, cls: 'paused', label: 'SLA suspendu' };
+function pillFor(status: DocumentStatus, tStatus: TDocStatus): { label: string; cls: string } {
+  switch (status) {
+    case 'AWAITING_DG_ANALYSIS':
+      return { label: tStatus('AWAITING_DG_ANALYSIS'), cls: 'dg' };
+    case 'AWAITING_DG_DECISION':
+      return { label: tStatus('AWAITING_DG_DECISION'), cls: 'dg' };
+    case 'ASSIGNED':
+      return { label: tStatus('ASSIGNED'), cls: 'new' };
+    case 'IN_TREATMENT':
+      return { label: tStatus('IN_TREATMENT'), cls: 'in-treatment' };
+    case 'AWAITING_EXTERNAL_AVIS':
+      return { label: tStatus('AWAITING_EXTERNAL_AVIS'), cls: 'ext-avis' };
+    default:
+      return { label: status, cls: '' };
+  }
+}
+
+function computeSla(
+  referenceTime: Date,
+  paused: boolean,
+  tSla: TSla,
+  tTime: TTime,
+): { pct: number; cls: string; label: string } {
+  if (paused) return { pct: 100, cls: 'paused', label: tSla('suspended') };
   const elapsed = Date.now() - referenceTime.getTime();
   const pct = Math.min(100, Math.max(2, Math.round((elapsed / SLA_TOTAL_MS) * 100)));
   const remaining = SLA_TOTAL_MS - elapsed;
-  if (remaining < 0) return { pct, cls: 'red', label: `+${humanDuration(-remaining)} dépassé` };
-  if (elapsed > SLA_RED_MS) return { pct, cls: 'red', label: `${humanDuration(remaining)} restant` };
-  if (elapsed > SLA_AMBER_MS) return { pct, cls: 'amber', label: `${humanDuration(remaining)} restant` };
-  return { pct, cls: '', label: `${humanDuration(remaining)} restant` };
+  if (remaining < 0)
+    return { pct, cls: 'red', label: tSla('overdue', { label: humanDuration(-remaining, tTime) }) };
+  if (elapsed > SLA_RED_MS)
+    return { pct, cls: 'red', label: tSla('remaining', { label: humanDuration(remaining, tTime) }) };
+  if (elapsed > SLA_AMBER_MS)
+    return { pct, cls: 'amber', label: tSla('remaining', { label: humanDuration(remaining, tTime) }) };
+  return { pct, cls: '', label: tSla('remaining', { label: humanDuration(remaining, tTime) }) };
 }
 
-function humanDuration(ms: number): string {
+function humanDuration(ms: number, tTime: TTime): string {
   const totalMin = Math.max(0, Math.floor(ms / 60_000));
   const h = Math.floor(totalMin / 60);
-  if (h < 1) return `${totalMin} min`;
+  if (h < 1) return `${totalMin} ${tTime('minuteShort')}`;
   if (h < 24) {
     const min = totalMin % 60;
-    return min === 0 ? `${h} h` : `${h} h ${String(min).padStart(2, '0')}`;
+    return min === 0
+      ? `${h} ${tTime('hourShort')}`
+      : `${h} ${tTime('hourShort')} ${String(min).padStart(2, '0')}`;
   }
   const d = Math.floor(h / 24);
-  return `${d} j`;
+  return `${d} ${tTime('dayShort')}`;
 }
