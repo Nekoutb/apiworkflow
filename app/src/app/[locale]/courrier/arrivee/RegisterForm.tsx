@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useRef, useEffect, useState, useTransition } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   registerArrivedDocument,
   type RegisterArriveeState,
@@ -12,28 +13,26 @@ import {
 
 const initial: RegisterArriveeState = {};
 
-const NATURES = [
-  { value: 'AGREMENT_REQUEST',       label: "Demande d'agrément (Ord. 2025/002)" },
-  { value: 'GENERAL_CORRESPONDENCE', label: 'Correspondance générale' },
-  { value: 'OFFICIAL_NOTIFICATION',  label: "Notification officielle d'une administration" },
-  { value: 'PARTNERSHIP_PROPOSAL',   label: 'Proposition de partenariat' },
-  { value: 'COMPLAINT',              label: 'Réclamation' },
-  { value: 'REPORT',                 label: 'Rapport' },
-  { value: 'OTHER',                  label: 'Autre' },
-];
+const NATURE_VALUES = [
+  'AGREMENT_REQUEST',
+  'GENERAL_CORRESPONDENCE',
+  'OFFICIAL_NOTIFICATION',
+  'PARTNERSHIP_PROPOSAL',
+  'COMPLAINT',
+  'REPORT',
+  'OTHER',
+] as const;
 
-const CHANNELS = [
-  { value: 'COURRIER_PHYSICAL', label: 'Physique · scanné au siège' },
-  { value: 'ONLINE',            label: 'En ligne (transcription manuelle)' },
-  { value: 'ANTENNE',           label: "Reçu via une antenne régionale" },
-];
+const CHANNEL_VALUES = ['COURRIER_PHYSICAL', 'ONLINE', 'ANTENNE'] as const;
 
-const SENDER_TYPES = [
-  'Investisseur',
-  'Particulier',
-  'Administration',
-  'Entreprise',
-  'Autre',
+// senderType is persisted as the canonical French string; we localise the
+// visible label only, keeping the stored value stable.
+const SENDER_TYPES: { value: string; en: string }[] = [
+  { value: 'Investisseur', en: 'Investor' },
+  { value: 'Particulier', en: 'Individual' },
+  { value: 'Administration', en: 'Administration' },
+  { value: 'Entreprise', en: 'Company' },
+  { value: 'Autre', en: 'Other' },
 ];
 
 type AiPanelState =
@@ -43,6 +42,12 @@ type AiPanelState =
   | { status: 'error'; error: string };
 
 export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
+  const t = useTranslations('CourrierArrivee');
+  const tNature = useTranslations('DocNatureLong');
+  const tChannel = useTranslations('SourceChannel');
+  const locale = useLocale();
+  const isEn = locale === 'en';
+
   const [state, formAction, pending] = useActionState(registerArrivedDocument, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -50,7 +55,6 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
   const [analyzing, startAnalyzing] = useTransition();
   const [aiFilledFields, setAiFilledFields] = useState<Set<string>>(new Set());
 
-  // Field values (controlled — so the AI can fill them)
   const [v, setV] = useState({
     senderName: '',
     senderEmail: '',
@@ -97,8 +101,6 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
         return;
       }
 
-      // Auto-fill only the fields the model returned a value for AND that
-      // the user hasn't already typed into manually (preserves user edits)
       setV((cur) => {
         const next = { ...cur };
         const filled = new Set<string>(aiFilledFields);
@@ -113,7 +115,6 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
         ];
         for (const k of fields) {
           const aiVal = (result.data as Record<string, unknown>)[k];
-          // Only fill empty fields or ones we (the AI) filled previously
           if (typeof aiVal === 'string' && aiVal.trim() && (cur[k] === '' || filled.has(k))) {
             next[k] = aiVal as typeof cur[typeof k];
             filled.add(k);
@@ -139,7 +140,7 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
         {state.ok && state.reference && (
           <div className="border border-cmgreen-800 bg-cmgreen-50 px-4 py-3">
             <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmgreen-900">
-              ✓ Document enregistré · accusé envoyé
+              {t('successHeading')}
             </div>
             <div className="mt-1 font-mono text-[15px] font-bold text-cmgreen-900">
               {state.reference}
@@ -147,18 +148,18 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
           </div>
         )}
 
-        {/* File picker first — drives the AI panel */}
+        {/* File picker first */}
         <fieldset className="border border-line bg-white">
           <legend className="ml-3 bg-white px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
-            1. Document scanné
+            {t('stepDocument')}
           </legend>
           <div className="p-5">
             <label className="flex items-center gap-3 border border-dashed border-line-2 bg-bgsoft px-4 py-4 hover:border-cmgreen-800">
               <span className="bg-obsidian px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-gold-500">
-                Choisir un fichier
+                {t('filePicker')}
               </span>
               <span className="flex-1 truncate text-[12.5px] italic text-ink-3">
-                {fileName || 'Aucun fichier sélectionné · PDF ou image (≤ 10 Mo)'}
+                {fileName || t('filePickerEmpty')}
               </span>
               <input
                 name="document"
@@ -175,9 +176,7 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
               </div>
             )}
             <p className="serif mt-2 text-[11.5px] italic text-ink-3">
-              {aiEnabled
-                ? "Dès le choix du fichier, le document est analysé et les champs ci-dessous sont pré-remplis. Vous pouvez tout corriger."
-                : "Analyse automatique indisponible · saisie 100 % manuelle."}
+              {aiEnabled ? t('filePickerHintActive') : t('filePickerHintInactive')}
             </p>
           </div>
         </fieldset>
@@ -185,60 +184,60 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Sender block */}
         <fieldset className="border border-line bg-white">
           <legend className="ml-3 bg-white px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
-            2. Émetteur
+            {t('stepSender')}
           </legend>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <Field label="Nom complet" name="senderName" error={state.fieldErrors?.senderName} aiFilled={aiFilledFields.has('senderName')}>
+            <Field label={t('labelFullName')} name="senderName" error={state.fieldErrors?.senderName} aiFilled={aiFilledFields.has('senderName')} tooltip={t('preFilledTooltip')}>
               <input
                 name="senderName"
                 value={v.senderName}
                 onChange={(e) => { setV({ ...v, senderName: e.target.value }); setAiFilledFields((s) => { const n = new Set(s); n.delete('senderName'); return n; }); }}
                 required
                 maxLength={120}
-                placeholder="ex. Aïcha Bouba"
+                placeholder={isEn ? 'e.g. Aïcha Bouba' : 'ex. Aïcha Bouba'}
                 className={inputCls}
               />
             </Field>
-            <Field label="Email" name="senderEmail" error={state.fieldErrors?.senderEmail} aiFilled={aiFilledFields.has('senderEmail')}>
+            <Field label={t('labelEmail')} name="senderEmail" error={state.fieldErrors?.senderEmail} aiFilled={aiFilledFields.has('senderEmail')} tooltip={t('preFilledTooltip')}>
               <input
                 type="email"
                 name="senderEmail"
                 value={v.senderEmail}
                 onChange={(e) => { setV({ ...v, senderEmail: e.target.value }); setAiFilledFields((s) => { const n = new Set(s); n.delete('senderEmail'); return n; }); }}
                 required
-                placeholder="ex. contact@example.cm"
+                placeholder="e.g. contact@example.cm"
                 className={inputCls}
               />
             </Field>
-            <Field label="Organisation / Société" name="senderOrganization" aiFilled={aiFilledFields.has('senderOrganization')}>
+            <Field label={t('labelOrganization')} name="senderOrganization" aiFilled={aiFilledFields.has('senderOrganization')} tooltip={t('preFilledTooltip')}>
               <input
                 name="senderOrganization"
                 value={v.senderOrganization}
                 onChange={(e) => { setV({ ...v, senderOrganization: e.target.value }); setAiFilledFields((s) => { const n = new Set(s); n.delete('senderOrganization'); return n; }); }}
                 maxLength={160}
-                placeholder="ex. Cameroun Solar Power SA"
+                placeholder={isEn ? 'e.g. Cameroon Solar Power SA' : 'ex. Cameroun Solar Power SA'}
                 className={inputCls}
               />
             </Field>
-            <Field label="Téléphone" name="senderPhone" aiFilled={aiFilledFields.has('senderPhone')}>
+            <Field label={t('labelPhone')} name="senderPhone" aiFilled={aiFilledFields.has('senderPhone')} tooltip={t('preFilledTooltip')}>
               <input
                 name="senderPhone"
                 value={v.senderPhone}
                 onChange={(e) => { setV({ ...v, senderPhone: e.target.value }); setAiFilledFields((s) => { const n = new Set(s); n.delete('senderPhone'); return n; }); }}
                 maxLength={40}
-                placeholder="ex. +237 6 55 44 33 22"
+                placeholder="e.g. +237 6 55 44 33 22"
                 className={inputCls}
               />
             </Field>
-            <Field label="Type d'émetteur" name="senderType" aiFilled={aiFilledFields.has('senderType')}>
+            <Field label={t('labelSenderType')} name="senderType" aiFilled={aiFilledFields.has('senderType')} tooltip={t('preFilledTooltip')}>
               <select
                 name="senderType"
                 value={v.senderType}
                 onChange={(e) => { setV({ ...v, senderType: e.target.value }); setAiFilledFields((s) => { const n = new Set(s); n.delete('senderType'); return n; }); }}
                 className={selectCls}
               >
-                {SENDER_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                {SENDER_TYPES.map((s) => (
+                  <option key={s.value} value={s.value}>{isEn ? s.en : s.value}</option>
                 ))}
               </select>
             </Field>
@@ -248,17 +247,17 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
         {/* Document metadata block */}
         <fieldset className="border border-line bg-white">
           <legend className="ml-3 bg-white px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-gold-700">
-            3. Métadonnées
+            {t('stepMetadata')}
           </legend>
           <div className="grid gap-4 p-5 md:grid-cols-2">
-            <Field label="Canal de réception" name="sourceChannel" error={state.fieldErrors?.sourceChannel}>
+            <Field label={t('labelChannel')} name="sourceChannel" error={state.fieldErrors?.sourceChannel}>
               <select name="sourceChannel" required defaultValue="COURRIER_PHYSICAL" className={selectCls}>
-                {CHANNELS.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                {CHANNEL_VALUES.map((c) => (
+                  <option key={c} value={c}>{tChannel(c)}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Nature du document" name="nature" error={state.fieldErrors?.nature} aiFilled={aiFilledFields.has('nature')}>
+            <Field label={t('labelNature')} name="nature" error={state.fieldErrors?.nature} aiFilled={aiFilledFields.has('nature')} tooltip={t('preFilledTooltip')}>
               <select
                 name="nature"
                 value={v.nature}
@@ -266,13 +265,13 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
                 required
                 className={selectCls}
               >
-                {NATURES.map((n) => (
-                  <option key={n.value} value={n.value}>{n.label}</option>
+                {NATURE_VALUES.map((n) => (
+                  <option key={n} value={n}>{tNature(n)}</option>
                 ))}
               </select>
             </Field>
             <div className="md:col-span-2">
-              <Field label="Objet" name="subject" error={state.fieldErrors?.subject} aiFilled={aiFilledFields.has('subject')}>
+              <Field label={t('labelSubject')} name="subject" error={state.fieldErrors?.subject} aiFilled={aiFilledFields.has('subject')} tooltip={t('preFilledTooltip')}>
                 <input
                   name="subject"
                   value={v.subject}
@@ -280,18 +279,18 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
                   required
                   minLength={5}
                   maxLength={400}
-                  placeholder="ex. Demande d'agrément · projet de centrale solaire 50 MW"
+                  placeholder={t('subjectPlaceholder')}
                   className={inputCls}
                 />
               </Field>
             </div>
             <div className="md:col-span-2">
-              <Field label="Note interne (optionnel · visible uniquement par le DG et le Bureau Arrivée)" name="notes">
+              <Field label={t('labelNotes')} name="notes">
                 <textarea
                   name="notes"
                   rows={3}
                   maxLength={2000}
-                  placeholder="ex. Reçu en 2 exemplaires originaux signés."
+                  placeholder={t('notesPlaceholder')}
                   className={inputCls}
                 />
               </Field>
@@ -301,39 +300,41 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
 
         <div className="flex items-center justify-between border-t border-line pt-5">
           <p className="serif text-[12.5px] italic text-ink-3">
-            ⓘ L&apos;émetteur recevra un accusé de réception par email. Le délai légal court à compter de cet instant.
+            {t('submitFooter')}
           </p>
           <button
             type="submit"
             disabled={pending || analyzing}
             className="bg-blue-700 px-6 py-3 text-[12.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800 disabled:opacity-50"
           >
-            {pending ? 'Enregistrement…' : 'Enregistrer & accuser réception'}
+            {pending ? t('submitting') : t('submitButton')}
           </button>
         </div>
       </form>
 
-      {/* ====== Right: AI synopsis panel ====== */}
+      {/* ====== Right: synopsis panel ====== */}
       <aside className="lg:sticky lg:top-6 lg:self-start">
-        <AiPanel state={ai} aiEnabled={aiEnabled} />
+        <AiPanel state={ai} aiEnabled={aiEnabled} t={t} />
       </aside>
     </div>
   );
 }
 
-function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean }) {
-  const bgGradient = 'bg-gradient-to-b from-obsidian via-[#0d1822] to-[#0a1420]';
+type TArrivee = ReturnType<typeof useTranslations<'CourrierArrivee'>>;
+
+function AiPanel({ state, aiEnabled, t }: { state: AiPanelState; aiEnabled: boolean; t: TArrivee }) {
+  // NOTE: this MUST be a template literal so ${bgGradient} interpolates.
+  const panelDark = 'max-h-[340px] overflow-y-auto relative overflow-hidden border border-obsidian bg-gradient-to-b from-obsidian via-[#0d1822] to-[#0a1420] p-6 text-white';
 
   if (!aiEnabled && state.status === 'idle') {
     return (
       <div className="max-h-[340px] overflow-y-auto border border-line bg-bgsoft p-5">
         <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-3">
-          Synthèse · Indisponible
+          {t('panelDemoTitle')}
         </div>
-        <h3 className="serif text-[16px] font-semibold text-ink">Saisie manuelle</h3>
+        <h3 className="serif text-[16px] font-semibold text-ink">{t('panelDemoHeading')}</h3>
         <p className="serif mt-2 text-[12.5px] italic text-ink-3">
-          L&apos;analyse automatique n&apos;est pas active sur ce serveur. Renseignez les
-          champs à gauche — l&apos;enregistrement reste possible.
+          {t('panelDemoIntro')}
         </p>
       </div>
     );
@@ -341,23 +342,21 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
 
   if (state.status === 'idle') {
     return (
-      <div className={`relative max-h-[340px] overflow-y-auto border border-obsidian ${bgGradient} p-6 text-white`}>
+      <div className={panelDark}>
         <div className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-          Synthèse · En attente
+          {t('panelIdleTitle')}
         </div>
         <h3 className="serif text-[17px] font-semibold leading-tight">
-          Joignez un fichier pour lancer l&apos;analyse automatique
+          {t('panelIdleHeading')}
         </h3>
         <p className="serif mt-3 text-[13px] italic text-white/65">
-          Dès qu&apos;un PDF ou une image est sélectionné, le document est
-          analysé automatiquement et les champs à gauche sont pré-remplis.
-          L&apos;essentiel est résumé ici en moins de 50&nbsp;mots.
+          {t('panelIdleIntro')}
         </p>
         <ul className="mt-4 space-y-1.5 text-[11.5px] text-white/55">
-          <li>✓ Extraction de l&apos;émetteur (nom, organisation, email)</li>
-          <li>✓ Détection de la nature du document (agrément, plainte, etc.)</li>
-          <li>✓ Synopsis &lt; 50 mots</li>
-          <li>✓ Niveau de confiance auto-évalué</li>
+          <li>{t('panelIdleBullet1')}</li>
+          <li>{t('panelIdleBullet2')}</li>
+          <li>{t('panelIdleBullet3')}</li>
+          <li>{t('panelIdleBullet4')}</li>
         </ul>
       </div>
     );
@@ -365,19 +364,18 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
 
   if (state.status === 'analyzing') {
     return (
-      <div className={`relative max-h-[340px] overflow-y-auto border border-obsidian ${bgGradient} p-6 text-white`}>
+      <div className={panelDark}>
         <div className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-          Analyse en cours
+          {t('panelAnalyzing')}
         </div>
         <div className="flex items-center gap-3">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
           <h3 className="serif text-[16px] font-semibold leading-tight">
-            Lecture de {state.fileName}…
+            {t('panelAnalyzingReading', { fileName: state.fileName })}
           </h3>
         </div>
         <p className="serif mt-3 text-[13px] italic text-white/65">
-          Habituellement 2–6 secondes pour un courrier d&apos;une page.
-          Vous pouvez commencer à saisir les champs à gauche en attendant.
+          {t('panelAnalyzingHint')}
         </p>
       </div>
     );
@@ -387,11 +385,11 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
     return (
       <div className="max-h-[340px] overflow-y-auto border border-cmred bg-cmred-50 p-5">
         <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmred">
-          ⚠ Erreur d&apos;analyse
+          {t('panelError')}
         </div>
         <p className="serif text-[13px] italic text-cmred-900">{state.error}</p>
         <p className="serif mt-3 text-[12px] italic text-ink-3">
-          Saisissez les champs manuellement à gauche — l&apos;enregistrement reste possible.
+          {t('panelErrorFooter')}
         </p>
       </div>
     );
@@ -406,13 +404,13 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
       ? 'text-gold-400'
       : 'text-cmred-300';
   const confidenceLabel =
-    d.confidence === 'high' ? 'Élevée' : d.confidence === 'medium' ? 'Moyenne' : 'Faible';
+    d.confidence === 'high' ? t('confidenceHigh') : d.confidence === 'medium' ? t('confidenceMedium') : t('confidenceLow');
 
   return (
-    <div className={`relative max-h-[340px] overflow-y-auto border border-obsidian ${bgGradient} p-6 text-white`}>
+    <div className={panelDark}>
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-          Synthèse du document
+          {t('panelTitle')}
         </div>
         <div className={'text-[10.5px] font-bold uppercase tracking-[0.16em] ' + confidenceColor}>
           ● {confidenceLabel}
@@ -420,7 +418,7 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
       </div>
 
       <h3 className="serif mb-2 text-[14px] font-semibold leading-tight text-white">
-        Document analysé
+        {t('panelOkHeading')}
       </h3>
       <p className="serif text-[14px] leading-[1.6] text-white">
         « {d.synopsis} »
@@ -428,18 +426,18 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
 
       <div className="mt-5 border-t border-white/15 pt-4">
         <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/55">
-          Champs reconnus dans le document
+          {t('panelFieldsHeading')}
         </div>
         <div className="space-y-1 text-[12px]">
-          {d.senderName && <KV k="Émetteur" v={d.senderName} />}
-          {d.senderOrganization && <KV k="Organisation" v={d.senderOrganization} />}
-          {d.senderEmail && <KV k="Email" v={d.senderEmail} />}
-          {d.senderPhone && <KV k="Téléphone" v={d.senderPhone} />}
-          {d.subject && <KV k="Objet" v={d.subject} />}
-          {d.nature && <KV k="Nature" v={d.nature} />}
+          {d.senderName && <KV k={t('labelFullName')} v={d.senderName} />}
+          {d.senderOrganization && <KV k={t('labelOrganization')} v={d.senderOrganization} />}
+          {d.senderEmail && <KV k={t('labelEmail')} v={d.senderEmail} />}
+          {d.senderPhone && <KV k={t('labelPhone')} v={d.senderPhone} />}
+          {d.subject && <KV k={t('labelSubject')} v={d.subject} />}
+          {d.nature && <KV k={t('labelNature')} v={d.nature} />}
         </div>
         <p className="serif mt-4 text-[11px] italic text-white/55">
-          Champs surlignés en vert à gauche = pré-remplis automatiquement. Vous pouvez tout corriger.
+          {t('panelFieldsFooter')}
         </p>
       </div>
     </div>
@@ -458,7 +456,7 @@ function KV({ k, v }: { k: string; v: string }) {
 const inputCls =
   'w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13.5px] text-ink placeholder:text-ink-4 focus:border-cmgreen-800 focus:outline-none focus:ring-1 focus:ring-cmgreen-800';
 const selectCls =
-  'w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink focus:border-cmgreen-800 focus:outline-none focus:ring-1 focus:ring-cmgreen-800';
+  'w-full border border-line-2 bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:border-cmgreen-800 focus:outline-none focus:ring-1 focus:ring-cmgreen-800';
 
 function Field({
   label,
@@ -466,25 +464,24 @@ function Field({
   children,
   error,
   aiFilled,
+  tooltip,
 }: {
   label: string;
   name: string;
   children: React.ReactNode;
   error?: string;
   aiFilled?: boolean;
+  tooltip?: string;
 }) {
   return (
-    <div className={aiFilled ? 'rounded-sm ring-1 ring-cmgreen-800/35' : ''}>
+    <div>
       <label
         htmlFor={name}
         className="mb-1.5 flex items-center justify-between text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
       >
         <span>{label}</span>
         {aiFilled && (
-          <span
-            className="rounded-sm bg-cmgreen-50 px-1.5 py-0.5 text-[10px] font-bold text-cmgreen-800"
-            title="Pré-rempli automatiquement"
-          >
+          <span className="rounded-sm bg-cmgreen-50 px-1.5 py-0.5 text-[10px] font-bold text-cmgreen-800" title={tooltip}>
             ✓
           </span>
         )}
