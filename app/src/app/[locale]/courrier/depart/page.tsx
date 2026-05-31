@@ -1,5 +1,7 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
@@ -7,26 +9,38 @@ import type { StaffRole } from '@prisma/client';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AppLogo } from '@/components/AppLogo';
 
-export const metadata = { title: 'Bureau Départ · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 const ALLOWED: StaffRole[] = ['ADMIN', 'CHEF_BUREAU_DEPART', 'CHEF_SERVICE_COURRIER'];
 
-const NATURE_SHORT: Record<string, string> = {
-  AGREMENT_REQUEST: "Demande d'agrément",
-  GENERAL_CORRESPONDENCE: 'Correspondance',
-  OFFICIAL_NOTIFICATION: 'Notification',
-  PARTNERSHIP_PROPOSAL: 'Partenariat',
-  COMPLAINT: 'Réclamation',
-  REPORT: 'Rapport',
-  OTHER: 'Autre',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('courrierDepartTitle') };
+}
 
-export default async function CourrierDepartPage() {
+export default async function CourrierDepartPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || !ALLOWED.includes(role)) redirect('/dashboard');
+
+  const t = await getTranslations('CourrierDepart');
+  const tCommon = await getTranslations('Common');
+  const tStatus = await getTranslations('DocStatus');
+  const tNature = await getTranslations('DocNature');
+  const localeShort = locale === 'en' ? 'en' : 'fr';
 
   // Awaiting outbound = status DECIDED
   // Recent outbound = status RESPONSE_SENT over the last 30 days
@@ -65,12 +79,17 @@ export default async function CourrierDepartPage() {
     }),
   ]);
 
+  const headingAwaiting = localeShort === 'en' ? 'Decisions ready to dispatch' : 'Décisions prêtes à expédier';
+  const headingRecent = localeShort === 'en' ? 'Recently dispatched' : 'Récemment expédiés';
+  const statAwaiting = localeShort === 'en' ? 'Awaiting dispatch' : "En attente d'expédition";
+  const statToday = localeShort === 'en' ? 'Dispatched today' : "Expédiés aujourd'hui";
+  const statRecent = localeShort === 'en' ? 'Dispatched (30 days)' : 'Expédiés (30 jours)';
+
   return (
     <main className="min-h-screen bg-bgsoft">
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        Portail interne <span className="mx-3 text-gold-500">⚜</span>
-        Service du Courrier <span className="mx-3 text-gold-500">⚜</span>
-        Bureau Départ
+        {tCommon('internalPortal')} <span className="mx-3 text-gold-500">⚜</span>
+        {t('title')}
       </div>
 
       <header className="border-b border-line bg-white">
@@ -78,47 +97,52 @@ export default async function CourrierDepartPage() {
           <AppLogo />
           <div className="leading-tight">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              Portail interne · Service du Courrier
+              {t('kicker')}
             </div>
-            <div className="serif text-[17px] font-bold text-ink">Bureau Départ — Expédition</div>
+            <div className="serif text-[17px] font-bold text-ink">{t('title')}</div>
           </div>
           <div className="ml-auto flex items-center gap-3">
             <NotificationBell />
             <div className="text-right leading-tight">
               <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
-              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role)}</div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role, localeShort)}</div>
             </div>
           </div>
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-7 py-10">
+      <section className="mx-auto max-w-7xl px-7 py-6">
+        <Link
+          href="/dashboard"
+          className="mb-5 inline-flex items-center text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-3 transition hover:text-ink"
+        >
+          {tCommon('backToDashboard')}
+        </Link>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Stat label="En attente d'expédition" value={awaiting.length} accent />
-          <Stat label="Expédiés aujourd'hui" value={todayCount} />
-          <Stat label="Expédiés (30 jours)" value={recent.length} />
+          <Stat label={statAwaiting} value={awaiting.length} accent />
+          <Stat label={statToday} value={todayCount} />
+          <Stat label={statRecent} value={recent.length} />
         </div>
 
         {/* Awaiting outbound */}
         <h2 className="serif mb-3 mt-12 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-          Décisions prêtes à expédier
+          {headingAwaiting}
         </h2>
         {awaiting.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            Aucun document au statut DECIDED. La file s&apos;alimente quand le DG
-            rend une décision (B15).
+            {t('empty')}
           </div>
         ) : (
           <div className="overflow-x-auto border border-line bg-white">
             <table className="w-full">
               <thead className="bg-bgsoft">
                 <tr className="text-left">
-                  <Th>Référence</Th>
-                  <Th>Émetteur</Th>
-                  <Th>Objet</Th>
-                  <Th>Nature</Th>
-                  <Th>Décidé le</Th>
-                  <Th>Action</Th>
+                  <Th>{tCommon('reference')}</Th>
+                  <Th>{tCommon('sender')}</Th>
+                  <Th>{tCommon('subject')}</Th>
+                  <Th>{tCommon('nature')}</Th>
+                  <Th>{t('colDecidedAt')}</Th>
+                  <Th>{tCommon('actions')}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -135,18 +159,16 @@ export default async function CourrierDepartPage() {
                     <td className="px-4 py-3 text-[12.5px] text-ink-2">
                       <div className="max-w-md truncate" title={d.subject}>{d.subject}</div>
                     </td>
-                    <td className="px-4 py-3 text-[11.5px] text-ink-3">
-                      {NATURE_SHORT[d.nature] ?? d.nature}
-                    </td>
+                    <td className="px-4 py-3 text-[11.5px] text-ink-3">{tNature(d.nature)}</td>
                     <td className="px-4 py-3 text-[11px] text-ink-3">
-                      {d.decidedAt?.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) ?? '—'}
+                      {d.decidedAt?.toLocaleString(localeShort === 'en' ? 'en-GB' : 'fr-FR', { dateStyle: 'short', timeStyle: 'short' }) ?? '—'}
                     </td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/courrier/depart/${d.id}`}
                         className="bg-blue-700 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
                       >
-                        Composer →
+                        {localeShort === 'en' ? 'Compose →' : 'Composer →'}
                       </Link>
                     </td>
                   </tr>
@@ -158,21 +180,21 @@ export default async function CourrierDepartPage() {
 
         {/* Recent outbound */}
         <h2 className="serif mb-3 mt-12 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-          Récemment expédiés
+          {headingRecent}
         </h2>
         {recent.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            Aucun document expédié récemment.
+            {tCommon('noResults')}
           </div>
         ) : (
           <div className="overflow-x-auto border border-line bg-white">
             <table className="w-full">
               <thead className="bg-bgsoft">
                 <tr className="text-left">
-                  <Th>Référence</Th>
-                  <Th>Émetteur</Th>
-                  <Th>Objet</Th>
-                  <Th>Expédié le</Th>
+                  <Th>{tCommon('reference')}</Th>
+                  <Th>{tCommon('sender')}</Th>
+                  <Th>{tCommon('subject')}</Th>
+                  <Th>{tCommon('sentOn')}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -187,7 +209,7 @@ export default async function CourrierDepartPage() {
                       <div className="max-w-md truncate" title={d.subject}>{d.subject}</div>
                     </td>
                     <td className="px-4 py-3 text-[11px] text-ink-3">
-                      {d.responseSentAt?.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) ?? '—'}
+                      {d.responseSentAt?.toLocaleString(localeShort === 'en' ? 'en-GB' : 'fr-FR', { dateStyle: 'short', timeStyle: 'short' }) ?? '—'}
                     </td>
                   </tr>
                 ))}
@@ -201,7 +223,7 @@ export default async function CourrierDepartPage() {
             href="/dashboard"
             className="border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
           >
-            ← Tableau de bord
+            {tCommon('backToDashboard')}
           </Link>
         </div>
       </section>

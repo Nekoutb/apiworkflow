@@ -1,10 +1,36 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 
-export const metadata = { title: 'Aperçu base de données v2 · Administration' };
 export const dynamic = 'force-dynamic';
 
-export default async function AdminDataPage() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('adminDataTitle') };
+}
+
+export default async function AdminDataPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  const t = await getTranslations('AdminData');
+  const tCommon = await getTranslations('Common');
+  const tAdmin = await getTranslations('Admin');
+  const tDashboard = await getTranslations('Dashboard');
+  const tStatus = await getTranslations('DocStatus');
+  const tNature = await getTranslations('DocNature');
+  const tChannel = await getTranslations('SourceChannel');
+
   const [
     userCount, antenneCount, documentCount, submissionCount, versionCount,
     assignmentCount, handoffCount, commentCount, attachmentCount,
@@ -34,34 +60,34 @@ export default async function AdminDataPage() {
     }),
   ]);
 
-  const counts: { label: string; value: number; helper?: string }[] = [
-    { label: 'Utilisateurs',                value: userCount,         helper: '5 seed (admin + DG + Arrivée + Départ + Chef Antenne)' },
-    { label: 'Antennes',                    value: antenneCount,      helper: 'B23 ajoutera 4 antennes' },
-    { label: 'Documents',                   value: documentCount,     helper: '1 document d\'exemple (en attente DG)' },
-    { label: 'Submissions',                 value: submissionCount },
-    { label: 'Versions de document',        value: versionCount },
-    { label: 'Assignations',                value: assignmentCount,   helper: 'Activé en B9' },
-    { label: 'Handoffs',                    value: handoffCount,      helper: '1 handoff Courrier → DG' },
-    { label: 'Commentaires',                value: commentCount,      helper: 'Activé en B14' },
-    { label: 'Pièces jointes',              value: attachmentCount,   helper: 'Activé en B14' },
-    { label: 'Analyses IA',                 value: aiAnalysisCount,   helper: 'Activé en B8' },
-    { label: 'Notifications',               value: notificationCount, helper: 'Activé en B20' },
-    { label: 'Transmissions externes',      value: externalCount,     helper: 'Activé en B14.5 (Min. Finances)' },
-    { label: 'Audit trail',                 value: auditCount,        helper: 'Activé en B21' },
+  // Locale-aware counter labels (using existing/standard nouns).
+  const isEn = locale === 'en';
+  const counters: { label: string; value: number }[] = [
+    { label: isEn ? 'Users'                  : 'Utilisateurs',           value: userCount },
+    { label: isEn ? 'Regional offices'       : 'Antennes',               value: antenneCount },
+    { label: isEn ? 'Documents'              : 'Documents',              value: documentCount },
+    { label: isEn ? 'Submissions'            : 'Submissions',            value: submissionCount },
+    { label: isEn ? 'Document versions'      : 'Versions de document',   value: versionCount },
+    { label: isEn ? 'Assignments'            : 'Assignations',           value: assignmentCount },
+    { label: isEn ? 'Handoffs'               : 'Handoffs',               value: handoffCount },
+    { label: isEn ? 'Comments'               : 'Commentaires',           value: commentCount },
+    { label: isEn ? 'Attachments'            : 'Pièces jointes',         value: attachmentCount },
+    { label: isEn ? 'AI analyses'            : 'Analyses IA',            value: aiAnalysisCount },
+    { label: isEn ? 'Notifications'          : 'Notifications',          value: notificationCount },
+    { label: isEn ? 'External transmissions' : 'Transmissions externes', value: externalCount },
+    { label: isEn ? 'Audit trail'            : 'Audit trail',            value: auditCount },
   ];
 
   return (
     <section className="mx-auto max-w-7xl px-7 py-12">
       <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.24em] text-gold-700">
-        Administration · v2
+        {t('kicker')}
       </div>
-      <h1 className="serif text-4xl font-semibold tracking-[-0.5px] text-ink">Aperçu base de données</h1>
-      <p className="serif mt-2 text-[14px] italic text-ink-3">
-        Schéma v2 document-centrique · PostgreSQL local sur le VPS (re-baseline du 24 mai 2026).
-      </p>
+      <h1 className="serif text-4xl font-semibold tracking-[-0.5px] text-ink">{t('title')}</h1>
+      <p className="serif mt-2 text-[14px] italic text-ink-3">{t('intro')}</p>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {counts.map((c) => (
+        {counters.map((c) => (
           <div key={c.label} className="border border-line bg-white p-5">
             <div className="text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-3">
               {c.label}
@@ -69,33 +95,41 @@ export default async function AdminDataPage() {
             <div className="serif mt-1 text-[34px] font-bold leading-none tracking-[-0.5px] text-ink">
               {c.value}
             </div>
-            {c.helper && <div className="mt-2 text-[11.5px] italic text-ink-4">{c.helper}</div>}
           </div>
         ))}
       </div>
 
       <div className="mt-12">
-        <h2 className="serif text-[22px] font-semibold text-ink">Documents récents</h2>
-        <p className="serif mt-1 text-[13px] italic text-ink-3">
-          Tous les documents enregistrés dans le nouveau schéma v2.
-        </p>
+        <h2 className="serif text-[22px] font-semibold text-ink">
+          {isEn ? 'Recent documents' : 'Documents récents'}
+        </h2>
 
         <div className="mt-5 border border-line bg-white">
           <table className="w-full">
             <thead>
               <tr className="bg-bgsoft text-left">
-                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">Référence</th>
-                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">Sujet · Émetteur</th>
-                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">Nature</th>
-                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">Source</th>
-                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">Statut</th>
+                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">
+                  {tCommon('reference')}
+                </th>
+                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">
+                  {tCommon('subject')} · {tCommon('sender')}
+                </th>
+                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">
+                  {tCommon('nature')}
+                </th>
+                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">
+                  {tCommon('channel')}
+                </th>
+                <th className="px-4 py-3 text-[10.5px] font-bold uppercase tracking-[0.16em] text-ink-3">
+                  {tCommon('status')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {recentDocs.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-[13px] italic text-ink-3">
-                    Aucun document enregistré pour le moment.
+                    {tCommon('noResults')}
                   </td>
                 </tr>
               )}
@@ -109,12 +143,12 @@ export default async function AdminDataPage() {
                       {d.submission?.senderOrganization && <span> · {d.submission.senderOrganization}</span>}
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-[11.5px] text-ink-3">{d.nature}</td>
+                  <td className="px-4 py-3.5 text-[11.5px] text-ink-3">{tNature(d.nature)}</td>
                   <td className="px-4 py-3.5 text-[11.5px] text-ink-3">
-                    {d.sourceChannel}
+                    {tChannel(d.sourceChannel + '_SHORT' as 'ONLINE_SHORT' | 'COURRIER_PHYSICAL_SHORT' | 'ANTENNE_SHORT')}
                     {d.antenne && <div className="text-[10.5px] italic">{d.antenne.name}</div>}
                   </td>
-                  <td className="px-4 py-3.5 text-[11.5px] text-ink-2">{d.status}</td>
+                  <td className="px-4 py-3.5 text-[11.5px] text-ink-2">{tStatus(d.status)}</td>
                 </tr>
               ))}
             </tbody>
@@ -124,10 +158,10 @@ export default async function AdminDataPage() {
 
       <div className="mt-10 flex gap-3">
         <Link href="/admin/users" className="border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink">
-          ← Gestion du personnel
+          ← {tAdmin('navUsers')}
         </Link>
         <Link href="/dashboard" className="border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink">
-          Tableau de bord
+          {tDashboard('panelHeading')}
         </Link>
       </div>
     </section>

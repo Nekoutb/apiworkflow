@@ -1,5 +1,7 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
@@ -7,31 +9,42 @@ import type { StaffRole } from '@prisma/client';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AppLogo } from '@/components/AppLogo';
 
-export const metadata = { title: 'Parapheur DG · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 const ALLOWED: StaffRole[] = ['DG', 'DGA', 'ADMIN'];
 
-const NATURE_SHORT: Record<string, string> = {
-  AGREMENT_REQUEST: "Demande d'agrément",
-  GENERAL_CORRESPONDENCE: 'Correspondance',
-  OFFICIAL_NOTIFICATION: 'Notification',
-  PARTNERSHIP_PROPOSAL: 'Partenariat',
-  COMPLAINT: 'Réclamation',
-  REPORT: 'Rapport',
-  OTHER: 'Autre',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('dgParapheurTitle') };
+}
 
-export default async function DgParapheurPage() {
+export default async function DgParapheurPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || !ALLOWED.includes(role)) redirect('/dashboard');
 
+  const t = await getTranslations('DgParapheur');
+  const tCommon = await getTranslations('Common');
+  const tNature = await getTranslations('DocNature');
+  const localeShort = locale === 'en' ? 'en' : 'fr';
+
   const [pending, awaitingDecision, processedToday, oldestWaiting, totalProcessed] = await Promise.all([
     db.document.findMany({
       where: { status: 'AWAITING_DG_ANALYSIS' },
-      orderBy: { submittedAt: 'asc' }, // FIFO
+      orderBy: { submittedAt: 'asc' },
       take: 100,
       select: {
         id: true,
@@ -50,10 +63,9 @@ export default async function DgParapheurPage() {
         },
       },
     }),
-    // B15: documents returned to DG for final decision
     db.document.findMany({
       where: { status: 'AWAITING_DG_DECISION' },
-      orderBy: { updatedAt: 'asc' }, // oldest pending decision first
+      orderBy: { updatedAt: 'asc' },
       take: 100,
       select: {
         id: true,
@@ -65,7 +77,6 @@ export default async function DgParapheurPage() {
         submission: {
           select: { senderName: true, senderEmail: true, senderOrganization: true },
         },
-        // The last RETURN_TO_DG handoff tells us who submitted it
         handoffs: {
           where: { type: 'RETURN_TO_DG' },
           orderBy: { createdAt: 'desc' },
@@ -95,12 +106,39 @@ export default async function DgParapheurPage() {
 
   const oldestAgeMs = oldestWaiting ? Date.now() - oldestWaiting.submittedAt.getTime() : 0;
 
+  // i18n bits not in the namespace (small, page-specific)
+  const isEn = localeShort === 'en';
+  const labelPendingAnalysis = isEn ? 'Awaiting analysis' : "En attente d'analyse";
+  const labelPendingDecision = isEn ? 'Awaiting decision' : 'En attente de décision';
+  const labelOldest = isEn ? 'Oldest in queue' : 'Doyen en file';
+  const labelTotal = isEn ? 'Total processed' : 'Total traités';
+  const labelPanelAnalysis = isEn ? 'Documents awaiting analysis' : "Documents en attente d'analyse";
+  const labelPanelDecision = isEn ? 'Dossiers awaiting GM decision' : 'Dossiers en attente de décision DG';
+  const introAnalysis = isEn
+    ? "Documents handed in by the Mail Service · Incoming Mail Office, oldest first. Click a row to open the AI analysis and dispatch."
+    : "Documents transmis par le Service du Courrier · Bureau Arrivée, triés du plus ancien au plus récent. Cliquez sur un document pour ouvrir l'analyse + dispatcher.";
+  const introDecision = isEn
+    ? "Documents that Directors processed and submitted to the GM for final decision (approval or rejection). Once decided, the dossier moves to the Outgoing Mail Office for response dispatch."
+    : "Documents que les Directeurs ont traités et soumis au DG pour décision finale (approbation ou rejet). Une fois la décision rendue, le dossier file au Bureau Départ pour expédition de la réponse.";
+  const emptyAnalysis = isEn
+    ? "No document pending. The folder fills as soon as a letter is registered at the Incoming Mail Office."
+    : "Aucun document en attente. Le parapheur se remplit dès qu'un courrier est enregistré au Bureau Arrivée.";
+  const emptyDecision = isEn
+    ? "No dossier awaiting decision. This queue fills as soon as a Director submits a processed dossier."
+    : "Aucun dossier en attente de décision. Cette file se remplit dès qu'un Directeur soumet un dossier traité.";
+  const colAge = isEn ? 'Age' : 'Âge';
+  const colAi = isEn ? 'AI' : 'IA';
+  const colSubmittedBy = isEn ? 'Submitted by' : 'Soumis par';
+  const colDecisionAge = isEn ? 'Decision age' : 'Âge décision';
+  const labelAnalysed = isEn ? '✨ Analysed' : '✨ Analysé';
+  const labelDecide = isEn ? 'Decide →' : 'Décider →';
+
   return (
     <main className="min-h-screen bg-bgsoft">
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        Portail interne <span className="mx-3 text-gold-500">⚜</span>
-        Direction Générale <span className="mx-3 text-gold-500">⚜</span>
-        Parapheur
+        {tCommon('internalPortal')} <span className="mx-3 text-gold-500">⚜</span>
+        {isEn ? 'General Management' : 'Direction Générale'} <span className="mx-3 text-gold-500">⚜</span>
+        {t('title')}
       </div>
 
       <header className="border-b border-line bg-white">
@@ -108,10 +146,10 @@ export default async function DgParapheurPage() {
           <AppLogo />
           <div className="leading-tight">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              Portail interne · Direction Générale
+              {tCommon('internalPortal')} · {isEn ? 'General Management' : 'Direction Générale'}
             </div>
             <div className="serif text-[17px] font-bold text-ink">
-              Parapheur DG — Analyse & Dispatch
+              {t('title')} — {t('subtitle')}
             </div>
           </div>
           <div className="ml-auto flex items-center gap-3">
@@ -121,47 +159,50 @@ export default async function DgParapheurPage() {
                 {session.user.name ?? session.user.email}
               </div>
               <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">
-                {roleLabel(role)}
+                {roleLabel(role, localeShort)}
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-7 py-10">
+      <section className="mx-auto max-w-7xl px-7 py-6">
+        <Link
+          href="/dashboard"
+          className="mb-5 inline-flex items-center text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-3 transition hover:text-ink"
+        >
+          {tCommon('backToDashboard')}
+        </Link>
+
         {/* Stats */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="En attente d'analyse" value={pending.length} accent />
-          <Stat label="En attente de décision" value={awaitingDecision.length} accent={awaitingDecision.length > 0} urgent={awaitingDecision.length > 0} />
-          <Stat label="Doyen en file" value={oldestWaiting ? humanAge(oldestAgeMs) : '—'} mono />
-          <Stat label="Total traités" value={totalProcessed} />
+          <Stat label={labelPendingAnalysis} value={pending.length} accent />
+          <Stat label={labelPendingDecision} value={awaitingDecision.length} accent={awaitingDecision.length > 0} urgent={awaitingDecision.length > 0} />
+          <Stat label={labelOldest} value={oldestWaiting ? humanAge(oldestAgeMs, isEn) : '—'} mono />
+          <Stat label={labelTotal} value={totalProcessed} />
         </div>
 
         <h2 className="serif mb-3 mt-12 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-          Documents en attente d&apos;analyse
+          {labelPanelAnalysis}
         </h2>
-        <p className="serif mb-4 text-[12.5px] italic text-ink-3">
-          Documents transmis par le Service du Courrier · Bureau Arrivée, triés du plus ancien au
-          plus récent. Cliquez sur un document pour ouvrir l&apos;analyse IA + dispatcher.
-        </p>
+        <p className="serif mb-4 text-[12.5px] italic text-ink-3">{introAnalysis}</p>
 
         {pending.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            Aucun document en attente. Le parapheur se remplit dès qu&apos;un courrier est enregistré
-            au Bureau Arrivée.
+            {emptyAnalysis}
           </div>
         ) : (
           <div className="overflow-x-auto border border-line bg-white">
             <table className="w-full">
               <thead className="bg-bgsoft">
                 <tr className="text-left">
-                  <Th>Âge</Th>
-                  <Th>Référence</Th>
-                  <Th>Émetteur</Th>
-                  <Th>Objet</Th>
-                  <Th>Nature</Th>
-                  <Th>IA</Th>
-                  <Th>Action</Th>
+                  <Th>{colAge}</Th>
+                  <Th>{tCommon('reference')}</Th>
+                  <Th>{tCommon('sender')}</Th>
+                  <Th>{tCommon('subject')}</Th>
+                  <Th>{tCommon('nature')}</Th>
+                  <Th>{colAi}</Th>
+                  <Th>{tCommon('actions')}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -172,11 +213,10 @@ export default async function DgParapheurPage() {
                     ageMs > 3 * 24 * 60 * 60 * 1000 ? 'text-gold-700' :
                     'text-ink-3';
                   const cached = d.aiAnalyses[0];
-                  const suggestion = cached?.contentJson as { suggestedRole?: string } | undefined;
                   return (
                     <tr key={d.id} className="border-t border-line align-top">
                       <td className={'px-4 py-3 font-mono text-[11px] font-semibold ' + ageClass}>
-                        {humanAge(ageMs)}
+                        {humanAge(ageMs, isEn)}
                       </td>
                       <td className="px-4 py-3 font-mono text-[11.5px] font-semibold text-cmgreen-900">
                         {d.reference}
@@ -194,15 +234,12 @@ export default async function DgParapheurPage() {
                         <div className="max-w-md truncate" title={d.subject}>{d.subject}</div>
                       </td>
                       <td className="px-4 py-3 text-[11px] text-ink-3">
-                        {NATURE_SHORT[d.nature] ?? d.nature}
+                        {tNature(d.nature)}
                       </td>
                       <td className="px-4 py-3 text-[11px]">
                         {cached ? (
-                          <span
-                            className="inline-block bg-cmgreen-50 px-1.5 py-0.5 text-[9.5px] font-bold tracking-[0.08em] text-cmgreen-900"
-                            title={`Analyse en cache → ${suggestion?.suggestedRole ?? '—'}`}
-                          >
-                            ✨ Analysé
+                          <span className="inline-block bg-cmgreen-50 px-1.5 py-0.5 text-[9.5px] font-bold tracking-[0.08em] text-cmgreen-900">
+                            {labelAnalysed}
                           </span>
                         ) : (
                           <span className="text-ink-4">—</span>
@@ -213,7 +250,7 @@ export default async function DgParapheurPage() {
                           href={`/dg/parapheur/${d.id}`}
                           className="bg-blue-700 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
                         >
-                          Ouvrir →
+                          {t('openButton')}
                         </Link>
                       </td>
                     </tr>
@@ -224,33 +261,28 @@ export default async function DgParapheurPage() {
           </div>
         )}
 
-        {/* B15 — Decisions awaiting DG ruling */}
+        {/* Decisions awaiting DG ruling */}
         <h2 className="serif mb-3 mt-16 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-          Dossiers en attente de décision DG
+          {labelPanelDecision}
         </h2>
-        <p className="serif mb-4 text-[12.5px] italic text-ink-3">
-          Documents que les Directeurs ont traités et soumis au DG pour décision finale
-          (approbation ou rejet). Une fois la décision rendue, le dossier file au Bureau Départ
-          pour expédition de la réponse.
-        </p>
+        <p className="serif mb-4 text-[12.5px] italic text-ink-3">{introDecision}</p>
 
         {awaitingDecision.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            Aucun dossier en attente de décision. Cette file se remplit dès qu&apos;un Directeur
-            soumet un dossier traité (B15).
+            {emptyDecision}
           </div>
         ) : (
           <div className="overflow-x-auto border border-line bg-white">
             <table className="w-full">
               <thead className="bg-bgsoft">
                 <tr className="text-left">
-                  <Th>Âge décision</Th>
-                  <Th>Référence</Th>
-                  <Th>Émetteur</Th>
-                  <Th>Objet</Th>
-                  <Th>Nature</Th>
-                  <Th>Soumis par</Th>
-                  <Th>Action</Th>
+                  <Th>{colDecisionAge}</Th>
+                  <Th>{tCommon('reference')}</Th>
+                  <Th>{tCommon('sender')}</Th>
+                  <Th>{tCommon('subject')}</Th>
+                  <Th>{tCommon('nature')}</Th>
+                  <Th>{colSubmittedBy}</Th>
+                  <Th>{tCommon('actions')}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -265,7 +297,7 @@ export default async function DgParapheurPage() {
                   return (
                     <tr key={d.id} className="border-t border-line align-top">
                       <td className={'px-4 py-3 font-mono text-[11px] font-semibold ' + ageClass}>
-                        {humanAge(ageMs)}
+                        {humanAge(ageMs, isEn)}
                       </td>
                       <td className="px-4 py-3 font-mono text-[11.5px] font-semibold text-cmgreen-900">
                         {d.reference}
@@ -283,11 +315,11 @@ export default async function DgParapheurPage() {
                         <div className="max-w-md truncate" title={d.subject}>{d.subject}</div>
                       </td>
                       <td className="px-4 py-3 text-[11px] text-ink-3">
-                        {NATURE_SHORT[d.nature] ?? d.nature}
+                        {tNature(d.nature)}
                       </td>
                       <td className="px-4 py-3 text-[11px] text-ink-3">
                         <div className="font-semibold text-ink-2">
-                          {submitted?.fromRole ? roleLabel(submitted.fromRole) : '—'}
+                          {submitted?.fromRole ? roleLabel(submitted.fromRole, localeShort) : '—'}
                         </div>
                         {submitted?.fromUser && (
                           <div className="text-[10.5px] italic text-ink-4">
@@ -300,7 +332,7 @@ export default async function DgParapheurPage() {
                           href={`/dg/parapheur/${d.id}`}
                           className="bg-blue-700 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white transition hover:bg-blue-800"
                         >
-                          Décider →
+                          {labelDecide}
                         </Link>
                       </td>
                     </tr>
@@ -316,7 +348,7 @@ export default async function DgParapheurPage() {
             href="/dashboard"
             className="border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
           >
-            ← Tableau de bord
+            {tCommon('backToDashboard')}
           </Link>
         </div>
       </section>
@@ -329,15 +361,15 @@ function startOfDayUTC(): Date {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
-function humanAge(ms: number): string {
+function humanAge(ms: number, isEn: boolean): string {
   const min = Math.floor(ms / 60_000);
-  if (min < 60)          return `${min} min`;
+  if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
-  if (h < 24)            return `${h} h`;
+  if (h < 24) return `${h} h`;
   const d = Math.floor(h / 24);
-  if (d < 30)            return `${d} j`;
+  if (d < 30) return `${d} ${isEn ? 'd' : 'j'}`;
   const mo = Math.floor(d / 30);
-  return `${mo} mois`;
+  return `${mo} ${isEn ? 'mo' : 'mois'}`;
 }
 
 function Stat({

@@ -1,5 +1,7 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { redirect } from 'next/navigation';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { roleLabel } from '@/lib/roles';
@@ -9,39 +11,40 @@ import { RegisterForm } from './RegisterForm';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AppLogo } from '@/components/AppLogo';
 
-export const metadata = { title: 'Bureau Arrivée · API Cameroun' };
 export const dynamic = 'force-dynamic';
 
 const ALLOWED: StaffRole[] = ['ADMIN', 'CHEF_BUREAU_ARRIVEE', 'CHEF_SERVICE_COURRIER'];
 
-const STATUS_LABEL_FR: Record<string, string> = {
-  RECEIVED: 'Reçu',
-  AWAITING_DG_ANALYSIS: 'Chez DG · attente analyse',
-  ASSIGNED: 'Affecté à une unité',
-  IN_TREATMENT: 'En traitement',
-  AWAITING_EXTERNAL_AVIS: 'Attente avis externe',
-  AWAITING_DG_DECISION: 'Attente décision DG',
-  DECIDED: 'Décision prise',
-  RESPONSE_SENT: 'Réponse envoyée',
-  CLOSED: 'Clos',
-  AWAITING_FOLLOW_UP: 'Attente complément',
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  return { title: t('courrierArriveeTitle') };
+}
 
-const NATURE_SHORT: Record<string, string> = {
-  AGREMENT_REQUEST: "Demande d'agrément",
-  GENERAL_CORRESPONDENCE: 'Correspondance',
-  OFFICIAL_NOTIFICATION: 'Notification',
-  PARTNERSHIP_PROPOSAL: 'Partenariat',
-  COMPLAINT: 'Réclamation',
-  REPORT: 'Rapport',
-  OTHER: 'Autre',
-};
+export default async function CourrierArriveePage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
 
-export default async function CourrierArriveePage() {
   const session = await auth();
   const role = session?.user?.role as StaffRole | undefined;
   if (!session?.user) redirect('/login');
   if (!role || !ALLOWED.includes(role)) redirect('/dashboard');
+
+  const t = await getTranslations('CourrierArrivee');
+  const tCommon = await getTranslations('Common');
+  const tDashboard = await getTranslations('Dashboard');
+  const tStatus = await getTranslations('DocStatus');
+  const tNature = await getTranslations('DocNature');
+  const tChannel = await getTranslations('SourceChannel');
+  const localeShort = locale === 'en' ? 'en' : 'fr';
 
   // Recent documents registered by Bureau Arrivée (last 30 days, any status)
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
@@ -78,9 +81,9 @@ export default async function CourrierArriveePage() {
     <main className="min-h-screen bg-bgsoft">
       {/* gov bar */}
       <div className="bg-obsidian px-7 py-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
-        Portail interne <span className="mx-3 text-gold-500">⚜</span>
-        Service du Courrier <span className="mx-3 text-gold-500">⚜</span>
-        Bureau Arrivée
+        {tCommon('internalPortal')} <span className="mx-3 text-gold-500">⚜</span>
+        {t('kicker').replace(tCommon('internalPortal') + ' · ', '')} <span className="mx-3 text-gold-500">⚜</span>
+        {t('title').split(' — ')[0]}
       </div>
 
       {/* header */}
@@ -89,15 +92,15 @@ export default async function CourrierArriveePage() {
           <AppLogo />
           <div className="leading-tight">
             <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-ink-3">
-              Portail interne · Service du Courrier
+              {t('kicker')}
             </div>
-            <div className="serif text-[17px] font-bold text-ink">Bureau Arrivée — Enregistrement</div>
+            <div className="serif text-[17px] font-bold text-ink">{t('title')}</div>
           </div>
           <div className="ml-auto flex items-center gap-3">
             <NotificationBell />
             <div className="text-right leading-tight">
               <div className="text-[13px] font-semibold text-ink">{session.user.name ?? session.user.email}</div>
-              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role)}</div>
+              <div className="text-[10.5px] uppercase tracking-[0.16em] text-ink-3">{roleLabel(role, localeShort)}</div>
             </div>
           </div>
         </div>
@@ -108,48 +111,46 @@ export default async function CourrierArriveePage() {
           href="/dashboard"
           className="mb-5 inline-flex items-center text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-3 transition hover:text-ink"
         >
-          ← Tableau de bord
+          {tCommon('backToDashboard')}
         </Link>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Aujourd'hui" value={todayCount} />
-          <Stat label="7 derniers jours" value={weekCount} />
-          <Stat label="30 derniers jours" value={monthCount} />
-          <Stat label="Référence" value="COURRIER-2026" mono small />
+          <Stat label={tCommon('today')} value={todayCount} />
+          <Stat label={tCommon('last7days')} value={weekCount} />
+          <Stat label={tCommon('last30days')} value={monthCount} />
+          <Stat label={tCommon('reference')} value="COURRIER-2026" mono small />
         </div>
 
         {/* Registration form */}
         <div className="mt-10">
           <h2 className="serif mb-3 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-            Enregistrer un nouveau document
+            {t('newDocumentHeading')}
           </h2>
           <p className="serif mb-6 text-[13.5px] italic text-ink-3">
-            Saisissez les informations de l&apos;émetteur, joignez la pièce numérisée
-            et envoyez. La référence officielle est générée automatiquement et l&apos;accusé
-            de réception est expédié immédiatement.
+            {t('newDocumentIntro')}
           </p>
           <RegisterForm aiEnabled={isClaudeConfigured()} />
         </div>
 
         {/* Recent documents */}
         <h2 className="serif mb-3 mt-14 text-[22px] font-semibold tracking-[-0.3px] text-ink">
-          Documents récents (30 derniers jours)
+          {t('recentHeading')}
         </h2>
         {recent.length === 0 ? (
           <div className="border border-line bg-white px-5 py-10 text-center text-[12.5px] italic text-ink-3">
-            Aucun document enregistré récemment.
+            {t('recentEmpty')}
           </div>
         ) : (
           <div className="overflow-x-auto border border-line bg-white">
             <table className="w-full">
               <thead className="bg-bgsoft">
                 <tr className="text-left">
-                  <Th>Référence</Th>
-                  <Th>Émetteur</Th>
-                  <Th>Objet</Th>
-                  <Th>Nature</Th>
-                  <Th>Canal</Th>
-                  <Th>Statut</Th>
-                  <Th>Reçu</Th>
+                  <Th>{tCommon('reference')}</Th>
+                  <Th>{tCommon('sender')}</Th>
+                  <Th>{tCommon('subject')}</Th>
+                  <Th>{tCommon('nature')}</Th>
+                  <Th>{tCommon('channel')}</Th>
+                  <Th>{tCommon('status')}</Th>
+                  <Th>{tCommon('receivedOn')}</Th>
                 </tr>
               </thead>
               <tbody>
@@ -169,18 +170,18 @@ export default async function CourrierArriveePage() {
                       <div className="max-w-md truncate" title={d.subject}>{d.subject}</div>
                     </td>
                     <td className="px-4 py-3 text-[11.5px] text-ink-3">
-                      {NATURE_SHORT[d.nature] ?? d.nature}
+                      {tNature(d.nature)}
                     </td>
                     <td className="px-4 py-3 text-[10.5px] uppercase tracking-[0.1em] text-ink-3">
-                      {channelShort(d.sourceChannel)}
+                      {tChannel((d.sourceChannel + '_SHORT') as 'ONLINE_SHORT' | 'COURRIER_PHYSICAL_SHORT' | 'ANTENNE_SHORT')}
                     </td>
                     <td className="px-4 py-3">
                       <span className="inline-block bg-gold-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-gold-700">
-                        {STATUS_LABEL_FR[d.status] ?? d.status}
+                        {tStatus(d.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[11px] text-ink-3">
-                      {d.submittedAt.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
+                      {d.submittedAt.toLocaleString(localeShort === 'en' ? 'en-GB' : 'fr-FR', { dateStyle: 'short', timeStyle: 'short' })}
                     </td>
                   </tr>
                 ))}
@@ -194,7 +195,7 @@ export default async function CourrierArriveePage() {
             href="/dashboard"
             className="border border-line-2 bg-white px-4 py-2 text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-2 hover:border-ink hover:text-ink"
           >
-            ← Tableau de bord
+            {tCommon('backToDashboard')}
           </Link>
         </div>
       </section>
@@ -205,15 +206,6 @@ export default async function CourrierArriveePage() {
 function startOfDayUTC(): Date {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-}
-
-function channelShort(c: string): string {
-  switch (c) {
-    case 'ONLINE': return 'En ligne';
-    case 'COURRIER_PHYSICAL': return 'Physique';
-    case 'ANTENNE': return 'Antenne';
-    default: return c;
-  }
 }
 
 function Stat({ label, value, mono, small }: { label: string; value: string | number; mono?: boolean; small?: boolean }) {
