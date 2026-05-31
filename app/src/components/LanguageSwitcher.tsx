@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { routing, type Locale } from '@/i18n/routing';
+import { updateMyLocale } from '@/lib/actions/settings';
 
 /**
  * FR / EN toggle. Stays on the current page when switching.
@@ -24,7 +25,15 @@ export function LanguageSwitcher({ variant = 'compact' }: Props) {
 
   function switchTo(target: Locale) {
     if (target === locale || pending) return;
-    startTransition(() => {
+    startTransition(async () => {
+      // Persist the choice to User.locale + NEXT_LOCALE cookie so it survives
+      // logout. No-op (and never throws) when the visitor isn't a logged-in
+      // staff member — the instant URL flip below still happens either way.
+      try {
+        await updateMyLocale(target);
+      } catch {
+        /* persistence is best-effort; the visible toggle must still work */
+      }
       router.replace(pathname, { locale: target });
     });
   }

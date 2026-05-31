@@ -42,7 +42,6 @@ export default async function DashboardPage({
   const t = await getTranslations('Dashboard');
   const tCommon = await getTranslations('Common');
   const tTime = await getTranslations('Time');
-  const tSettings = await getTranslations('Settings');
 
   const isAdmin = role === 'ADMIN';
   const isCourrierArrivee =
@@ -363,21 +362,6 @@ export default async function DashboardPage({
                 </div>
               </Link>
             )}
-            <Link href="/settings" className="v4-tile glass">
-              <div className="head">
-                <div className="chip navy">
-                  <Icon name="shield" />
-                </div>
-                <div className="meta">
-                  <div className="name">{tCommon('settings')}</div>
-                  <div className="role">{tSettings('sectionLanguage')} · {tSettings('sectionSecurity')}</div>
-                </div>
-              </div>
-              <p>{tSettings('subtitle')}</p>
-              <div className="open">
-                {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
-              </div>
-            </Link>
           </div>
 
           <aside className="v4-feed glass" aria-labelledby="dash-feed-title">

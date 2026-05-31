@@ -9,7 +9,6 @@ import { AppLogo } from '@/components/AppLogo';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { LogoutButton } from '@/components/LogoutButton';
 import { NotificationBell } from '@/components/NotificationBell';
-import { LanguageCard } from './LanguageCard';
 import { PasswordCard } from './PasswordCard';
 
 export const dynamic = 'force-dynamic';
@@ -129,11 +128,6 @@ export default async function SettingsPage({
               <Row k={t('profileLastLogin')} v={fmtDate(user?.lastLoginAt)} />
               <Row k={t('profileMemberSince')} v={fmtDate(user?.createdAt)} />
             </dl>
-          </Card>
-
-          {/* Language */}
-          <Card title={t('sectionLanguage')} hint={t('sectionLanguageHint')}>
-            <LanguageCard />
           </Card>
 
           {/* Security */}
