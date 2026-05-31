@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isStaffRole } from '@/lib/roles';
@@ -9,10 +8,13 @@ export const dynamic = 'force-dynamic';
 /**
  * Silent router fired right after a successful sign-in.
  *
- * B22/B21-P5: before redirecting, sync the NEXT_LOCALE cookie from the
- * user's persisted `User.locale` so their language choice follows them
- * across sessions and devices. next-intl then renders /dashboard in the
- * stored locale.
+ * B22/B21-P5: restore the user's persisted language by redirecting to the
+ * locale-prefixed dashboard derived from `User.locale`. We must NOT call
+ * cookies().set() here — a Server Component cannot mutate cookies during
+ * render (Next.js throws). The NEXT_LOCALE cookie is managed by the
+ * LanguageSwitcher / updateMyLocale Server Actions instead; an explicit
+ * locale prefix on this redirect is enough to land the user in the right
+ * language, and next-intl's <Link> preserves it across in-app navigation.
  */
 export default async function PostLoginPage() {
   const session = await auth();
@@ -23,19 +25,12 @@ export default async function PostLoginPage() {
     redirect('/login');
   }
 
-  // Pull stored locale (default 'fr') and mirror into the cookie next-intl reads.
   const user = await db.user.findUnique({
     where: { id: userId },
     select: { locale: true },
   });
   const stored = user?.locale === 'en' ? 'en' : 'fr';
-  const jar = await cookies();
-  jar.set('NEXT_LOCALE', stored, {
-    path: '/',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 365,
-  });
 
-  // next-intl middleware applies the locale prefix on the redirect.
-  redirect('/dashboard');
+  // localePrefix is 'as-needed': FR (default) has no prefix, EN uses /en.
+  redirect(stored === 'en' ? '/en/dashboard' : '/dashboard');
 }
