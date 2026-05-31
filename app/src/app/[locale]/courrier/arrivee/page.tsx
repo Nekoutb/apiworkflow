@@ -103,7 +103,13 @@ export default async function CourrierArriveePage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-7xl px-7 py-10">
+      <section className="mx-auto max-w-7xl px-7 py-6">
+        <Link
+          href="/dashboard"
+          className="mb-5 inline-flex items-center text-[11.5px] font-bold uppercase tracking-[0.14em] text-ink-3 transition hover:text-ink"
+        >
+          ← Tableau de bord
+        </Link>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Aujourd'hui" value={todayCount} />
           <Stat label="7 derniers jours" value={weekCount} />

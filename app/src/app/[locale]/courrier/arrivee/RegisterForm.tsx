@@ -176,8 +176,8 @@ export function RegisterForm({ aiEnabled }: { aiEnabled: boolean }) {
             )}
             <p className="serif mt-2 text-[11.5px] italic text-ink-3">
               {aiEnabled
-                ? "Dès le choix du fichier, l'IA lit le document et pré-remplit les champs ci-dessous. Vous pouvez tout corriger."
-                : "Mode démo · l'analyse IA n'est pas active sur ce serveur. Saisie 100 % manuelle."}
+                ? "Dès le choix du fichier, le document est analysé et les champs ci-dessous sont pré-remplis. Vous pouvez tout corriger."
+                : "Analyse automatique indisponible · saisie 100 % manuelle."}
             </p>
           </div>
         </fieldset>
@@ -326,20 +326,14 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
 
   if (!aiEnabled && state.status === 'idle') {
     return (
-      <div className="border border-line bg-bgsoft p-5">
+      <div className="max-h-[340px] overflow-y-auto border border-line bg-bgsoft p-5">
         <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-ink-3">
-          🤖 Synthèse IA
+          Synthèse · Indisponible
         </div>
-        <h3 className="serif text-[16px] font-semibold text-ink">Mode démo</h3>
+        <h3 className="serif text-[16px] font-semibold text-ink">Saisie manuelle</h3>
         <p className="serif mt-2 text-[12.5px] italic text-ink-3">
-          L&apos;analyse automatique du document n&apos;est pas active sur ce serveur.
-          Pour l&apos;activer, ajoutez la clé&nbsp;:
-        </p>
-        <code className="mt-3 block bg-white px-3 py-2 font-mono text-[11px] text-ink-2">
-          ANTHROPIC_API_KEY=&quot;sk-ant-…&quot;
-        </code>
-        <p className="serif mt-2 text-[11.5px] italic text-ink-4">
-          dans <code className="font-mono">/var/www/cmipaportal/shared/.env.production</code>
+          L&apos;analyse automatique n&apos;est pas active sur ce serveur. Renseignez les
+          champs à gauche — l&apos;enregistrement reste possible.
         </p>
       </div>
     );
@@ -347,18 +341,17 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
 
   if (state.status === 'idle') {
     return (
-      <div className={`relative overflow-hidden border border-obsidian ${bgGradient} p-6 text-white`}>
-        <div className="absolute right-2 top-2 text-[24px] opacity-10">✨</div>
+      <div className={`relative max-h-[340px] overflow-y-auto border border-obsidian ${bgGradient} p-6 text-white`}>
         <div className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-          🤖 Synthèse IA · En attente
+          Synthèse · En attente
         </div>
         <h3 className="serif text-[17px] font-semibold leading-tight">
           Joignez un fichier pour lancer l&apos;analyse automatique
         </h3>
         <p className="serif mt-3 text-[13px] italic text-white/65">
-          Dès qu&apos;un PDF ou une image est sélectionné, Claude lit le
-          document, pré-remplit les champs à gauche et résume l&apos;essentiel
-          en moins de 50&nbsp;mots ici.
+          Dès qu&apos;un PDF ou une image est sélectionné, le document est
+          analysé automatiquement et les champs à gauche sont pré-remplis.
+          L&apos;essentiel est résumé ici en moins de 50&nbsp;mots.
         </p>
         <ul className="mt-4 space-y-1.5 text-[11.5px] text-white/55">
           <li>✓ Extraction de l&apos;émetteur (nom, organisation, email)</li>
@@ -372,36 +365,29 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
 
   if (state.status === 'analyzing') {
     return (
-      <div className={`relative overflow-hidden border border-obsidian ${bgGradient} p-6 text-white`}>
+      <div className={`relative max-h-[340px] overflow-y-auto border border-obsidian ${bgGradient} p-6 text-white`}>
         <div className="mb-3 text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-          🤖 Synthèse IA · Analyse en cours
+          Analyse en cours
         </div>
         <div className="flex items-center gap-3">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-gold-500 border-t-transparent" />
           <h3 className="serif text-[16px] font-semibold leading-tight">
-            Claude lit {state.fileName}…
+            Lecture de {state.fileName}…
           </h3>
         </div>
         <p className="serif mt-3 text-[13px] italic text-white/65">
           Habituellement 2–6 secondes pour un courrier d&apos;une page.
+          Vous pouvez commencer à saisir les champs à gauche en attendant.
         </p>
-        <div className="mt-5 space-y-2">
-          {['Reconnaissance optique du texte', 'Identification de l\'émetteur', 'Détection de la nature', 'Rédaction du synopsis'].map((step) => (
-            <div key={step} className="flex items-center gap-2 text-[12px] text-white/55">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gold-500" />
-              {step}
-            </div>
-          ))}
-        </div>
       </div>
     );
   }
 
   if (state.status === 'error') {
     return (
-      <div className="border border-cmred bg-cmred-50 p-5">
+      <div className="max-h-[340px] overflow-y-auto border border-cmred bg-cmred-50 p-5">
         <div className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmred">
-          ⚠ Erreur d&apos;analyse IA
+          ⚠ Erreur d&apos;analyse
         </div>
         <p className="serif text-[13px] italic text-cmred-900">{state.error}</p>
         <p className="serif mt-3 text-[12px] italic text-ink-3">
@@ -423,10 +409,10 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
     d.confidence === 'high' ? 'Élevée' : d.confidence === 'medium' ? 'Moyenne' : 'Faible';
 
   return (
-    <div className={`relative overflow-hidden border border-obsidian ${bgGradient} p-6 text-white`}>
+    <div className={`relative max-h-[340px] overflow-y-auto border border-obsidian ${bgGradient} p-6 text-white`}>
       <div className="mb-3 flex items-center justify-between">
         <div className="text-[10.5px] font-bold uppercase tracking-[0.24em] text-gold-500">
-          ✨ Synthèse IA · {state.mode === 'live' ? 'Claude' : 'Démo'}
+          Synthèse du document
         </div>
         <div className={'text-[10.5px] font-bold uppercase tracking-[0.16em] ' + confidenceColor}>
           ● {confidenceLabel}
@@ -453,7 +439,7 @@ function AiPanel({ state, aiEnabled }: { state: AiPanelState; aiEnabled: boolean
           {d.nature && <KV k="Nature" v={d.nature} />}
         </div>
         <p className="serif mt-4 text-[11px] italic text-white/55">
-          Champs surlignés en vert à gauche = pré-remplis par l&apos;IA. Vous pouvez tout corriger.
+          Champs surlignés en vert à gauche = pré-remplis automatiquement. Vous pouvez tout corriger.
         </p>
       </div>
     </div>
@@ -495,8 +481,11 @@ function Field({
       >
         <span>{label}</span>
         {aiFilled && (
-          <span className="rounded-sm bg-cmgreen-50 px-1.5 py-0.5 text-[9px] font-bold text-cmgreen-800">
-            ✨ IA
+          <span
+            className="rounded-sm bg-cmgreen-50 px-1.5 py-0.5 text-[10px] font-bold text-cmgreen-800"
+            title="Pré-rempli automatiquement"
+          >
+            ✓
           </span>
         )}
       </label>
