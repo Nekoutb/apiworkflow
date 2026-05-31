@@ -12,6 +12,7 @@ import { DispatchAiPanel } from './DispatchAiPanel';
 import { DecisionPanel } from './DecisionPanel';
 import { NotificationBell } from '@/components/NotificationBell';
 import { AppLogo } from '@/components/AppLogo';
+import { DocTimeline } from '@/components/DocTimeline';
 
 export const dynamic = 'force-dynamic';
 
@@ -196,52 +197,14 @@ export default async function DgDocumentDetailPage({
               )}
             </Panel>
 
-            <Panel title={isEn ? `History (${doc.handoffs.length} handoff${doc.handoffs.length > 1 ? 's' : ''})` : `Historique (${doc.handoffs.length} handoff${doc.handoffs.length > 1 ? 's' : ''})`}>
-              {doc.handoffs.length === 0 ? (
-                <p className="text-[12.5px] italic text-ink-3">{isEn ? 'No handoff.' : 'Aucun handoff.'}</p>
-              ) : (
-                <ol className="space-y-3">
-                  {doc.handoffs.map((h, i) => (
-                    <li key={h.id} className="border-l-2 border-cmgreen-700 pl-3">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <div className="text-[10.5px] font-bold uppercase tracking-[0.1em] text-cmgreen-900">
-                          {i + 1}. {h.type}
-                        </div>
-                        <div className="text-[10.5px] text-ink-4">
-                          {h.createdAt.toLocaleString(dtLocale, dtShort)}
-                        </div>
-                      </div>
-                      <div className="mt-1 text-[11.5px] text-ink-3">
-                        {h.fromRole ? roleLabel(h.fromRole, localeShort) : '—'} → {h.toRole ? roleLabel(h.toRole, localeShort) : '—'}
-                      </div>
-                      {h.reason && (
-                        <p className="serif mt-1 text-[12px] italic text-ink-2">{h.reason}</p>
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              )}
+            <Panel title={isEn ? `History & notes (${doc.handoffs.length + doc.comments.length})` : `Historique & notes (${doc.handoffs.length + doc.comments.length})`}>
+              <DocTimeline
+                handoffs={doc.handoffs}
+                comments={doc.comments}
+                locale={localeShort}
+                isEn={isEn}
+              />
             </Panel>
-
-            {doc.comments.length > 0 && (
-              <Panel title={`Notes (${doc.comments.length})`}>
-                <ul className="space-y-3">
-                  {doc.comments.map((c) => (
-                    <li key={c.id} className="border-l-2 border-gold-600 pl-3">
-                      <div className="flex items-baseline justify-between gap-2 text-[10.5px]">
-                        <span className="font-bold uppercase tracking-[0.1em] text-gold-700">
-                          {c.author?.name ?? c.author?.email ?? (c.authorRole ? roleLabel(c.authorRole, localeShort) : (isEn ? 'System' : 'Système'))}
-                        </span>
-                        <span className="text-ink-4">
-                          {c.createdAt.toLocaleString(dtLocale, dtShort)}
-                        </span>
-                      </div>
-                      <p className="serif mt-1 whitespace-pre-wrap text-[12.5px] text-ink-2">{c.body}</p>
-                    </li>
-                  ))}
-                </ul>
-              </Panel>
-            )}
           </div>
 
           {/* RIGHT — context-aware panel */}
