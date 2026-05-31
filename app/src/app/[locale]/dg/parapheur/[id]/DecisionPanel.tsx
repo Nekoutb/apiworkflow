@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useActionState, useEffect } from 'react';
+import { useLocale } from 'next-intl';
 import { dgDecide, type DgDecideResult } from '@/lib/actions/dg-decide';
 
 const initial: DgDecideResult = {};
@@ -16,6 +17,8 @@ export function DecisionPanel({
   submittedByLabel: string | null;
   submittedAt: string | null;
 }) {
+  const locale = useLocale();
+  const isEn = locale === 'en';
   const [state, action, pending] = useActionState(dgDecide, initial);
   const [decision, setDecision] = useState<'APPROVED' | 'REJECTED'>('APPROVED');
   const [done, setDone] = useState(false);
@@ -26,7 +29,7 @@ export function DecisionPanel({
 
   if (done) {
     const isApproved = state.decision === 'APPROVED';
-    const label = isApproved ? 'APPROUVÉ' : 'REJETÉ';
+    const label = isApproved ? (isEn ? 'APPROVED' : 'APPROUVÉ') : (isEn ? 'REJECTED' : 'REJETÉ');
     return (
       <div className="lg:sticky lg:top-6 lg:self-start">
         <div
@@ -41,10 +44,12 @@ export function DecisionPanel({
               (isApproved ? 'text-cmgreen-900' : 'text-cmred')
             }
           >
-            ✓ Décision rendue · {label}
+            {isEn ? '✓ Decision made · ' : '✓ Décision rendue · '}{label}
           </div>
           <h3 className="serif mt-2 text-[16px] font-bold text-ink">
-            {documentReference} transmis au Bureau Départ
+            {isEn
+              ? `${documentReference} forwarded to Outgoing Mail`
+              : `${documentReference} transmis au Bureau Départ`}
           </h3>
           <p
             className={
@@ -52,9 +57,11 @@ export function DecisionPanel({
               (isApproved ? 'text-cmgreen-900/80' : 'text-cmred-900/80')
             }
           >
-            Le dossier est désormais au statut <strong>DECIDED</strong> et apparaît dans la file
-            d&apos;expédition du Bureau Départ. Le chef du Bureau Départ composera la lettre de
-            réponse (acceptation ou refus) et l&apos;enverra par email à l&apos;émetteur.
+            {isEn ? (
+              <>The dossier is now at status <strong>DECIDED</strong> and appears in the Outgoing Mail dispatch queue. The head of Outgoing Mail will compose the response letter (acceptance or refusal) and email it to the sender.</>
+            ) : (
+              <>Le dossier est désormais au statut <strong>DECIDED</strong> et apparaît dans la file d&apos;expédition du Bureau Départ. Le chef du Bureau Départ composera la lettre de réponse (acceptation ou refus) et l&apos;enverra par email à l&apos;émetteur.</>
+            )}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <a
@@ -66,7 +73,7 @@ export function DecisionPanel({
                   : 'border-cmred text-cmred hover:bg-cmred hover:text-white')
               }
             >
-              ← Retour au parapheur DG
+              {isEn ? '← Back to GM folder' : '← Retour au parapheur DG'}
             </a>
             <a
               href="/courrier/depart"
@@ -75,7 +82,7 @@ export function DecisionPanel({
                 (isApproved ? 'bg-blue-700 hover:bg-blue-800' : 'bg-cmred hover:bg-cmred-900')
               }
             >
-              Voir le Bureau Départ →
+              {isEn ? 'View Outgoing Mail →' : 'Voir le Bureau Départ →'}
             </a>
           </div>
         </div>
@@ -88,16 +95,16 @@ export function DecisionPanel({
       <form action={action} className="border-2 border-cmgreen-800 bg-white">
         <div className="border-b border-line bg-cmgreen-50/50 px-4 py-3">
           <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-cmgreen-900">
-            ⚖ Décision finale du DG
+            {isEn ? '⚖ GM final decision' : '⚖ Décision finale du DG'}
           </div>
           <h3 className="serif mt-0.5 text-[15px] font-semibold text-ink">
-            Trancher le dossier
+            {isEn ? 'Rule on the dossier' : 'Trancher le dossier'}
           </h3>
           {submittedByLabel && submittedAt && (
             <p className="mt-1 text-[10.5px] italic text-ink-4">
-              Soumis par {submittedByLabel} le{' '}
-              {new Date(submittedAt).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}.
-              Recommandation visible dans les notes du dossier (colonne de gauche).
+              {isEn ? 'Submitted by ' : 'Soumis par '}{submittedByLabel}{isEn ? ' on ' : ' le '}
+              {new Date(submittedAt).toLocaleString(isEn ? 'en-GB' : 'fr-FR', { dateStyle: 'short', timeStyle: 'short' })}.
+              {isEn ? ' Recommendation visible in the dossier notes (left column).' : ' Recommandation visible dans les notes du dossier (colonne de gauche).'}
             </p>
           )}
         </div>
@@ -114,7 +121,7 @@ export function DecisionPanel({
 
           <div>
             <div className="mb-1.5 text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2">
-              Décision <span className="text-cmred">*</span>
+              {isEn ? 'Decision' : 'Décision'} <span className="text-cmred">*</span>
             </div>
             <div className="flex gap-1">
               <button
@@ -127,7 +134,7 @@ export function DecisionPanel({
                     : 'border-line-2 bg-white text-ink-3 hover:border-ink-3')
                 }
               >
-                ✓ Approuver
+                {isEn ? '✓ Approve' : '✓ Approuver'}
               </button>
               <button
                 type="button"
@@ -139,7 +146,7 @@ export function DecisionPanel({
                     : 'border-line-2 bg-white text-ink-3 hover:border-ink-3')
                 }
               >
-                ✕ Rejeter
+                {isEn ? '✕ Reject' : '✕ Rejeter'}
               </button>
             </div>
           </div>
@@ -149,7 +156,7 @@ export function DecisionPanel({
               htmlFor="dg-decide-message"
               className="mb-1.5 block text-[10.5px] font-semibold uppercase tracking-[0.18em] text-ink-2"
             >
-              Motivation de la décision <span className="text-cmred">*</span>
+              {isEn ? 'Decision rationale' : 'Motivation de la décision'} <span className="text-cmred">*</span>
             </label>
             <textarea
               id="dg-decide-message"
@@ -160,8 +167,12 @@ export function DecisionPanel({
               maxLength={4000}
               placeholder={
                 decision === 'APPROVED'
-                  ? 'ex. Dossier complet et conforme à l\'art. 17 de l\'Ordonnance 2025-002. Avis favorable du Directeur de la Promotion et du DGI. Régime d\'incitation accordé sous réserve de la production du certificat de localisation sous 30 jours.'
-                  : 'ex. Dossier incomplet : pièces 3, 4 et 7 manquantes. Avis défavorable de la Direction de la Facilitation pour cause de non-conformité à l\'art. 23. Refus motivé à notifier à l\'émetteur.'
+                  ? (isEn
+                      ? 'e.g. Complete dossier compliant with art. 17 of Ordinance 2025-002. Favourable opinion from the Promotion Director and DGI. Incentive regime granted subject to the location certificate being produced within 30 days.'
+                      : 'ex. Dossier complet et conforme à l\'art. 17 de l\'Ordonnance 2025-002. Avis favorable du Directeur de la Promotion et du DGI. Régime d\'incitation accordé sous réserve de la production du certificat de localisation sous 30 jours.')
+                  : (isEn
+                      ? 'e.g. Incomplete dossier: documents 3, 4 and 7 missing. Unfavourable opinion from the Facilitation Department for non-compliance with art. 23. Reasoned refusal to be notified to the sender.'
+                      : 'ex. Dossier incomplet : pièces 3, 4 et 7 manquantes. Avis défavorable de la Direction de la Facilitation pour cause de non-conformité à l\'art. 23. Refus motivé à notifier à l\'émetteur.')
               }
               className={
                 'w-full border bg-white px-3.5 py-2.5 text-[13px] text-ink placeholder:text-ink-4 focus:outline-none focus:ring-1 ' +
@@ -176,15 +187,17 @@ export function DecisionPanel({
               <p className="mt-1 text-[11px] text-cmred">{state.fieldErrors.message}</p>
             )}
             <p className="mt-1 text-[10.5px] italic text-ink-4">
-              Devient une note tagguée <code className="font-mono">[Décision DG — {decision === 'APPROVED' ? 'APPROUVÉ' : 'REJETÉ'}]</code>
-              {' '}visible par toute la chaîne. Le Bureau Départ s&apos;en sert pour composer la lettre.
+              {isEn ? 'Becomes a tagged note ' : 'Devient une note tagguée '}
+              <code className="font-mono">[{isEn ? 'GM decision' : 'Décision DG'} — {decision === 'APPROVED' ? (isEn ? 'APPROVED' : 'APPROUVÉ') : (isEn ? 'REJECTED' : 'REJETÉ')}]</code>
+              {isEn ? ' visible to the whole chain. Outgoing Mail uses it to compose the letter.' : ' visible par toute la chaîne. Le Bureau Départ s\'en sert pour composer la lettre.'}
             </p>
           </div>
 
           <div className="border border-cmgreen-800/40 bg-cmgreen-50/50 px-3 py-2 text-[11.5px] italic text-cmgreen-900">
-            ⓘ Le dossier transitionne <code className="font-mono not-italic">AWAITING_DG_DECISION</code> →{' '}
-            <code className="font-mono not-italic">DECIDED</code>. Il quitte le parapheur DG et
-            apparaît dans le Bureau Départ pour expédition.
+            {isEn ? 'ⓘ The dossier transitions ' : 'ⓘ Le dossier transitionne '}
+            <code className="font-mono not-italic">AWAITING_DG_DECISION</code> →{' '}
+            <code className="font-mono not-italic">DECIDED</code>.
+            {isEn ? ' It leaves the GM folder and appears in Outgoing Mail for dispatch.' : ' Il quitte le parapheur DG et apparaît dans le Bureau Départ pour expédition.'}
           </div>
 
           <button
@@ -196,10 +209,10 @@ export function DecisionPanel({
             }
           >
             {pending
-              ? 'Enregistrement…'
+              ? (isEn ? 'Saving…' : 'Enregistrement…')
               : decision === 'APPROVED'
-                ? '✓ Confirmer l\'approbation →'
-                : '✕ Confirmer le rejet →'}
+                ? (isEn ? '✓ Confirm approval →' : '✓ Confirmer l\'approbation →')
+                : (isEn ? '✕ Confirm rejection →' : '✕ Confirmer le rejet →')}
           </button>
         </div>
       </form>
