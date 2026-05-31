@@ -42,6 +42,7 @@ export default async function DashboardPage({
   const t = await getTranslations('Dashboard');
   const tCommon = await getTranslations('Common');
   const tTime = await getTranslations('Time');
+  const tSettings = await getTranslations('Settings');
 
   const isAdmin = role === 'ADMIN';
   const isCourrierArrivee =
@@ -146,6 +147,17 @@ export default async function DashboardPage({
         <div className="ml-auto flex items-center gap-3">
           <LanguageSwitcher variant="editorial" />
           <NotificationBell />
+          <Link
+            href="/settings"
+            aria-label={tCommon('settings')}
+            title={tCommon('settings')}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white/60 text-ink-2 transition hover:border-ink hover:text-navy"
+          >
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </Link>
           <div className="hidden text-right leading-tight sm:block">
             <div className="text-[13px] font-semibold text-navy">
               {session.user.name ?? session.user.email}
@@ -351,6 +363,21 @@ export default async function DashboardPage({
                 </div>
               </Link>
             )}
+            <Link href="/settings" className="v4-tile glass">
+              <div className="head">
+                <div className="chip navy">
+                  <Icon name="shield" />
+                </div>
+                <div className="meta">
+                  <div className="name">{tCommon('settings')}</div>
+                  <div className="role">{tSettings('sectionLanguage')} · {tSettings('sectionSecurity')}</div>
+                </div>
+              </div>
+              <p>{tSettings('subtitle')}</p>
+              <div className="open">
+                {tCommon('open')} <Icon name="arrow-right" className="icon-sm" />
+              </div>
+            </Link>
           </div>
 
           <aside className="v4-feed glass" aria-labelledby="dash-feed-title">
