@@ -60,6 +60,12 @@ export default async function AdminLayout({
             >
               {t('navData')}
             </Link>
+            <Link
+              href="/admin/audit"
+              className="text-[12px] font-semibold uppercase tracking-[0.14em] text-ink-3 hover:text-ink"
+            >
+              {t('navAudit')}
+            </Link>
           </nav>
           <div className="ml-auto flex items-center gap-4">
             <LanguageSwitcher variant="compact" />

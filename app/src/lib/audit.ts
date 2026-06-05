@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { headers } from 'next/headers';
 import { Prisma } from '@prisma/client';
+import type { StaffRole } from '@prisma/client';
 import { db } from './db';
 
 /**
@@ -164,6 +165,138 @@ export async function writeAudit(tx: Tx, params: AuditParams): Promise<void> {
       hash,
     },
   });
+}
+
+/** Human-readable French + English labels for each audited action. */
+export const AUDIT_ACTION_LABELS: Record<AuditAction, { fr: string; en: string }> = {
+  DOCUMENT_REGISTERED:    { fr: 'Courrier enregistré',        en: 'Document registered' },
+  DG_DISPATCHED:          { fr: 'Dispatché par le DG',         en: 'Dispatched by GM' },
+  DG_DECIDED:             { fr: 'Décision du DG',              en: 'GM decision' },
+  RESPONSE_SENT:          { fr: 'Réponse expédiée',            en: 'Response sent' },
+  DOCUMENT_CLOSED:        { fr: 'Dossier clos',                en: 'Document closed' },
+  TAKEN_IN_TREATMENT:     { fr: 'Pris en charge',              en: 'Taken in treatment' },
+  RETURNED_TO_DG:         { fr: 'Renvoyé au DG',               en: 'Returned to GM' },
+  DELEGATED_DOWN:         { fr: 'Délégué (descendant)',        en: 'Delegated down' },
+  RETURNED_UP:            { fr: 'Renvoyé au supérieur',        en: 'Returned up' },
+  CO_AVIS_REQUESTED:      { fr: 'Co-avis demandé',             en: 'Peer opinion requested' },
+  CO_AVIS_RETURNED:       { fr: 'Co-avis retourné',            en: 'Peer opinion returned' },
+  SUBMITTED_TO_DG:        { fr: 'Soumis au DG',                en: 'Submitted to GM' },
+  EXTERNAL_AVIS_REQUESTED:{ fr: 'Avis externe demandé',        en: 'External opinion requested' },
+  EXTERNAL_AVIS_RECORDED: { fr: 'Avis externe enregistré',     en: 'External opinion recorded' },
+  EXTERNAL_AVIS_CANCELLED:{ fr: 'Avis externe annulé',         en: 'External opinion cancelled' },
+  REMINDER_SENT:          { fr: 'Rappel envoyé',               en: 'Reminder sent' },
+  USER_CREATED:           { fr: 'Compte créé',                 en: 'User created' },
+  USER_UPDATED:           { fr: 'Compte modifié',              en: 'User updated' },
+  USER_DEACTIVATED:       { fr: 'Compte désactivé',            en: 'User deactivated' },
+  USER_REACTIVATED:       { fr: 'Compte réactivé',             en: 'User reactivated' },
+  USER_PASSWORD_RESET:    { fr: 'Mot de passe réinitialisé',   en: 'Password reset' },
+  PASSWORD_CHANGED:       { fr: 'Mot de passe changé',         en: 'Password changed' },
+  ANTENNE_CREATED:        { fr: 'Antenne créée',               en: 'Regional office created' },
+  ANTENNE_STATUS_CHANGED: { fr: 'Statut antenne modifié',      en: 'Regional office status changed' },
+};
+
+export const AUDIT_ACTIONS = Object.keys(AUDIT_ACTION_LABELS) as AuditAction[];
+
+export type AuditRow = {
+  id: string;
+  createdAt: Date;
+  action: string;
+  entityType: string;
+  entityId: string;
+  actorName: string | null;
+  actorEmail: string | null;
+  actorRole: StaffRole | null;
+  ip: string | null;
+  /** Best-effort human reference: document.reference or the after/before payload. */
+  reference: string | null;
+  after: unknown;
+};
+
+export type AuditQuery = {
+  action?: string;
+  entityType?: string;
+  /** free-text match on actor email/name or document reference */
+  search?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+/**
+ * Read a page of audit entries, newest first, with optional filters. Joins the
+ * actor and (when the entity is a document) resolves its reference for display.
+ * Admin-only callers.
+ */
+export async function queryAuditTrail(
+  q: AuditQuery,
+): Promise<{ rows: AuditRow[]; total: number; page: number; pageSize: number }> {
+  const page = Math.max(1, q.page ?? 1);
+  const pageSize = Math.min(200, Math.max(10, q.pageSize ?? 50));
+
+  const where: Prisma.AuditTrailEntryWhereInput = {};
+  if (q.action) where.action = q.action;
+  if (q.entityType) where.entityType = q.entityType;
+  if (q.search && q.search.trim()) {
+    const s = q.search.trim();
+    where.OR = [
+      { actor: { email: { contains: s, mode: 'insensitive' } } },
+      { actor: { name: { contains: s, mode: 'insensitive' } } },
+      // reference is inside afterJson — fall back to a string match on entityId
+      { entityId: { contains: s, mode: 'insensitive' } },
+    ];
+  }
+
+  const [total, entries] = await Promise.all([
+    db.auditTrailEntry.count({ where }),
+    db.auditTrailEntry.findMany({
+      where,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        createdAt: true,
+        action: true,
+        entityType: true,
+        entityId: true,
+        ip: true,
+        afterJson: true,
+        beforeJson: true,
+        actor: { select: { name: true, email: true, staffRole: true } },
+      },
+    }),
+  ]);
+
+  // Resolve document references in one batched query for the document entities.
+  const docIds = entries.filter((e) => e.entityType === 'document').map((e) => e.entityId);
+  const refMap = new Map<string, string>();
+  if (docIds.length > 0) {
+    const docs = await db.document.findMany({
+      where: { id: { in: docIds } },
+      select: { id: true, reference: true },
+    });
+    for (const d of docs) refMap.set(d.id, d.reference);
+  }
+
+  const rows: AuditRow[] = entries.map((e) => {
+    const after = (e.afterJson ?? null) as Record<string, unknown> | null;
+    const payloadRef =
+      after && typeof after.reference === 'string' ? (after.reference as string) : null;
+    return {
+      id: e.id,
+      createdAt: e.createdAt,
+      action: e.action,
+      entityType: e.entityType,
+      entityId: e.entityId,
+      actorName: e.actor?.name ?? null,
+      actorEmail: e.actor?.email ?? null,
+      actorRole: e.actor?.staffRole ?? null,
+      ip: e.ip,
+      reference: refMap.get(e.entityId) ?? payloadRef,
+      after,
+    };
+  });
+
+  return { rows, total, page, pageSize };
 }
 
 export type AuditVerification = {

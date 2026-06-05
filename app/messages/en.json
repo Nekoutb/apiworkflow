@@ -168,7 +168,8 @@
     "navDashboard": "Dashboard",
     "navUsers": "Staff",
     "navData": "Data",
-    "roleAdmin": "Administrator"
+    "roleAdmin": "Administrator",
+    "navAudit": "Audit trail"
   },
   "AdminUsers": {
     "kicker": "Administration · v2 · B2",

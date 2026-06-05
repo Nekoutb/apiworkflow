@@ -168,7 +168,8 @@
     "navDashboard": "Tableau de bord",
     "navUsers": "Personnel",
     "navData": "Données",
-    "roleAdmin": "Administrateur"
+    "roleAdmin": "Administrateur",
+    "navAudit": "Journal d'audit"
   },
   "AdminUsers": {
     "kicker": "Administration · v2 · B2",
