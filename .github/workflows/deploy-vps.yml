@@ -138,7 +138,9 @@ jobs:
               app/next.config.ts \
               app/server.js \
               scripts/vps-deploy.sh \
-              scripts/initial-seed.sql
+              scripts/initial-seed.sql \
+              scripts/backup-db.sh \
+              scripts/restore-db.sh
           ls -lh /tmp/release.tar.gz
 
       - name: ⬆️  Upload artifact

@@ -794,6 +794,40 @@ PRUNED_CRON="$(echo "${EXISTING_CRON}" | grep -v 'cmipaportal-tick' || true)"
 printf "%s\n%s\n" "${PRUNED_CRON}" "${CRON_LINE}" | sed '/^$/N;/^\n$/D' | crontab -
 ok "Cron installed: hourly tick at H:30 → https://${APP_DOMAIN_VAL}/api/cron/tick"
 
+# ---------- 6d. Install/update nightly DB backup cron (A2) ------------------
+# Daily pg_dump of the local Postgres DB to $APP_ROOT/backups (mode 600,
+# retention via backup-db.sh). Idempotent — strip any previous backup line,
+# re-append. The backup script lives in the release; we point the cron at a
+# stable path under shared/ so it survives release pruning.
+log "Installing nightly DB backup cron (A2)"
+BACKUP_SCRIPT_SRC="${RELEASE_DIR}/scripts/backup-db.sh"
+RESTORE_SCRIPT_SRC="${RELEASE_DIR}/scripts/restore-db.sh"
+SHARED_BIN="${APP_ROOT}/shared/bin"
+if [[ -f "$BACKUP_SCRIPT_SRC" ]]; then
+  mkdir -p "$SHARED_BIN"
+  install -m 755 "$BACKUP_SCRIPT_SRC" "${SHARED_BIN}/backup-db.sh"
+  [[ -f "$RESTORE_SCRIPT_SRC" ]] && install -m 755 "$RESTORE_SCRIPT_SRC" "${SHARED_BIN}/restore-db.sh"
+
+  BACKUP_TAG="# cmipaportal-backup · managed by vps-deploy.sh"
+  # 02:15 UTC daily. APP_NAME exported so the script resolves all its paths.
+  BACKUP_LINE="15 2 * * * APP_NAME=${APP_NAME} bash ${SHARED_BIN}/backup-db.sh ${BACKUP_TAG}"
+  EXISTING_CRON2="$(crontab -l 2>/dev/null || true)"
+  PRUNED_CRON2="$(echo "${EXISTING_CRON2}" | grep -v 'cmipaportal-backup' || true)"
+  printf "%s\n%s\n" "${PRUNED_CRON2}" "${BACKUP_LINE}" | sed '/^$/N;/^\n$/D' | crontab -
+  ok "Cron installed: nightly DB backup at 02:15 UTC → ${APP_ROOT}/backups"
+
+  # Run one backup immediately so there's a recovery point from this deploy
+  # onward (and so the very first deploy doesn't wait until 02:15 for any
+  # backup to exist). Non-fatal if it hiccups — the cron will retry nightly.
+  if APP_NAME="${APP_NAME}" bash "${SHARED_BIN}/backup-db.sh"; then
+    ok "Initial DB backup taken"
+  else
+    warn "Initial DB backup did not complete — nightly cron will retry"
+  fi
+else
+  warn "backup-db.sh not found in release — skipping backup cron install"
+fi
+
 # ---------- 7. Prune old releases -------------------------------------------
 log "Pruning old releases (keeping last ${KEEP_RELEASES})"
 cd "${APP_ROOT}/releases"
