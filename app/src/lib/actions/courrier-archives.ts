@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -82,6 +83,16 @@ export async function closeDocument(documentId: string): Promise<CloseResult> {
           authorRole: 'CHEF_BUREAU_ARCHIVES',
           body: `[Clôture] Dossier archivé le ${now.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })}.`,
         },
+      });
+
+      // S1 — chain-of-custody (final state)
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: documentId,
+        action: 'DOCUMENT_CLOSED',
+        before: { status: 'RESPONSE_SENT' },
+        after: { status: 'CLOSED', reference: doc.reference, closedAt: now },
       });
     });
 

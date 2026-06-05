@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { storePdf } from '@/lib/blob-storage';
 import { sendEmail, acknowledgementEmail } from '@/lib/email';
 import { nextCourrierReference } from '@/lib/reference';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole, SourceChannel, DocumentNature } from '@prisma/client';
 
 // ============================================================================
@@ -209,8 +210,22 @@ export async function registerArrivedDocument(
         });
       }
 
-      // NOTE: hash-chained AuditTrailEntry rows are written in B22 — for now
-      // the Handoff + DocumentVersion rows are sufficient provenance.
+      // S1 — hash-chained chain-of-custody entry
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'DOCUMENT_REGISTERED',
+        after: {
+          reference: doc.reference,
+          status: 'AWAITING_DG_ANALYSIS',
+          sourceChannel: data.sourceChannel,
+          senderName: data.senderName,
+          senderEmail: data.senderEmail.toLowerCase().trim(),
+          sha256,
+        },
+      });
+
       return doc;
     });
 

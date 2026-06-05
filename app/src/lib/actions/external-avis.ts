@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel } from '@/lib/roles';
 import { notifyRole } from '@/lib/notify';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole, ExternalRecipient } from '@prisma/client';
 
 // ============================================================================
@@ -229,6 +230,15 @@ export async function requestExternalAvis(
           // currentHolderRole + currentHolderUserId unchanged
         },
       });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'EXTERNAL_AVIS_REQUESTED',
+        before: { status: doc.status },
+        after: { status: 'AWAITING_EXTERNAL_AVIS', reference: doc.reference, byRole: effectiveRole, recipient: displayName },
+      });
     });
 
     revalidatePath('/unit/parapheur');
@@ -373,6 +383,15 @@ export async function recordExternalAvis(
         link: `/unit/parapheur/${doc.id}`,
         excludeUserId: userId,
       });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'EXTERNAL_AVIS_RECORDED',
+        before: { status: 'AWAITING_EXTERNAL_AVIS' },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, byRole: effectiveRole, recipient: displayName },
+      });
     });
 
     revalidatePath('/unit/parapheur');
@@ -480,6 +499,15 @@ export async function cancelExternalAvis(
       await tx.document.update({
         where: { id: doc.id },
         data: { status: 'IN_TREATMENT' },
+      });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'EXTERNAL_AVIS_CANCELLED',
+        before: { status: 'AWAITING_EXTERNAL_AVIS' },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, byRole: effectiveRole, recipient: displayName },
       });
     });
 

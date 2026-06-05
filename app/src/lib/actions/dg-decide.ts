@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel } from '@/lib/roles';
 import { notifyRole } from '@/lib/notify';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -146,6 +147,22 @@ export async function dgDecide(
         body: `${dgLabel} a tranché. Composez la lettre de réponse et expédiez à l'émetteur.`,
         link: `/courrier/depart/${doc.id}`,
         excludeUserId: userId,
+      });
+
+      // 5. Audit (chain-of-custody) — written last, inside the same tx
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'DG_DECIDED',
+        before: { status: 'AWAITING_DG_DECISION' },
+        after: {
+          status: 'DECIDED',
+          decision,
+          reference: doc.reference,
+          decidedByRole: handoffFromRole,
+          routedTo: 'CHEF_BUREAU_DEPART',
+        },
       });
     });
 

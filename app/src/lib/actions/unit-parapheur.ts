@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { roleLabel, roleChildren, roleParent, isStaffRole } from '@/lib/roles';
 import { coAvisReturnTarget, isDirectorPeer } from '@/lib/co-avis';
 import { notifyRole, notifyUser } from '@/lib/notify';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -122,6 +123,15 @@ export async function markInTreatment(documentId: string): Promise<MarkInTreatme
             `[Prise en charge] Document pris en charge par ${roleLabel(effectiveRole)} ` +
             `(${now.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}).`,
         },
+      });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: documentId,
+        action: 'TAKEN_IN_TREATMENT',
+        before: { status: doc.status },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, byRole: effectiveRole },
       });
     });
 
@@ -241,6 +251,15 @@ export async function returnToDg(
           currentHolderUserId: null,
           dispatchedAt: null, // reset so it goes back to the head of the FIFO age sort
         },
+      });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: documentId,
+        action: 'RETURNED_TO_DG',
+        before: { status: doc.status },
+        after: { status: 'AWAITING_DG_ANALYSIS', reference: doc.reference, byRole: effectiveRole },
       });
     });
 
@@ -432,6 +451,15 @@ export async function delegateDown(
         link: `/unit/parapheur/${doc.id}`,
         excludeUserId: userId,
       });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'DELEGATED_DOWN',
+        before: { status: doc.status },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, fromRole: effectiveRole, toRole: targetRole },
+      });
     });
 
     revalidatePath('/unit/parapheur');
@@ -586,6 +614,15 @@ export async function returnUp(
         body: `${fromLabel} vous renvoie le dossier avec son avis.`,
         link: `/unit/parapheur/${doc.id}`,
         excludeUserId: userId,
+      });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'RETURNED_UP',
+        before: { status: doc.status },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, fromRole: effectiveRole, toRole: parentRole },
       });
     });
 
@@ -790,6 +827,15 @@ export async function requestCoAvis(
         link: `/unit/parapheur/${doc.id}`,
         excludeUserId: userId,
       });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'CO_AVIS_REQUESTED',
+        before: { status: doc.status },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, fromRole: effectiveRole, toPeerRole: targetRole },
+      });
     });
 
     revalidatePath('/unit/parapheur');
@@ -950,6 +996,15 @@ export async function returnCoAvis(
         body: `${fromLabel} vous renvoie votre dossier avec son co-avis.`,
         link: `/unit/parapheur/${doc.id}`,
         excludeUserId: userId,
+      });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'CO_AVIS_RETURNED',
+        before: { status: doc.status },
+        after: { status: 'IN_TREATMENT', reference: doc.reference, fromRole: effectiveRole, toRole: target },
       });
     });
 
@@ -1112,6 +1167,15 @@ export async function submitToDgForDecision(
         title: `Nouveau dossier au DG pour décision : ${doc.reference}`,
         body: `Soumis par ${fromLabel}. À surveiller pour le SLA 72h.`,
         link: `/secretariat`,
+      });
+
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'SUBMITTED_TO_DG',
+        before: { status: doc.status },
+        after: { status: 'AWAITING_DG_DECISION', reference: doc.reference, byRole: effectiveRole },
       });
     });
 

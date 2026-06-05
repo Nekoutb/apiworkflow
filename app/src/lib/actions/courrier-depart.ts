@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { storePdf } from '@/lib/blob-storage';
 import { sendEmail, responseEmail } from '@/lib/email';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -205,6 +206,21 @@ export async function sendResponse(
           status: 'RESPONSE_SENT',
           responseSentAt: now,
           currentHolderRole: null,
+        },
+      });
+
+      // S1 — chain-of-custody
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'RESPONSE_SENT',
+        before: { status: 'DECIDED' },
+        after: {
+          status: 'RESPONSE_SENT',
+          reference: doc.reference,
+          recipientEmail,
+          responseSha256: sha256,
         },
       });
     });

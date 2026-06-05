@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { isStaffRole, roleLabel } from '@/lib/roles';
 import { notifyRole } from '@/lib/notify';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -177,6 +178,21 @@ export async function dispatchToUnit(
         body: `${dispatcher} vous a dispatché « ${doc.subject.slice(0, 120)}${doc.subject.length > 120 ? '…' : ''} ».`,
         link: `/unit/parapheur/${doc.id}`,
         excludeUserId: userId,
+      });
+
+      // 6. Audit (chain-of-custody)
+      await writeAudit(tx, {
+        actorUserId: userId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'DG_DISPATCHED',
+        before: { status: 'AWAITING_DG_ANALYSIS' },
+        after: {
+          status: 'ASSIGNED',
+          reference: doc.reference,
+          dispatchedToRole: targetRole,
+          acceptedSuggestion: accepted,
+        },
       });
     });
 

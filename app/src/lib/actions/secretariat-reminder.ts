@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { roleLabel } from '@/lib/roles';
 import { getStaffScope, canAccessDocument } from '@/lib/visibility';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -126,6 +127,20 @@ export async function sendReminder(documentId: string): Promise<SendReminderResu
           body:
             `[Rappel envoyé par ${senderLabel} → ${holderLabel}]\n\n` +
             `${recipientIds.length} destinataire${recipientIds.length > 1 ? 's' : ''} notifié${recipientIds.length > 1 ? 's' : ''}.`,
+        },
+      });
+
+      // 3. S1 — chain-of-custody
+      await writeAudit(tx, {
+        actorUserId: senderId,
+        entityType: 'document',
+        entityId: doc.id,
+        action: 'REMINDER_SENT',
+        after: {
+          reference: doc.reference,
+          fromRole: senderRole,
+          toHolderRole: doc.currentHolderRole,
+          recipientCount: recipientIds.length,
         },
       });
     });
