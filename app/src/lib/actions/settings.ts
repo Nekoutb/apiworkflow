@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcryptjs';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { writeAudit } from '@/lib/audit';
 
 // =============================================================================
 //  B22 — Staff settings actions
@@ -79,7 +80,17 @@ export async function changeMyPassword(
   if (!ok) return { fieldErrors: { oldPassword: 'passwordWrong' } };
 
   const newHash = await bcrypt.hash(newPassword, 10);
-  await db.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
+  await db.$transaction(async (tx) => {
+    await tx.user.update({ where: { id: userId }, data: { passwordHash: newHash } });
+    await writeAudit(tx, {
+      actorUserId: userId,
+      entityType: 'user',
+      entityId: userId,
+      // never record the password — only that the holder changed it themselves
+      action: 'PASSWORD_CHANGED',
+      after: { selfService: true },
+    });
+  });
 
   return { ok: true };
 }

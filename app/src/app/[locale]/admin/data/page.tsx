@@ -1,7 +1,10 @@
+import { redirect } from 'next/navigation';
 import { Link } from '@/i18n/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
 import { db } from '@/lib/db';
+import { auth } from '@/lib/auth';
+import { verifyAuditChain } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +25,10 @@ export default async function AdminDataPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  // S6 — defense-in-depth: guard the page itself, not only the admin layout.
+  const session = await auth();
+  if (session?.user?.role !== 'ADMIN') redirect('/dashboard');
 
   const t = await getTranslations('AdminData');
   const tCommon = await getTranslations('Common');
@@ -60,6 +67,9 @@ export default async function AdminDataPage({
     }),
   ]);
 
+  // S1 — verify the tamper-evident audit chain (recompute every hash link).
+  const audit = await verifyAuditChain();
+
   // Locale-aware counter labels (using existing/standard nouns).
   const isEn = locale === 'en';
   const counters: { label: string; value: number }[] = [
@@ -85,6 +95,39 @@ export default async function AdminDataPage({
       </div>
       <h1 className="serif text-4xl font-semibold tracking-[-0.5px] text-ink">{t('title')}</h1>
       <p className="serif mt-2 text-[14px] italic text-ink-3">{t('intro')}</p>
+
+      {/* S1 — chain-of-custody integrity banner */}
+      <div
+        className={
+          'mt-6 flex items-center gap-3 rounded-lg border px-4 py-3 ' +
+          (audit.ok
+            ? 'border-cmgreen-800 bg-cmgreen-50'
+            : 'border-cmred bg-cmred-50')
+        }
+      >
+        <span className={'text-[16px] ' + (audit.ok ? 'text-cmgreen-900' : 'text-cmred')}>
+          {audit.ok ? '🛡' : '⚠'}
+        </span>
+        <div>
+          <div
+            className={
+              'text-[10.5px] font-bold uppercase tracking-[0.16em] ' +
+              (audit.ok ? 'text-cmgreen-900' : 'text-cmred')
+            }
+          >
+            {isEn ? 'Chain of custody' : 'Chaîne de traçabilité'}
+          </div>
+          <div className={'text-[12.5px] ' + (audit.ok ? 'text-cmgreen-900' : 'text-cmred')}>
+            {audit.ok
+              ? (isEn
+                  ? `Audit chain intact · ${audit.total} entries verified.`
+                  : `Chaîne d'audit intègre · ${audit.total} entrée(s) vérifiée(s).`)
+              : (isEn
+                  ? `Integrity FAILED — ${audit.message} (entry ${audit.brokenEntryId ?? '?'}).`
+                  : `Intégrité COMPROMISE — ${audit.message} (entrée ${audit.brokenEntryId ?? '?'}).`)}
+          </div>
+        </div>
+      </div>
 
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {counters.map((c) => (

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
+import { writeAudit } from '@/lib/audit';
 
 // ============================================================================
 //  Antennes — create / rename / archive
@@ -18,9 +19,10 @@ export type AntenneActionState = {
   fieldErrors?: Record<string, string>;
 };
 
-async function assertAdmin(): Promise<void> {
+async function assertAdmin(): Promise<{ id: string }> {
   const session = await auth();
   if (session?.user?.role !== 'ADMIN') throw new Error('UNAUTHORIZED');
+  return { id: session.user.id! };
 }
 
 const CreateSchema = z.object({
@@ -35,7 +37,7 @@ export async function createAntenne(
   formData: FormData,
 ): Promise<AntenneActionState> {
   try {
-    await assertAdmin();
+    const admin = await assertAdmin();
     const parsed = CreateSchema.safeParse({
       name: formData.get('name'),
       region: formData.get('region'),
@@ -54,14 +56,23 @@ export async function createAntenne(
     const exists = await db.antenne.findUnique({ where: { name: parsed.data.name } });
     if (exists) return { fieldErrors: { name: 'Cette antenne existe déjà.' } };
 
-    await db.antenne.create({
-      data: {
-        name: parsed.data.name.trim(),
-        region: parsed.data.region.trim(),
-        ville: parsed.data.ville?.trim() ?? null,
-        address: parsed.data.address?.trim() ?? null,
-        active: true,
-      },
+    await db.$transaction(async (tx) => {
+      const created = await tx.antenne.create({
+        data: {
+          name: parsed.data.name.trim(),
+          region: parsed.data.region.trim(),
+          ville: parsed.data.ville?.trim() ?? null,
+          address: parsed.data.address?.trim() ?? null,
+          active: true,
+        },
+      });
+      await writeAudit(tx, {
+        actorUserId: admin.id,
+        entityType: 'antenne',
+        entityId: created.id,
+        action: 'ANTENNE_CREATED',
+        after: { name: created.name, region: created.region },
+      });
     });
 
     revalidatePath('/admin/users');
@@ -74,8 +85,17 @@ export async function createAntenne(
 
 export async function setAntenneActive(antenneId: string, active: boolean): Promise<AntenneActionState> {
   try {
-    await assertAdmin();
-    await db.antenne.update({ where: { id: antenneId }, data: { active } });
+    const admin = await assertAdmin();
+    await db.$transaction(async (tx) => {
+      await tx.antenne.update({ where: { id: antenneId }, data: { active } });
+      await writeAudit(tx, {
+        actorUserId: admin.id,
+        entityType: 'antenne',
+        entityId: antenneId,
+        action: 'ANTENNE_STATUS_CHANGED',
+        after: { active },
+      });
+    });
     revalidatePath('/admin/users');
     return { ok: true };
   } catch (e) {

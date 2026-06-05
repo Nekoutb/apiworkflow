@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { auth } from '@/lib/auth';
 import { isStaffRole } from '@/lib/roles';
+import { writeAudit } from '@/lib/audit';
 import type { StaffRole } from '@prisma/client';
 
 // ============================================================================
@@ -65,7 +66,7 @@ export async function createStaff(
   formData: FormData,
 ): Promise<StaffActionState> {
   try {
-    await assertAdmin();
+    const admin = await assertAdmin();
 
     const parsed = CreateSchema.safeParse({
       shortName: formData.get('shortName'),
@@ -96,17 +97,26 @@ export async function createStaff(
 
     const passwordHash = await bcrypt.hash(PASSWORD_DEFAULT, 10);
 
-    await db.user.create({
-      data: {
-        email,
-        name: fullName,
-        passwordHash,
-        userType: 'STAFF',
-        staffRole: role as StaffRole,
-        antenneId: effectiveAntenne,
-        emailVerified: new Date(),
-        status: 'ACTIVE',
-      },
+    await db.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: {
+          email,
+          name: fullName,
+          passwordHash,
+          userType: 'STAFF',
+          staffRole: role as StaffRole,
+          antenneId: effectiveAntenne,
+          emailVerified: new Date(),
+          status: 'ACTIVE',
+        },
+      });
+      await writeAudit(tx, {
+        actorUserId: admin.id,
+        entityType: 'user',
+        entityId: created.id,
+        action: 'USER_CREATED',
+        after: { email, name: fullName, role, antenneId: effectiveAntenne },
+      });
     });
 
     revalidatePath('/admin/users');
@@ -131,7 +141,7 @@ export async function updateStaff(
   formData: FormData,
 ): Promise<StaffActionState> {
   try {
-    await assertAdmin();
+    const admin = await assertAdmin();
 
     const parsed = UpdateSchema.safeParse({
       userId: formData.get('userId'),
@@ -147,13 +157,27 @@ export async function updateStaff(
     const effectiveAntenne =
       role === 'CHEF_ANTENNE' && antenneId ? antenneId : null;
 
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        name: fullName,
-        staffRole: role as StaffRole,
-        antenneId: effectiveAntenne,
-      },
+    await db.$transaction(async (tx) => {
+      const before = await tx.user.findUnique({
+        where: { id: userId },
+        select: { name: true, staffRole: true, antenneId: true },
+      });
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          name: fullName,
+          staffRole: role as StaffRole,
+          antenneId: effectiveAntenne,
+        },
+      });
+      await writeAudit(tx, {
+        actorUserId: admin.id,
+        entityType: 'user',
+        entityId: userId,
+        action: 'USER_UPDATED',
+        before: before ?? null,
+        after: { name: fullName, role, antenneId: effectiveAntenne },
+      });
     });
 
     revalidatePath('/admin/users');
@@ -171,7 +195,16 @@ export async function deactivateStaff(userId: string): Promise<StaffActionState>
     if (me.id === userId) {
       return { error: 'Vous ne pouvez pas désactiver votre propre compte.' };
     }
-    await db.user.update({ where: { id: userId }, data: { status: 'SUSPENDED' } });
+    await db.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { status: 'SUSPENDED' } });
+      await writeAudit(tx, {
+        actorUserId: me.id,
+        entityType: 'user',
+        entityId: userId,
+        action: 'USER_DEACTIVATED',
+        after: { status: 'SUSPENDED' },
+      });
+    });
     revalidatePath('/admin/users');
     return { ok: true };
   } catch (e) {
@@ -181,8 +214,17 @@ export async function deactivateStaff(userId: string): Promise<StaffActionState>
 
 export async function reactivateStaff(userId: string): Promise<StaffActionState> {
   try {
-    await assertAdmin();
-    await db.user.update({ where: { id: userId }, data: { status: 'ACTIVE' } });
+    const me = await assertAdmin();
+    await db.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { status: 'ACTIVE' } });
+      await writeAudit(tx, {
+        actorUserId: me.id,
+        entityType: 'user',
+        entityId: userId,
+        action: 'USER_REACTIVATED',
+        after: { status: 'ACTIVE' },
+      });
+    });
     revalidatePath('/admin/users');
     return { ok: true };
   } catch (e) {
@@ -194,9 +236,19 @@ export async function reactivateStaff(userId: string): Promise<StaffActionState>
 
 export async function resetPassword(userId: string): Promise<StaffActionState> {
   try {
-    await assertAdmin();
+    const me = await assertAdmin();
     const passwordHash = await bcrypt.hash(PASSWORD_DEFAULT, 10);
-    await db.user.update({ where: { id: userId }, data: { passwordHash } });
+    await db.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      await writeAudit(tx, {
+        actorUserId: me.id,
+        entityType: 'user',
+        entityId: userId,
+        // never record the password itself — only that a reset occurred
+        action: 'USER_PASSWORD_RESET',
+        after: { resetToDefault: true },
+      });
+    });
     revalidatePath('/admin/users');
     return { ok: true };
   } catch (e) {
