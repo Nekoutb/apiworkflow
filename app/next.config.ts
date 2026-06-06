@@ -5,23 +5,32 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 // ---------------------------------------------------------------------------
-//  S4 — Content-Security-Policy
-//  Allow-list derived from what the app ACTUALLY loads (verified):
-//    - fonts use next/font/google → SELF-HOSTED at build time, so NO external
-//      font origin is needed (stronger than a Google-Fonts allow-list).
-//    - the only dangerouslySetInnerHTML usages render i18n HTML text, not
-//      <script>, so script-src stays strict ('self', no 'unsafe-inline').
-//    - 'unsafe-inline' for STYLE only: Next.js injects inline <style>; standard
-//      and low-risk (style injection ≠ script execution).
-//    - data:/blob: images for inline SVG icons and any client-generated blobs.
-//    - report-uri /api/csp-report → collect violations during observation.
-//  Shipped as Report-Only first (see headers()) so it blocks nothing in
-//  production until we've confirmed zero false positives, then flipped to the
-//  enforcing `Content-Security-Policy` key.
+//  S4 — Content-Security-Policy (ENFORCING)
+//  Allow-list derived from what the app ACTUALLY loads (verified live against
+//  the served HTML on cmipaportal.com):
+//    - All assets are self-hosted: scripts/styles/fonts/images come from our
+//      origin (/_next/static/...). No external origin appears in the markup.
+//      Fonts are self-hosted via next/font/google — no Google-Fonts origin.
+//    - script-src 'self' 'unsafe-inline': Next.js App Router emits ~14 INLINE
+//      framework scripts per page (the self.__next_f RSC streaming payload +
+//      hydration bootstrap) with NO nonce. A strict script-src would block
+//      them and break hydration. 'unsafe-inline' is the standard, stable Next
+//      App Router posture. (Nonce-based CSP is fragile here — App Router does
+//      not reliably nonce the __next_f blocks.) Every OTHER directive stays
+//      strict, so the policy still meaningfully constrains: no external script
+//      origins, no plugins/objects, no framing, locked base-uri & form-action.
+//    - style-src 'unsafe-inline': Next injects inline <style> (low risk —
+//      style injection is not script execution).
+//    - data:/blob: images for inline SVG icons and client-generated blobs.
+//    - report-uri /api/csp-report keeps collecting violations even while
+//      enforcing, so any future regression is visible in the logs.
+//  Verified in report-only first (commit 8b6e018): the served HTML referenced
+//  zero external/blocked assets; the only inline content was Next's own
+//  framework scripts (covered by 'unsafe-inline') — hence safe to enforce.
 // ---------------------------------------------------------------------------
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   "img-src 'self' data: blob:",
@@ -60,12 +69,13 @@ const nextConfig: NextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains',
           },
-          // --- S4 Stage 2: CSP in REPORT-ONLY mode ---
-          // Blocks nothing yet; the browser only POSTs violations to
-          // /api/csp-report so we can confirm the policy fits real traffic
-          // before switching to the enforcing `Content-Security-Policy` key.
+          // --- S4 Stage 2: CSP ENFORCING ---
+          // Validated in report-only first (commit 8b6e018): served HTML
+          // referenced zero external/blocked assets; only inline content was
+          // Next's own framework scripts (covered by script-src 'unsafe-inline').
+          // report-uri kept so any future regression still surfaces in logs.
           {
-            key: 'Content-Security-Policy-Report-Only',
+            key: 'Content-Security-Policy',
             value: cspDirectives,
           },
         ],
